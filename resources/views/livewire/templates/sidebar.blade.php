@@ -113,11 +113,11 @@
                             </div>
                         </div>
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'user-permissions' ? 'active' : '' }}" href="#">
+                            <a class="menu-link {{ Route::currentRouteName() == 'teams-and-permissions' ? 'active' : '' }}" href="{{ route('teams-and-permissions') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>
-                                <span class="menu-title">User Permissions</span>
+                                <span class="menu-title">Teams and Permissions</span>
                             </a>
                         </div>
                         <div class="menu-item">
