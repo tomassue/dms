@@ -50,7 +50,7 @@
                         <!--begin::Title-->
                         <div>
                             <a href="#" class="fs-6 text-gray-800 text-hover-primary fw-bolder">{{ $item->name }}</a>
-                            <div class="fs-7 text-muted fw-bold mt-1">Team</div>
+                            <div class="fs-7 text-muted fw-bold mt-1">Office</div>
                         </div>
                         <!--end::Title-->
                     </div>

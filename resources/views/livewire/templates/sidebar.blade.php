@@ -121,7 +121,7 @@
                             </a>
                         </div>
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'user-management' ? 'active' : '' }}" href="#">
+                            <a class="menu-link {{ Route::currentRouteName() == 'settings.user-management' ? 'active' : '' }}" href="{{ route('settings.user-management') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>

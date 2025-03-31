@@ -5,7 +5,7 @@
         <div class="card-header border-0 py-5">
             <h3 class="card-title align-items-start flex-column">
                 <span class="card-label fw-bolder fs-3 mb-1">Permissions</span>
-                <span class="text-muted fw-bold fs-7">Teams</span>
+                <span class="text-muted fw-bold fs-7">Roles</span>
             </h3>
             <div class="card-toolbar">
                 <!--begin::Menu-->
@@ -37,11 +37,13 @@
                     </tbody>
                 </table>
             </div>
-            <!-- <div> -->
-            <ul class="pagination">
+
+            <!--begin::Pagination-->
+            <div class="pt-3">
                 {{ $permissions->links() }}
-            </ul>
-            <!-- </div> -->
+            </div>
+            <!--end::Pagination-->
+
             <div class="resize-triggers">
                 <div class="expand-trigger">
                     <div style="width: 404px; height: 426px;"></div>

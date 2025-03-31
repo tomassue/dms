@@ -34,7 +34,7 @@ class PermissionsComponent extends Component
 
     public function loadPermissions()
     {
-        return Permission::paginate('1');
+        return Permission::paginate('10');
     }
 
     public function createPermission()
