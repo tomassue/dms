@@ -136,18 +136,8 @@ class UserManagement extends Component
                 $user->team_id = $this->team_id;
                 $user->username = $this->username;
                 $user->email = $this->email;
-                $user->save();
 
-                // Get the role by ID and verify it exists for this team
-                $role = Role::where('id', $this->role_id)
-                    ->where('team_id', $this->team_id)
-                    ->firstOrFail();
-
-                // Clear existing roles for this team
-                $user->roles()->wherePivot('team_id', $this->team_id)->detach();
-
-                // Assign the new role with team context
-                $user->assignRole([$role->name => $this->team_id]);
+                //TODO: Assign Role. Remove TEAMS
 
                 $this->clear();
                 $this->dispatch('hide-users-modal');
@@ -155,8 +145,7 @@ class UserManagement extends Component
             });
         } catch (\Exception $e) {
             throw $e;
-            $this->dispatch('error', message: 'Something went wrong: ' . $e->getMessage());
-            // Remove the throw if you want to handle it gracefully
+            $this->dispatch('error', message: 'Something went wrong.');
         }
     }
 }
