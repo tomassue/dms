@@ -14,31 +14,43 @@
                             <span class="text-muted fw-bold fs-7">Management</span>
                         </h3>
                         <div class="card-toolbar">
+                            @can('reference.userManagement.create')
                             <!--begin::Menu-->
                             <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#usersModal"><i class="bi bi-plus-circle"></i></a>
                             <!--end::Menu-->
+                            @endcan
                         </div>
                     </div>
                     <!--end::Header-->
                     <!--begin::Body-->
                     <div class="card-body d-flex flex-column" style="position: relative;">
 
+                        <!-- begin:search -->
+                        <div class="row py-5 justify-content-between">
+                            <div class="col-sm-12 col-md-12 col-lg-4">
+                                <input type="search" wire:model.live="search" class="form-control" placeholder="Type a keyword..." aria-label="Type a keyword..." style="appearance: none; background-color: #fff; border: 1px solid #eff2f5; border-radius: 5px; font-size: 14px; line-height: 1.45; outline: 0; padding: 10px 13px;">
+                            </div>
+                        </div>
+                        <!-- end:search -->
+
                         <div class="table-responsive">
                             <table class="table align-middle table-hover table-rounded table-striped border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
                                         <th>Name</th>
-                                        <th>Team</th>
+                                        <th>Office</th>
                                         <th>Username</th>
                                         <th>Status</th>
+                                        @can('reference.userManagement.update')
                                         <th>Actions</th>
+                                        @endcan
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @forelse($users as $item)
                                     <tr>
                                         <td>{{ $item->name }}</td>
-                                        <td>{{ $item->team->name ?? '' }}</td>
+                                        <td>{{ $item->roles()->first()->name ?? 'None' }}</td>
                                         <td>{{ $item->username }}</td>
                                         <td>
                                             @if(!$item->deleted_at)
@@ -48,9 +60,23 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" wire:click="editUser({{ $item->id }})">
+                                            @can('reference.userManagement.update')
+                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
+
+                                            <a href="#" class="btn btn-icon btn-sm btn-warning" title="Reset Password" wire:click="resetPasswordUser({{ $item->id }})">
+                                                <i class="bi bi-key"></i>
+                                            </a>
+
+                                            <a
+                                                href="#"
+                                                class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
+                                                title="Delete"
+                                                wire:click="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
+                                                <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                            </a>
+                                            @endcan
                                         </td>
                                     </tr>
                                     @empty
@@ -64,7 +90,7 @@
 
                         <!--begin::Pagination-->
                         <div class="pt-3">
-
+                            {{ $users->links() }}
                         </div>
                         <!--end::Pagination-->
 
@@ -123,18 +149,6 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Team</label>
-                                <select class="form-select" aria-label="Select example" wire:model="team_id">
-                                    <option>-Select an office-</option>
-                                    @foreach ($teams as $item)
-                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('team_id')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div class="mb-10">
                                 <label class="form-label required">Role</label>
                                 <select class="form-select" aria-label="Select example" wire:model="role_id">
                                     <option>-Select an office-</option>
@@ -145,6 +159,274 @@
                                 @error('team_id')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Permissions</label>
+                                <br>
+                                @error('permissions')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                                <div class="d-flex flex-column">
+
+                                    <!-- Dashboard -->
+                                    <li class="d-flex align-items-center py-2">
+                                        <span class="bullet me-5"></span> Dashboard
+                                    </li>
+                                    <div class="row py-2 ms-4">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="dashboard.read" id="dashboardRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="dashboardRead"> Read </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Incoming Requests -->
+                                    <li class="d-flex align-items-center py-2">
+                                        <span class="bullet me-5"></span> Incoming Requests
+                                    </li>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.requests.create" id="incomingRequestsCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingRequestsCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.requests.read" id="incomingRequestsRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingRequestsRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.requests.update" id="incomingRequestsUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingRequestsUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Incoming Documents -->
+                                    <li class="d-flex align-items-center py-2">
+                                        <span class="bullet me-5"></span> Incoming Documents
+                                    </li>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.documents.create" id="incomingDocumentsCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingDocumentsCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.documents.read" id="incomingDocumentsRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingDocumentsRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.documents.update" id="incomingDocumentsUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingDocumentsUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Outgoing -->
+                                    <li class="d-flex align-items-center py-2">
+                                        <span class="bullet me-5"></span> Outgoing
+                                    </li>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="outgoing.create" id="outgoingCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="outgoingCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="outgoing.read" id="outgoingRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="outgoingRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="outgoing.update" id="outgoingUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="outgoingUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Calendar -->
+                                    <li class="d-flex align-items-center py-2">
+                                        <span class="bullet me-5"></span> Calendar
+                                    </li>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="calendar.read" id="calendarRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="calendarRead"> Read </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Accomplishments -->
+                                    <li class="d-flex align-items-center py-2">
+                                        <span class="bullet me-5"></span> Accomplishments
+                                    </li>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="accomplishments.create" id="accomplishmentsCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="accomplishmentsCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="accomplishments.read" id="accomplishmentsRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="accomplishmentsRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="accomplishments.update" id="accomplishmentsUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="accomplishmentsUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- References -->
+                                    <li class="d-flex align-items-center py-2">
+                                        <span class="bullet me-5"></span> References
+                                    </li>
+
+                                    <!-- References.User Management -->
+                                    <li class="d-flex align-items-center py-2 ms-8">
+                                        <span class="bullet me-5"></span> User Management
+                                    </li>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.userManagement.create" id="userManagementCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="userManagementCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.userManagement.read" id="userManagementRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="userManagementRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.userManagement.update" id="userManagementUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="userManagementUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- References.Incoming Request Category -->
+                                    <li class="d-flex align-items-center py-2 ms-8">
+                                        <span class="bullet me-5"></span> Incoming Request Category
+                                    </li>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.incomingRequestCategory.create" id="incomingRequestCategoryCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingRequestCategoryCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.incomingRequestCategory.read" id="incomingRequestCategoryRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingRequestCategoryRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.incomingRequestCategory.update" id="incomingRequestCategoryUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingRequestCategoryUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- References.Incoming Document Category -->
+                                    <li class="d-flex align-items-center py-2 ms-8">
+                                        <span class="bullet me-5"></span> Incoming Document Category
+                                    </li>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.incomingDocumentCategory.create" id="incomingDocumentCategoryCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingDocumentCategoryCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.incomingDocumentCategory.read" id="incomingDocumentCategoryRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingDocumentCategoryRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.incomingDocumentCategory.update" id="incomingDocumentCategoryUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingDocumentCategoryUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- References.Outgoing Category -->
+                                    <li class="d-flex align-items-center py-2 ms-8">
+                                        <span class="bullet me-5"></span> Outgoing Category
+                                    </li>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.outgoingCategory.create" id="outgoingCategoryCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="outgoingCategoryCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.outgoingCategory.read" id="outgoingCategoryRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="outgoingCategoryRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.outgoingCategory.update" id="outgoingCategoryUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="outgoingCategoryUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- References.Divisions -->
+                                    <li class="d-flex align-items-center py-2 ms-8">
+                                        <span class="bullet me-5"></span> Divisions
+                                    </li>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.divisions.create" id="divisionsCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="divisionsCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.divisions.read" id="divisionsRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="divisionsRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.divisions.update" id="divisionsUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="divisionsUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- References.Accomplishment Category -->
+                                    <li class="d-flex align-items-center py-2 ms-8">
+                                        <span class="bullet me-5"></span> Accomplishment Category
+                                    </li>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.create" id="accomplishmentCategoryCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="accomplishmentCategoryCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.read" id="accomplishmentCategoryRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="accomplishmentCategoryRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.update" id="accomplishmentCategoryUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="accomplishmentCategoryUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Continue with other sections using the same pattern -->
+                                </div>
                             </div>
                         </div>
                 </div>

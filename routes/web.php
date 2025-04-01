@@ -1,7 +1,7 @@
 <?php
 
 use App\Livewire\Shared\Settings\UserManagement;
-use App\Livewire\SuperAdmin\TeamsAndPermissions;
+use App\Livewire\SuperAdmin\RolesAndPermissions;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -10,7 +10,7 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::group(['middleware' => ['role:Admin|1']], function () {
+Route::group(['middleware' => ['role:Super Admin|APO']], function () {
     // Routes accessible only by admin of team 1
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 });
@@ -19,10 +19,14 @@ Route::group(['middleware' => ['role:Admin|1']], function () {
 
 Route::middleware(['auth'])->group(function () {
 
-    // Super admin routes
-    Route::get('/teams-and-permissions', TeamsAndPermissions::class)->name('teams-and-permissions');
+    /* ------------------------------ SHARED ROUTES ----------------------------- */
+    #Dashboard
 
-    //* SHARED ROUTES
-    // Admin routes
+    # Settings
     Route::get('/settings/user-management', UserManagement::class)->name('settings.user-management');
+
+    /* --------------------------- SUPER ADMIN ROUTES --------------------------- */
+    Route::group(['middleware' => ['role:Super Admin']], function () {
+        Route::get('/roles-and-permissions', RolesAndPermissions::class)->name('roles-and-permissions');
+    });
 });

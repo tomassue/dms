@@ -13,13 +13,26 @@ class PermissionsComponent extends Component
 
     public $permissionId;
     public $editMode;
+    public $search;
     # Properties for the form
     public $name;
+
+    public function rules()
+    {
+        return [
+            'name' => 'required|string|unique:permissions,name,' . $this->permissionId, // Exclude the current permission's name
+        ];
+    }
 
     public function clear()
     {
         $this->reset();
         $this->resetValidation();
+    }
+
+    public function updatedSearch()
+    {
+        $this->resetPage();
     }
 
     public function render()
@@ -34,11 +47,18 @@ class PermissionsComponent extends Component
 
     public function loadPermissions()
     {
-        return Permission::paginate('10');
+        return Permission::query()
+            ->when($this->search, function ($query) {
+                $query->where('name', 'like', '%' . $this->search . '%');
+            })
+            ->orderBy('name', 'asc')
+            ->paginate('5');
     }
 
     public function createPermission()
     {
+        $this->validate();
+
         try {
             DB::transaction(function () {
                 $permission = new Permission();

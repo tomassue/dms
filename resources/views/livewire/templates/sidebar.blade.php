@@ -10,6 +10,8 @@
         <div class="aside-nav d-flex flex-column align-lg-center flex-column-fluid w-100 pt-5 pt-lg-0" id="kt_aside_nav">
             <!--begin::Primary menu-->
             <div id="kt_aside_menu" class="menu menu-column menu-title-gray-600 menu-state-primary menu-state-icon-primary menu-state-bullet-primary menu-arrow-gray-500 fw-bold fs-6" data-kt-menu="true">
+
+                @can('dashboard.read')
                 <div class="menu-item py-3">
                     <a class="menu-link {{ Route::currentRouteName() == 'dashboard' ? 'active' : '' }} menu-center" href="#" title="Dashboard" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
@@ -21,6 +23,9 @@
                         </span>
                     </a>
                 </div>
+                @endcan
+
+                @canany(['incoming.requests.read', 'incoming.documents.read'])
                 <div data-kt-menu-trigger="click" data-kt-menu-placement="right-start" class="menu-item py-3">
                     <span class="menu-link menu-center" title="Incoming" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
@@ -33,12 +38,15 @@
                             <!--end::Svg Icon-->
                         </span>
                     </span>
+
                     <div class="menu-sub menu-sub-dropdown w-225px px-1 py-4">
                         <div class="menu-item">
                             <div class="menu-content">
                                 <span class="menu-section fs-5 fw-bolder ps-1 py-1">Incoming</span>
                             </div>
                         </div>
+
+                        @can('incoming.requests.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'incoming.requests' ? 'active' : '' }}" href="#">
                                 <span class="menu-bullet">
@@ -47,6 +55,9 @@
                                 <span class="menu-title">Requests</span>
                             </a>
                         </div>
+                        @endcan
+
+                        @can('incoming.documents.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'incoming.documents' ? 'active' : '' }}" href="#">
                                 <span class="menu-bullet">
@@ -55,8 +66,12 @@
                                 <span class="menu-title">Documents</span>
                             </a>
                         </div>
+                        @endcan
                     </div>
                 </div>
+                @endcanany
+
+                @can('outgoing.read')
                 <div class="menu-item py-3">
                     <a class="menu-link menu-center" href="#" title="Outgoing" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
@@ -70,6 +85,9 @@
                         </span>
                     </a>
                 </div>
+                @endcan
+
+                @can('calendar.read')
                 <div class="menu-item py-3">
                     <a class="menu-link menu-center" href="#" title="Calendar" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
@@ -83,6 +101,9 @@
                         </span>
                     </a>
                 </div>
+                @endcan
+
+                @can('accomplishments.read')
                 <div class="menu-item py-3">
                     <a class="menu-link menu-center" href="#" title="Accomplishments" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
@@ -95,6 +116,18 @@
                         </span>
                     </a>
                 </div>
+                @endcan
+
+                @canany(
+                [
+                'reference.accomplishmentCategory.read',
+                'reference.divisions.read',
+                'reference.incomingDocumentCategory.read',
+                'reference.incomingRequestCategory.read',
+                'reference.outgoingCategory.read',
+                'reference.userManagement.read'
+                ]
+                )
                 <div data-kt-menu-trigger="click" data-kt-menu-placement="right-start" class="menu-item py-3">
                     <span class="menu-link menu-center" title="References" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
@@ -112,14 +145,19 @@
                                 <span class="menu-section fs-5 fw-bolder ps-1 py-1">References</span>
                             </div>
                         </div>
+
+                        @role('Super Admin')
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'teams-and-permissions' ? 'active' : '' }}" href="{{ route('teams-and-permissions') }}">
+                            <a class="menu-link {{ Route::currentRouteName() == 'roles-and-permissions' ? 'active' : '' }}" href="{{ route('roles-and-permissions') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>
-                                <span class="menu-title">Teams and Permissions</span>
+                                <span class="menu-title">Roles and Permissions</span>
                             </a>
                         </div>
+                        @endrole
+
+                        @can('reference.userManagement.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'settings.user-management' ? 'active' : '' }}" href="{{ route('settings.user-management') }}">
                                 <span class="menu-bullet">
@@ -128,6 +166,9 @@
                                 <span class="menu-title">User Management</span>
                             </a>
                         </div>
+                        @endcan
+
+                        @can('reference.incomingRequestCategory.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'incoming-request-category' ? 'active' : '' }}" href="#">
                                 <span class="menu-bullet">
@@ -136,6 +177,9 @@
                                 <span class="menu-title">Incoming Request (Category)</span>
                             </a>
                         </div>
+                        @endcan
+
+                        @can('reference.incomingDocumentCategory.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'incoming-document-category' ? 'active' : '' }}" href="#">
                                 <span class="menu-bullet">
@@ -144,6 +188,9 @@
                                 <span class="menu-title">Incoming Document (Category)</span>
                             </a>
                         </div>
+                        @endcan
+
+                        @can('reference.outgoingCategory.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'outgoing-category' ? 'active' : '' }}" href="#">
                                 <span class="menu-bullet">
@@ -152,6 +199,9 @@
                                 <span class="menu-title">Outgoing (Category)</span>
                             </a>
                         </div>
+                        @endcan
+
+                        @can('reference.divisions.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'divisions' ? 'active' : '' }}" href="#">
                                 <span class="menu-bullet">
@@ -160,6 +210,9 @@
                                 <span class="menu-title">Divisions</span>
                             </a>
                         </div>
+                        @endcan
+
+                        @can('reference.accomplishmentCategory.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'accomplishment-category' ? 'active' : '' }}" href="#">
                                 <span class="menu-bullet">
@@ -168,8 +221,10 @@
                                 <span class="menu-title">Accomplishment Category</span>
                             </a>
                         </div>
+                        @endcan
                     </div>
                 </div>
+                @endcanany
             </div>
             <!--end::Primary menu-->
         </div>

@@ -8,12 +8,6 @@
                 <div class="row g-5 g-xl-8 col-xxl-4">
                     <!--begin::Col-->
                     <div class="col-xxl-12">
-                        <livewire:super-admin.teams-component />
-                    </div>
-                    <!--end::Col-->
-
-                    <!--begin::Col-->
-                    <div class="col-xxl-12">
                         <livewire:super-admin.roles-component />
                     </div>
                     <!--end::Col-->

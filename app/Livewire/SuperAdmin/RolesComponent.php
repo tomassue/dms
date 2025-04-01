@@ -2,7 +2,6 @@
 
 namespace App\Livewire\SuperAdmin;
 
-use App\Models\Team;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -15,24 +14,14 @@ class RolesComponent extends Component
     public $roleId,
         $role;
     public $editMode;
+
     # Properties
-    public $name,
-        $team_id,
-        $permissions = [];
+    public $name;
 
     public function rules()
     {
         return [
-            'name' => 'required|string',
-            'team_id' => 'required',
-            'permissions' => 'required|array',
-        ];
-    }
-
-    public function attributes()
-    {
-        return [
-            'team_id' => 'team',
+            'name' => 'required|string|unique:roles,name,' . $this->roleId,
         ];
     }
 
@@ -47,8 +36,7 @@ class RolesComponent extends Component
         return view(
             'livewire.super-admin.roles-component',
             [
-                'roles' => $this->loadRoles(),
-                'teams' => $this->loadTeams(), // Load teams for the dropdown
+                'roles' => $this->loadRoles()
             ]
         );
     }
@@ -59,20 +47,14 @@ class RolesComponent extends Component
             ->paginate(10);
     }
 
-    public function loadTeams()
-    {
-        return Team::all();
-    }
-
     public function createRole()
     {
-        $this->validate($this->rules(), [], $this->attributes());
+        $this->validate();
 
         try {
             DB::transaction(function () {
                 $role = new Role();
                 $role->name = $this->name;
-                $role->team_id = $this->team_id;
                 $role->save();
 
                 $this->clear();
@@ -90,11 +72,7 @@ class RolesComponent extends Component
         try {
             $role = Role::findOrFail($roleId);
             $this->name = $role->name;
-            $this->team_id = $role->team_id;
-            $this->permissions = $role->getPermissionNames()->toArray();
-
             $this->roleId = $roleId;
-
             $this->editMode = true;
 
             $this->dispatch('show-roles-modal');
@@ -106,14 +84,12 @@ class RolesComponent extends Component
 
     public function updateRole()
     {
-        $this->validate($this->rules(), [], $this->attributes());
+        $this->validate();
 
         try {
             DB::transaction(function () {
                 $role = Role::find($this->roleId);
                 $role->name = $this->name;
-                $role->team_id = $this->team_id;
-                $role->syncPermissions($this->permissions);
                 $role->save();
 
                 $this->clear();
