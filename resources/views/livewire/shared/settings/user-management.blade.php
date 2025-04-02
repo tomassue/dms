@@ -90,7 +90,7 @@
 
                         <!--begin::Pagination-->
                         <div class="pt-3">
-                            {{ $users->links() }}
+                            {{ $users->links(data: ['scrollTo' => false]) }}
                         </div>
                         <!--end::Pagination-->
 
@@ -422,6 +422,29 @@
                                         <div class="form-check form-check-custom form-check-solid">
                                             <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.update" id="accomplishmentCategoryUpdate" wire:model="permissions" />
                                             <label class="form-check-label" for="accomplishmentCategoryUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- References.Signatories -->
+                                    <li class="d-flex align-items-center py-2 ms-8">
+                                        <span class="bullet me-5"></span> Signatories
+                                    </li>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.signatories.create" id="signatoriesCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="signatoriesCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.signatories.read" id="signatoriesRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="signatoriesRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.signatories.update" id="signatoriesUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="signatoriesUpdate"> Update </label>
                                         </div>
                                     </div>
 

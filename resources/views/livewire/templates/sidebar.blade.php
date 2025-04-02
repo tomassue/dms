@@ -203,7 +203,7 @@
 
                         @can('reference.divisions.read')
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'divisions' ? 'active' : '' }}" href="#">
+                            <a class="menu-link {{ Route::currentRouteName() == 'settings.divisions' ? 'active' : '' }}" href="{{ route('settings.divisions') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>
@@ -219,6 +219,17 @@
                                     <span class="bullet bullet-dot"></span>
                                 </span>
                                 <span class="menu-title">Accomplishment Category</span>
+                            </a>
+                        </div>
+                        @endcan
+
+                        @can('reference.signatories.read')
+                        <div class="menu-item">
+                            <a class="menu-link {{ Route::currentRouteName() == 'settings.signatories' ? 'active' : '' }}" href="{{ route('settings.signatories') }}">
+                                <span class="menu-bullet">
+                                    <span class="bullet bullet-dot"></span>
+                                </span>
+                                <span class="menu-title">Signatories</span>
                             </a>
                         </div>
                         @endcan

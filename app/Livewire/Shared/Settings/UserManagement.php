@@ -44,6 +44,7 @@ class UserManagement extends Component
     {
         return User::query()
             ->with('roles')
+            ->withoutRole('Super Admin') // Exclude Super Admin role
             ->where('id', '!=', auth()->id()) // Always exclude current user first
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {

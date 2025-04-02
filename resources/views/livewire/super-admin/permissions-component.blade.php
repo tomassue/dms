@@ -17,7 +17,7 @@
         <!--begin::Body-->
         <div class="card-body d-flex flex-column" style="position: relative;">
             <!--begin::Alert-->
-            <div class="alert alert-dismissible bg-light-warning border border-warning d-flex flex-column flex-sm-row p-5 mb-10">
+            <div class="alert alert-dismissible bg-light-warning border border-warning d-flex flex-column flex-sm-row p-5 mb-5">
                 <!--begin::Icon-->
                 <span class="svg-icon svg-icon-2hx svg-icon-warning me-4 mb-5 mb-sm-0">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-journal-bookmark-fill" viewBox="0 0 16 16">
@@ -72,7 +72,7 @@
 
             <!--begin::Pagination-->
             <div class="pt-3">
-                {{ $permissions->links() }}
+                {{ $permissions->links(data: ['scrollTo' => false]) }}
             </div>
             <!--end::Pagination-->
 

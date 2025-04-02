@@ -94,6 +94,8 @@
 
         /* End Buttons */
 
+        /* begin:: CUSTOM COLORS */
+
         .bg-primary2 {
             --bs-bg-opacity: 1;
             background-color: #639a56 !important;
@@ -134,6 +136,34 @@
             border-color: rgb(63, 99, 55);
             background-color: rgb(63, 99, 55) !important;
         }
+
+        .page-link:hover {
+            z-index: 2;
+            color: #639a56 !important;
+            text-decoration: none;
+            background-color: #f8f5ff;
+            border-color: transparent;
+        }
+
+        .page-item.active .page-link {
+            z-index: 3;
+            color: #fff;
+            background-color: #639a56 !important;
+            border-color: transparent;
+        }
+
+        .btn-check:active+.btn.btn-active-light-primary i,
+        .btn-check:checked+.btn.btn-active-light-primary i,
+        .btn.btn-active-light-primary.active i,
+        .btn.btn-active-light-primary.show i,
+        .btn.btn-active-light-primary:active:not(.btn-active) i,
+        .btn.btn-active-light-primary:focus:not(.btn-active) i,
+        .btn.btn-active-light-primary:hover:not(.btn-active) i,
+        .show>.btn.btn-active-light-primary i {
+            color: #639a56 !important;
+        }
+
+        /* end:: CUSTOM COLORS */
 
         /* begin::Separator */
         .separator {
