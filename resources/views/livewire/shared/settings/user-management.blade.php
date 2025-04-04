@@ -39,6 +39,8 @@
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
                                         <th>Name</th>
                                         <th>Office</th>
+                                        <th>Division / Title</th>
+                                        <th>Position</th>
                                         <th>Username</th>
                                         <th>Status</th>
                                         @can('reference.userManagement.update')
@@ -50,7 +52,9 @@
                                     @forelse($users as $item)
                                     <tr>
                                         <td>{{ $item->name }}</td>
-                                        <td>{{ $item->roles()->first()->name ?? 'None' }}</td>
+                                        <td>{{ $item->roles()->first()->name ?? '-' }}</td>
+                                        <td>{{ $item->user_metadata->division->name ?? '-' }}</td>
+                                        <td>{{ $item->user_metadata->position->name ?? '-' }}</td>
                                         <td>{{ $item->username }}</td>
                                         <td>
                                             @if(!$item->deleted_at)
@@ -149,14 +153,38 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Role</label>
-                                <select class="form-select" aria-label="Select example" wire:model="role_id">
+                                <label class="form-label required">Office</label>
+                                <select class="form-select" aria-label="Select example" wire:model.live="role_id">
                                     <option>-Select an office-</option>
                                     @foreach ($roles as $item)
                                     <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
-                                @error('team_id')
+                                @error('role_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label">Division / Title</label>
+                                <select class="form-select" aria-label="Select example" wire:model="ref_division_id">
+                                    <option value="">-Select a division-</option>
+                                    @foreach ($divisions as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_division_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label">Position</label>
+                                <select class="form-select" aria-label="Select example" wire:model="ref_position_id">
+                                    <option value="">-Select a position-</option>
+                                    @foreach ($positions as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_position_id')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>

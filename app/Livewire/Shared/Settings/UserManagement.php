@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Shared\Settings;
 
+use App\Models\RefDivision;
+use App\Models\RefPosition;
 use App\Models\User;
+use App\Models\UserMetadata;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
@@ -23,15 +26,37 @@ class UserManagement extends Component
         $email,
         $role_id,
         $permissions = [];
+    public $ref_division_id,
+        $ref_position_id;
 
     public function rules()
     {
-        return [
+        $rules = [
             'name' => 'required|string',
             'username' => 'required|string|unique:users,username,' . $this->userId, // Exclude the current user's username
             'email' => 'required|email|unique:users,email,' . $this->userId, // Exclude the current user's email
-            'role_id' => 'required|exists:roles,id' // Ensure the role exists
+            'role_id' => 'required|exists:roles,id', // Ensure the role exists
         ];
+
+        return $rules;
+    }
+
+    public function attributes()
+    {
+        return [
+            'role_id' => 'role',
+            'ref_division_id' => 'division',
+            'ref_position_id' => 'position'
+        ];
+    }
+
+    public function updated($property)
+    {
+
+        if ($property === 'role_id') {
+            $this->reset('ref_division_id');
+            $this->loadDivisions();
+        }
     }
 
     public function clear()
@@ -43,7 +68,7 @@ class UserManagement extends Component
     public function loadUsers()
     {
         return User::query()
-            ->with('roles')
+            ->with(['roles', 'user_metadata'])
             ->withoutRole('Super Admin') // Exclude Super Admin role
             ->where('id', '!=', auth()->id()) // Always exclude current user first
             ->when($this->search, function ($query) {
@@ -62,6 +87,20 @@ class UserManagement extends Component
             ->get();
     }
 
+    public function loadDivisions()
+    {
+        return RefDivision::query()
+            ->when($this->role_id, function ($query) {
+                $query->where('role_id', $this->role_id);
+            })
+            ->get();
+    }
+
+    public function loadPositions()
+    {
+        return RefPosition::all();
+    }
+
     public function render()
     {
         return view(
@@ -69,13 +108,15 @@ class UserManagement extends Component
             [
                 'users' => $this->loadUsers(),
                 'roles' => $this->loadRoles(), // Load roles for the dropdown
+                'divisions' => $this->loadDivisions(), // Load divisions for the dropdown
+                'positions' => $this->loadPositions(), // Load positions for the dropdown
             ]
         );
     }
 
     public function createUser()
     {
-        $this->validate();
+        $this->validate($this->rules(), [], $this->attributes());
 
         try {
             DB::transaction(function () {
@@ -85,6 +126,12 @@ class UserManagement extends Component
                 $user->email = $this->email;
                 $user->password = Hash::make('password'); // Set a default password
                 $user->save();
+
+                $user_metadata = new UserMetadata();
+                $user_metadata->ref_division_id = $this->ref_division_id;
+                $user_metadata->ref_position_id = $this->ref_position_id;
+                $user_metadata->user_id = $user->id;
+                $user_metadata->save();
 
                 $role = Role::findOrFail($this->role_id);
                 $user->syncRoles($role);
@@ -110,12 +157,13 @@ class UserManagement extends Component
             $this->username = $user->username;
             $this->email = $user->email;
             $this->role_id = $user->roles->first()->id ?? ''; // Assuming the user has only one role
-            // $user->roles->pluck('id'); // Returns collection of IDs
-
             $this->permissions = $user->getPermissionNames()->toArray(); // Get all permissions for the user
 
-            $this->editMode = true;
+            $user_metadata = UserMetadata::where('user_id', $userId)->first();
+            $this->ref_division_id = $user_metadata->ref_division_id ?? '';
+            $this->ref_position_id = $user_metadata->ref_position_id ?? '';
 
+            $this->editMode = true;
             $this->userId = $userId;
 
             $this->dispatch('show-users-modal');
@@ -127,8 +175,7 @@ class UserManagement extends Component
 
     public function updateUser()
     {
-        // dd($this->permissions);
-        $this->validate();
+        $this->validate($this->rules(), [], $this->attributes());
 
         try {
             DB::transaction(function () {
@@ -137,6 +184,15 @@ class UserManagement extends Component
                 $user->username = $this->username;
                 $user->email = $this->email;
                 $user->save();
+
+                // Use updateOrCreate for metadata
+                UserMetadata::updateOrCreate(
+                    ['user_id' => $user->id],
+                    [
+                        'ref_division_id' => $this->ref_division_id === '' ? null : $this->ref_division_id,
+                        'ref_position_id' => $this->ref_position_id === '' ? null : $this->ref_position_id
+                    ]
+                );
 
                 $role = Role::findOrFail($this->role_id);
                 $user->syncRoles($role);
@@ -148,7 +204,7 @@ class UserManagement extends Component
                 $this->dispatch('success', message: 'User updated successfully.');
             });
         } catch (\Exception $e) {
-            // throw $e;
+            throw $e;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

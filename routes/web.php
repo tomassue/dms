@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Shared\Accomplishments;
+use App\Livewire\Shared\Settings\AccomplishmentCategory;
 use App\Livewire\Shared\Settings\Divisions;
 use App\Livewire\Shared\Settings\Signatories;
 use App\Livewire\Shared\Settings\UserManagement;
@@ -24,11 +26,15 @@ Route::middleware(['auth'])->group(function () {
     /* ------------------------------ SHARED ROUTES ----------------------------- */
     # Dashboard
 
+    # Accomplishments
+    Route::get('/accomplishments', Accomplishments::class)->name('accomplishments')->middleware('permission:accomplishments.read');
+
+    # Settings.Accomplishment Category
+    Route::get('/settings/accomplishment-category', AccomplishmentCategory::class)->name('accomplishment-category')->middleware('permission:reference.accomplishmentCategory.read');
     # Settings.Signatories
     Route::get('/settings/signatories', Signatories::class)->name('settings.signatories')->middleware('permission:reference.signatories.read');
     # Settings.Divisions
     Route::get('/settings/divisions', Divisions::class)->name('settings.divisions')->middleware('permission:reference.divisions.read');
-
     # Settings.User Management
     Route::get('/settings/user-management', UserManagement::class)->name('settings.user-management')->middleware('permission:reference.userManagement.read');
 

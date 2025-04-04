@@ -9,8 +9,11 @@ class RefSignatories extends Model
     protected $table = 'ref_signatories';
 
     protected $fillable = [
-        'user_id',
-        'ref_position_id',
-        'ref_division_id'
+        'user_id'
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
 }

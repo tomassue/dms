@@ -1,7 +1,6 @@
 <?php
 
-use App\Models\RefDivision;
-use App\Models\RefPosition;
+use App\Models\RefAccomplishmentCategory;
 use App\Models\User;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -14,9 +13,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ref_signatories', function (Blueprint $table) {
+        Schema::create('accomplishments', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(User::class); # Get name from users but when we retrieve it, users should only see records associated with their role (office).
+            $table->foreignIdFor(RefAccomplishmentCategory::class);
+            $table->date('date');
+            $table->text('details');
             $table->softDeletes();
             $table->timestamps();
         });
@@ -27,6 +28,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ref_signatories');
+        Schema::dropIfExists('accomplishments');
     }
 };

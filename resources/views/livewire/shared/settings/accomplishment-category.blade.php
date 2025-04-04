@@ -1,4 +1,4 @@
-<div wire:lazy>
+<div>
     <!--begin::Content-->
     <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
         <!--begin::Container-->
@@ -10,13 +10,13 @@
                     <!--begin::Beader-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
-                            <span class="card-label fw-bolder fs-3 mb-1">Signatories</span>
-                            <span class="text-muted fw-bold fs-7">Reference</span>
+                            <span class="card-label fw-bolder fs-3 mb-1">Accomplishment Category</span>
+                            <span class="text-muted fw-bold fs-7">Management</span>
                         </h3>
                         <div class="card-toolbar">
-                            @can('reference.signatories.create')
+                            @can('reference.accomplishmentCategory.create')
                             <!--begin::Menu-->
-                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#signatoryModal"><i class="bi bi-plus-circle"></i></a>
+                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentCategoryModal"><i class="bi bi-plus-circle"></i></a>
                             <!--end::Menu-->
                             @endcan
                         </div>
@@ -37,31 +37,35 @@
                             <table class="table align-middle table-hover table-rounded table-striped border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
-                                        <th>Office</th>
                                         <th>Name</th>
                                         <th>Status</th>
-                                        @can('reference.signatories.update')
+                                        @can('reference.accomplishmentCategory.create')
                                         <th>Actions</th>
                                         @endcan
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($signatories as $item)
+                                    @forelse($accomplishment_categories as $item)
                                     <tr>
-                                        <td>{{ $item->user->roles()->first()->name ?? '-' }}</td>
-                                        <td>{{ $item->user->name }}</td>
+                                        <td>{{ $item->name }}</td>
                                         <td>
-                                            <span class="badge {{ $item->deleted_at ? 'badge-light-danger' : 'badge-light-success' }}">
-                                                {{ $item->deleted_at ? 'Inactive' : 'Active' }}
-                                            </span>
+                                            @if(!$item->deleted_at)
+                                            <span class="badge badge-light-success">Active</span>
+                                            @else
+                                            <span class="badge badge-light-danger">Inactive</span>
+                                            @endif
                                         </td>
                                         <td>
-                                            @can('reference.signatories.update')
+                                            @can('reference.accomplishmentCategory.update')
+                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+
                                             <a
                                                 href="#"
                                                 class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
                                                 title="Delete"
-                                                wire:click="{{ $item->deleted_at ? 'restoreSignatory' : 'deleteSignatory' }}({{ $item->id }})">
+                                                wire:click="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
                                                 <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
                                             </a>
                                             @endcan
@@ -69,7 +73,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="4" class="text-center">No records found.</td>
+                                        <td colspan="3" class="text-center">No records found.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -78,7 +82,7 @@
 
                         <!--begin::Pagination-->
                         <div class="pt-3">
-                            {{ $signatories->links(data: ['scrollTo' => false]) }}
+                            {{ $accomplishment_categories->links(data: ['scrollTo' => false]) }}
                         </div>
                         <!--end::Pagination-->
 
@@ -99,12 +103,12 @@
     </div>
     <!--end::Content-->
 
-    <!--begin::Modal - Signatories-->
-    <div class="modal fade" tabindex="-1" id="signatoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+    <!--begin::Modal - Accomplishment Category-->
+    <div class="modal fade" tabindex="-1" id="accomplishmentCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Signatory</h5>
+                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Category</h5>
                     <!--begin::Close-->
                     <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
                         <i class="bi bi-x-circle"></i>
@@ -113,62 +117,23 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="{{ $editMode ? 'updateSignatory' : 'createSignatory' }}">
+                    <form wire:submit="{{ $editMode ? 'updateAccomplishmentCategory' : 'createAccomplishmentCategory' }}">
                         <div class="p-2">
                             <div class="mb-10">
-                                <label class="form-label required">User</label>
-                                <div wire:ignore>
-                                    <div id="user-select"></div>
-                                </div>
-                                @error('user_id')
+                                <label class="form-label required">Name</label>
+                                <input type="text" class="form-control" wire:model="name">
+                                @error('name')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                         </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                    <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                            <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-    <!--end::Modal - Signatories-->
+    <!--end::Modal - Accomplishment Category-->
 </div>
-
-@script
-<script>
-    $wire.on('show-signatory-modal', () => {
-        $('#signatoryModal').modal('show');
-    });
-
-    $wire.on('hide-signatory-modal', () => {
-        $('#signatoryModal').modal('hide');
-    });
-
-    VirtualSelect.init({
-        ele: '#user-select',
-        options: @json($users),
-        maxWidth: '100%',
-        dropboxWrapper: 'body', // Append to body instead of parent
-        zIndex: 1060, // Higher than modal's z-index
-        hasOptionDescription: true
-    });
-
-    let user_id = document.querySelector('#user-select');
-    user_id.addEventListener('change', () => {
-        let data = user_id.value;
-        @this.set('user_id', data);
-    });
-
-    $wire.on('reset-user-select', () => {
-        document.querySelector('#user-select').reset();
-    });
-
-    $wire.on('set-user-select', (value) => {
-        document.querySelector('#user-select').setValue(value.value);
-    });
-</script>
-@endscript

@@ -30,7 +30,6 @@
 
     <!-- begin::Plugins -->
     <link rel="stylesheet" href="{{ asset('plugins/sweetalert2/sweetalert2.min.css') }}">
-
     <link rel="stylesheet" href="{{ asset('plugins/jquery-filepond-master/filepond.css') }}" />
     <link rel="stylesheet" href="{{ asset('plugins/jquery-filepond-master/filepond-plugin-image-preview.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('plugins/custom/fullcalendar/fullcalendar.bundle.css') }}" />

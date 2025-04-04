@@ -47,4 +47,13 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * hasOne: Used when this model owns the other model (foreign key is in the other table)
+     * Example: User has one Metadata (the user_id foreign key is in the user_metadata table)
+     */
+    public function user_metadata()
+    {
+        return $this->hasOne(UserMetadata::class, 'user_id', 'id');
+    }
 }

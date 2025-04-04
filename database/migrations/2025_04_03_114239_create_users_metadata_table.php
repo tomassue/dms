@@ -14,10 +14,10 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('ref_signatories', function (Blueprint $table) {
-            $table->id();
-            $table->foreignIdFor(User::class); # Get name from users but when we retrieve it, users should only see records associated with their role (office).
-            $table->softDeletes();
+        Schema::create('users_metadata', function (Blueprint $table) {
+            $table->foreignIdFor(User::class)->unique();
+            $table->foreignIdFor(RefDivision::class);
+            $table->foreignIdFor(RefPosition::class);
             $table->timestamps();
         });
     }
@@ -27,6 +27,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('ref_signatories');
+        Schema::dropIfExists('users_metadata');
     }
 };
