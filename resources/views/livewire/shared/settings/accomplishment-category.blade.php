@@ -57,7 +57,7 @@
                                         </td>
                                         <td>
                                             @can('reference.accomplishmentCategory.update')
-                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
+                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishmentCategory({{ $item->id }})">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
 
@@ -65,7 +65,7 @@
                                                 href="#"
                                                 class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
                                                 title="Delete"
-                                                wire:click="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
+                                                wire:click="{{ $item->deleted_at ? 'restoreAccomplishmentCategory' : 'deleteAccomplishmentCategory' }}({{ $item->id }})">
                                                 <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
                                             </a>
                                             @endcan
@@ -137,3 +137,15 @@
     </div>
     <!--end::Modal - Accomplishment Category-->
 </div>
+
+@script
+<script>
+    $wire.on('hide-accomplishment-category-modal', () => {
+        $('#accomplishmentCategoryModal').modal('hide');
+    });
+
+    $wire.on('show-accomplishment-category-modal', () => {
+        $('#accomplishmentCategoryModal').modal('show');
+    });
+</script>
+@endscript
