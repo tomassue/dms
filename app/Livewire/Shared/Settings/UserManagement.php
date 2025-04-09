@@ -238,7 +238,7 @@ class UserManagement extends Component
     public function resetPasswordUser($userId)
     {
         try {
-            $user = new User();
+            $user = User::withTrashed()->findOrFail($userId);
             $user->password = Hash::make('password');
             $user->save();
 

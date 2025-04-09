@@ -16,8 +16,8 @@ return new class extends Migration
         Schema::create('accomplishments', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(RefAccomplishmentCategory::class);
-            $table->date('date');
-            $table->text('details');
+            $table->dateTime('date')->nullable();
+            $table->text('details')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

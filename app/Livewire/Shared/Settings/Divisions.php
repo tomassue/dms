@@ -56,6 +56,9 @@ class Divisions extends Component
         return RefDivision::query()
             ->with('roles')
             ->withTrashed()
+            ->when($this->search, function ($query) {
+                return $query->where('name', 'LIKE', '%' . $this->search . '%');
+            })
             ->paginate(10);
     }
 

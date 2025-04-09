@@ -4,8 +4,10 @@ namespace App\Livewire\Shared\Settings;
 
 use App\Models\RefAccomplishmentCategory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Permission\Models\Role;
 
 class AccomplishmentCategory extends Component
 {
@@ -15,13 +17,29 @@ class AccomplishmentCategory extends Component
     public $editMode;
     public $accomplishmentCategoryId;
     # Properties Form
-    public $name;
+    public $name,
+        $role_id;
 
     public function rules()
     {
-        return [
-            'name' => 'required|string|unique:ref_accomplishment_categories,name,' . $this->accomplishmentCategoryId,
+        //* Determine the role_id to use since if the user is the Super Admin, we will choose the role the category is associated to. Otherwise, we will use the user's role when creating a new Accomplishment Category.
+        $roleId = $this->role_id ?? auth()->user()->roles()->first()->id;
+
+        $rules = [
+            'name' => [
+                'required',
+                'string',
+                Rule::unique('ref_accomplishment_categories')
+                    ->where('role_id', $roleId)
+                    ->ignore($this->accomplishmentCategoryId)
+            ],
         ];
+
+        if (auth()->user()->hasRole('Super Admin')) {
+            $rules['role_id'] = 'required';
+        }
+
+        return $rules;
     }
 
     public function clear()
@@ -35,7 +53,8 @@ class AccomplishmentCategory extends Component
         return view(
             'livewire.shared.settings.accomplishment-category',
             [
-                'accomplishment_categories' => $this->loadAccomplishmentCategories()
+                'accomplishment_categories' => $this->loadAccomplishmentCategories(),
+                'offices' => $this->loadOffice(), // Office dropdown
             ]
         );
     }
@@ -44,10 +63,24 @@ class AccomplishmentCategory extends Component
     {
         return RefAccomplishmentCategory::query()
             ->withTrashed()
+            ->when(auth()->user()->hasRole('Super Admin'), function ($query) {
+                // Super Admin sees all
+            }, function ($query) {
+                $roleId = auth()->user()->roles()->first()->id; // Explicitly fails if no role
+                $query->where('role_id', $roleId);
+            })
             ->when($this->search, function ($query) {
                 $query->where('name', 'like', '%' . $this->search . '%');
             })
             ->paginate(10);
+    }
+
+    public function loadOffice()
+    {
+        //* Role
+        return Role::query()
+            ->whereNot('name', 'Super Admin')
+            ->get();
     }
 
     public function createAccomplishmentCategory()
@@ -57,6 +90,11 @@ class AccomplishmentCategory extends Component
         try {
             DB::transaction(function () {
                 $accomplishment_category = new RefAccomplishmentCategory();
+                if (auth()->user()->hasRole('Super Admin')) {
+                    $accomplishment_category->role_id = $this->role_id;
+                } else {
+                    $accomplishment_category->role_id = auth()->user()->roles()->first()->id;
+                }
                 $accomplishment_category->name = $this->name;
                 $accomplishment_category->save();
             });
@@ -77,6 +115,10 @@ class AccomplishmentCategory extends Component
             $this->name = $accomplishment_category->name;
             $this->accomplishmentCategoryId = $accomplishment_category->id;
 
+            if (auth()->user()->hasRole('Super Admin')) {
+                $this->role_id = $accomplishment_category->role_id;
+            }
+
             $this->editMode = true;
             $this->dispatch('show-accomplishment-category-modal');
         } catch (\Throwable $th) {
@@ -92,6 +134,9 @@ class AccomplishmentCategory extends Component
         try {
             DB::transaction(function () {
                 $accomplishment_category = RefAccomplishmentCategory::findOrFail($this->accomplishmentCategoryId);
+                if (auth()->user()->hasRole('Super Admin')) {
+                    $accomplishment_category->role_id = $this->role_id;
+                }
                 $accomplishment_category->name = $this->name;
                 $accomplishment_category->save();
 

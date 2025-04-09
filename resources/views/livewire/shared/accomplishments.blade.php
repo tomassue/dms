@@ -40,26 +40,55 @@
                                         <th>Accomplishment Category</th>
                                         <th>Date</th>
                                         <th>Details</th>
+                                        @role('APO')
+                                        <th>Next Steps</th>
+                                        @endrole
                                         @can('accomplishments.update')
                                         <th>Actions</th>
                                         @endcan
                                     </tr>
                                 </thead>
                                 <tbody>
-
-
-
+                                    @forelse($accomplishments as $item)
                                     <tr>
-                                        <td colspan="4" class="text-center">No records found.</td>
+                                        <td>
+                                            {{ $item->accomplishment_category->name }}
+                                        </td>
+                                        <td>
+                                            @role('APO')
+                                            {{ $item->apo->start_date_formatted }}
+                                            @else
+                                            {{ $item->date }}
+                                            @endrole
+                                        </td>
+                                        <td>
+                                            {{ $item->details }}
+                                        </td>
+                                        @role('APO')
+                                        <td>
+                                            {{ $item->apo->next_steps }}
+                                        </td>
+                                        @endrole
+                                        @can('accomplishments.update')
+                                        <td>
+                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishment({{ $item->id }})">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                        </td>
+                                        @endcan
                                     </tr>
-
+                                    @empty
+                                    <tr>
+                                        <td colspan="5" class="text-center">No records found.</td>
+                                    </tr>
+                                    @endforelse
                                 </tbody>
                             </table>
                         </div>
 
                         <!--begin::Pagination-->
                         <div class="pt-3">
-
+                            {{ $accomplishments->links(data: ['scrollTo' => false]) }}
                         </div>
                         <!--end::Pagination-->
 
@@ -79,4 +108,100 @@
         <!--end::Container-->
     </div>
     <!--end::Content-->
+
+    <!--begin::Modal - Accomplishment-->
+    <div class="modal fade" tabindex="-1" id="accomplishmentModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Accomplishment</h5>
+                    <!--begin::Close-->
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <!--end::Close-->
+                </div>
+
+                <div class="modal-body">
+                    <form wire:submit="{{ $editMode ? 'updateAccomplishment' : 'createAccomplishment' }}">
+                        <div class="p-2">
+                            <div class="mb-10">
+                                <label class="form-label required">Accomplishment Category</label>
+                                <select class="form-select" aria-label="Select example" wire:model="ref_accomplishment_category_id">
+                                    <option>Open this select menu</option>
+                                    @foreach ($accomplishment_categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_accomplishment_category_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            @role('APO')
+                            <div class="mb-10">
+                                <label class="form-label required">Start Date</label>
+                                <input type="date" class="form-control" wire:model="start_date">
+                                @error('start_date')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">End Date</label>
+                                <input type="date" class="form-control" wire:model="end_date">
+                                @error('end_date')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @else
+                            <div class="mb-10">
+                                <label class="form-label required">Date</label>
+                                <input type="date" class="form-control" wire:model="date">
+                                @error('date')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @endrole
+
+                            <div class="mb-10">
+                                <label class="form-label required">Details</label>
+                                <!-- <input type="text" class="form-control" wire:model="details"> -->
+                                <textarea class="form-control" wire:model="details"></textarea>
+                                @error('details')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            @role('APO')
+                            <div class="mb-10">
+                                <label class="form-label required">Next Steps</label>
+                                <!-- <input type="text" class="form-control" wire:model="next_steps"> -->
+                                <textarea class="form-control" wire:model="next_steps"></textarea>
+                                @error('next_steps')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @endrole
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                            <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--end::Modal - Accomplishment-->
 </div>
+
+@script
+<script>
+    $wire.on('hide-accomplishment-modal', () => {
+        $('#accomplishmentModal').modal('hide');
+    });
+
+    $wire.on('show-accomplishment-modal', () => {
+        $('#accomplishmentModal').modal('show');
+    });
+</script>
+@endscript

@@ -23,7 +23,7 @@ class Signatories extends Component
     public function rules()
     {
         return [
-            'user_id' => 'required|exists:users,id'
+            'user_id' => 'required|exists:users,id|unique:ref_signatories,user_id,' . $this->signatoryId,
         ];
     }
 
@@ -59,7 +59,13 @@ class Signatories extends Component
     public function loadSignatories()
     {
         return RefSignatories::query()
+            ->withTrashed()
             ->with('user')
+            ->when($this->search, function ($query) {
+                $query->whereHas('user', function ($query) {
+                    $query->where('name', 'like', '%' . $this->search . '%');
+                });
+            })
             ->paginate(10);
     }
 
@@ -124,6 +130,19 @@ class Signatories extends Component
             $signatory->delete();
             $this->clear();
             $this->dispatch('success', message: 'Signatory deleted successfully!');
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    public function restoreSignatory($signatoryId)
+    {
+        try {
+            $signatory = RefSignatories::withTrashed()->find($signatoryId);
+            $signatory->restore();
+            $this->clear();
+            $this->dispatch('success', message: 'Signatory restored successfully!');
         } catch (\Throwable $th) {
             //throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
