@@ -162,6 +162,19 @@
             color: #639a56 !important;
         }
 
+        .btn-check:active+.btn.btn-active-light-primary,
+        .btn-check:checked+.btn.btn-active-light-primary,
+        .btn.btn-active-light-primary.active,
+        .btn.btn-active-light-primary.show,
+        .btn.btn-active-light-primary:active:not(.btn-active),
+        .btn.btn-active-light-primary:focus:not(.btn-active),
+        .btn.btn-active-light-primary:hover:not(.btn-active),
+        .show>.btn.btn-active-light-primary {
+            color: #639a56 !important;
+            border-color: #f8f5ff;
+            background-color: #f8f5ff !important;
+        }
+
         /* end:: CUSTOM COLORS */
 
         /* begin::Separator */

@@ -4,16 +4,24 @@ namespace App\Models;
 
 use App\Models\Apo\Accomplishment as ApoAccomplishment;
 use App\Models\Scopes\RoleBasedFilterScope;
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+/**
+ * * This is a GLOBAL SCOPE
+ * I have reasons why we are using global scope since, this model is shared accross different roles (offices), we would want to filter the data based on the user's role and make
+ * them visible only to users with the same role.
+ * @see https://laravel.com/docs/11.x/eloquent#global-scopes
+ */
 #[ScopedBy([RoleBasedFilterScope::class])]
 class Accomplishment extends Model
 {
-    use LogsActivity;
+    use SoftDeletes, LogsActivity;
 
     protected $table = 'accomplishments';
     protected $fillable = [
@@ -26,9 +34,9 @@ class Accomplishment extends Model
     ];
 
     //* Accessors
-    public function getDateFormattedAttribute()
+    public function getFormattedDateAttribute()
     {
-        return $this->date->format('F j, Y');
+        return $this->date ? $this->date->format('F j, Y') : null;
     }
 
     //* Activity Log
@@ -41,6 +49,11 @@ class Accomplishment extends Model
     }
 
     //* Relationships
+    public function activities(): MorphMany
+    {
+        return $this->morphMany(Activity::class, 'subject');
+    }
+
     public function accomplishment_category()
     {
         return $this->belongsTo(RefAccomplishmentCategory::class, 'ref_accomplishment_category_id', 'id');

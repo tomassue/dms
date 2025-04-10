@@ -11,14 +11,21 @@
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
                             <span class="card-label fw-bolder fs-3 mb-1">Accomplishment</span>
-                            <span class="text-muted fw-bold fs-7">Management</span>
+                            <span class="text-muted fw-bold fs-7">Over {{ $accomplishments->count() }} accomplishments</span>
                         </h3>
                         <div class="card-toolbar">
-                            @can('accomplishments.create')
-                            <!--begin::Menu-->
-                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentModal"><i class="bi bi-plus-circle"></i></a>
-                            <!--end::Menu-->
-                            @endcan
+                            <div class="d-flex align-items-center gap-2">
+                                <!--begin::Menu Filter-->
+                                <livewire:components.menu-filter-component />
+                                <!--end::Menu Filter-->
+
+                                <!--begin::Menu 2-->
+                                @can('accomplishments.create')
+                                <div class="vr"></div> <!-- Vertical Divider -->
+                                <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentModal"><i class="bi bi-plus-circle"></i></a>
+                                @endcan
+                                <!--end::Menu 2-->
+                            </div>
                         </div>
                     </div>
                     <!--end::Header-->
@@ -34,9 +41,9 @@
                         <!-- end:search -->
 
                         <div class="table-responsive">
-                            <table class="table align-middle table-hover table-rounded table-striped border gy-7 gs-7">
+                            <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                 <thead>
-                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
                                         <th>Accomplishment Category</th>
                                         <th>Date</th>
                                         <th>Details</th>
@@ -44,7 +51,7 @@
                                         <th>Next Steps</th>
                                         @endrole
                                         @can('accomplishments.update')
-                                        <th>Actions</th>
+                                        <th class="text-center">Actions</th>
                                         @endcan
                                     </tr>
                                 </thead>
@@ -53,12 +60,13 @@
                                     <tr>
                                         <td>
                                             {{ $item->accomplishment_category->name }}
+                                            <span class="text-muted d-block">{{ $item->apo->sub_category }}</span>
                                         </td>
                                         <td>
                                             @role('APO')
-                                            {{ $item->apo->start_date_formatted }}
+                                            {{ $item->apo->start_date_formatted . ' - ' . $item->apo->end_date_formatted }}
                                             @else
-                                            {{ $item->date }}
+                                            {{ $item->formatted_date }}
                                             @endrole
                                         </td>
                                         <td>
@@ -70,7 +78,7 @@
                                         </td>
                                         @endrole
                                         @can('accomplishments.update')
-                                        <td>
+                                        <td class="text-center">
                                             <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishment({{ $item->id }})">
                                                 <i class="bi bi-pencil"></i>
                                             </a>
@@ -125,19 +133,6 @@
                 <div class="modal-body">
                     <form wire:submit="{{ $editMode ? 'updateAccomplishment' : 'createAccomplishment' }}">
                         <div class="p-2">
-                            <div class="mb-10">
-                                <label class="form-label required">Accomplishment Category</label>
-                                <select class="form-select" aria-label="Select example" wire:model="ref_accomplishment_category_id">
-                                    <option>Open this select menu</option>
-                                    @foreach ($accomplishment_categories as $item)
-                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('ref_accomplishment_category_id')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-
                             @role('APO')
                             <div class="mb-10">
                                 <label class="form-label required">Start Date</label>
@@ -158,6 +153,29 @@
                                 <label class="form-label required">Date</label>
                                 <input type="date" class="form-control" wire:model="date">
                                 @error('date')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @endrole
+
+                            <div class="mb-10">
+                                <label class="form-label required">Accomplishment Category</label>
+                                <select class="form-select" aria-label="Select example" wire:model="ref_accomplishment_category_id">
+                                    <option>Open this select menu</option>
+                                    @foreach ($accomplishment_categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_accomplishment_category_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            @role('APO')
+                            <div class="mb-10">
+                                <label class="form-label required">Sub-category</label>
+                                <input type="text" class="form-control" wire:model="sub_category">
+                                @error('sub_category')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -203,5 +221,7 @@
     $wire.on('show-accomplishment-modal', () => {
         $('#accomplishmentModal').modal('show');
     });
+
+    /* -------------------------------------------------------------------------- */
 </script>
 @endscript

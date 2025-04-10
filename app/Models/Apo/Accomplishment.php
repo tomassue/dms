@@ -15,6 +15,7 @@ class Accomplishment extends Model
     protected $table = "apo_accomplishments";
     protected $fillable = [
         'accomplishment_id',
+        'sub_category',
         'start_date',
         'end_date',
         'next_steps',
