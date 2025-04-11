@@ -15,6 +15,12 @@
                         </h3>
                         <div class="card-toolbar">
                             <div class="d-flex align-items-center gap-2">
+                                <!-- begin::Generate PDF -->
+                                <livewire:components.generate-pdf-component
+                                    :$report
+                                    :accomplishments="$accomplishments->getCollection()" />
+                                <!-- end::Generate PDF -->
+
                                 <!--begin::Menu Filter-->
                                 <livewire:components.menu-filter-component />
                                 <!--end::Menu Filter-->
@@ -40,7 +46,7 @@
                         </div>
                         <!-- end:search -->
 
-                        <div class="table-responsive">
+                        <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveAccomplishment">
                             <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
@@ -131,7 +137,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="{{ $editMode ? 'updateAccomplishment' : 'createAccomplishment' }}">
+                    <form wire:submit="saveAccomplishment">
                         <div class="p-2">
                             @role('APO')
                             <div class="mb-10">
@@ -203,7 +209,15 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                            <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                            <div wire:loading.remove>
+                                <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                            </div>
+                            <div wire:loading wire:target="saveAccomplishment">
+                                <button class="btn btn-primary" type="button" disabled>
+                                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                                    <span role="status">Loading...</span>
+                                </button>
+                            </div>
                     </form>
                 </div>
             </div>
