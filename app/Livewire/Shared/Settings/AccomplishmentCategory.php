@@ -59,6 +59,11 @@ class AccomplishmentCategory extends Component
         );
     }
 
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
     public function loadAccomplishmentCategories()
     {
         return RefAccomplishmentCategory::query()

@@ -10,13 +10,13 @@
                     <!--begin::Beader-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
-                            <span class="card-label fw-bolder fs-3 mb-1">Accomplishment Category</span>
-                            <span class="text-muted fw-bold fs-7">Management</span>
+                            <span class="card-label fw-bolder fs-3 mb-1">Incoming Document Category</span>
+                            <span class="text-muted fw-bold fs-7">Over {{ $incoming_document_categories->count() }} categories</span>
                         </h3>
                         <div class="card-toolbar">
-                            @can('reference.accomplishmentCategory.create')
+                            @can('reference.incomingDocumentCategory.create')
                             <!--begin::Menu-->
-                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentCategoryModal"><i class="bi bi-plus-circle"></i></a>
+                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingDocumentCategoryModal"><i class="bi bi-plus-circle"></i></a>
                             <!--end::Menu-->
                             @endcan
                         </div>
@@ -33,19 +33,19 @@
                         </div>
                         <!-- end:search -->
 
-                        <div class="table-responsive">
+                        <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveIncomingDocumentCategory">
                             <table class="table align-middle table-hover table-rounded table-striped border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
                                         <th>Name</th>
                                         <th>Status</th>
-                                        @can('reference.accomplishmentCategory.update')
+                                        @can('reference.accomplishmentCategory.create')
                                         <th>Actions</th>
                                         @endcan
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($accomplishment_categories as $item)
+                                    @forelse($incoming_document_categories as $item)
                                     <tr>
                                         <td>{{ $item->name }}</td>
                                         <td>
@@ -56,17 +56,33 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @can('reference.accomplishmentCategory.update')
-                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishmentCategory({{ $item->id }})">
-                                                <i class="bi bi-pencil"></i>
+                                            @can('reference.incomingDocumentCategory.update')
+                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocumentCategory({{ $item->id }})">
+                                                <div wire:loading.remove wire:target="editIncomingDocumentCategory({{ $item->id }})">
+                                                    <i class="bi bi-pencil"></i>
+                                                </div>
+
+                                                <div wire:loading wire:target="editIncomingDocumentCategory({{ $item->id }})">
+                                                    <div class="spinner-border spinner-border-sm" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                </div>
                                             </a>
 
                                             <a
                                                 href="#"
                                                 class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
                                                 title="Delete"
-                                                wire:click="{{ $item->deleted_at ? 'restoreAccomplishmentCategory' : 'deleteAccomplishmentCategory' }}({{ $item->id }})">
-                                                <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                                wire:click="{{ $item->deleted_at ? 'restoreIncomingDocumentCategory' : 'deleteIncomingDocumentCategory' }}({{ $item->id }})">
+                                                <div wire:loading.remove wire:target="deleteIncomingDocumentCategory, restoreIncomingDocumentCategory">
+                                                    <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                                </div>
+
+                                                <div wire:loading wire:target="deleteIncomingDocumentCategory, restoreIncomingDocumentCategory">
+                                                    <div class="spinner-border spinner-border-sm" role="status">
+                                                        <span class="visually-hidden">Loading...</span>
+                                                    </div>
+                                                </div>
                                             </a>
                                             @endcan
                                         </td>
@@ -82,7 +98,7 @@
 
                         <!--begin::Pagination-->
                         <div class="pt-3">
-                            {{ $accomplishment_categories->links(data: ['scrollTo' => false]) }}
+                            {{ $incoming_document_categories->links(data: ['scrollTo' => false]) }}
                         </div>
                         <!--end::Pagination-->
 
@@ -104,7 +120,7 @@
     <!--end::Content-->
 
     <!--begin::Modal - Accomplishment Category-->
-    <div class="modal fade" tabindex="-1" id="accomplishmentCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+    <div class="modal fade" tabindex="-1" id="incomingDocumentCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -117,7 +133,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="{{ $editMode ? 'updateAccomplishmentCategory' : 'createAccomplishmentCategory' }}">
+                    <form wire:submit="saveIncomingDocumentCategory">
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label required">Name</label>
@@ -143,7 +159,15 @@
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                            <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                            <div wire:loading.remove>
+                                <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                            </div>
+                            <div wire:loading wire:target="saveIncomingDocumentCategory">
+                                <button class="btn btn-primary" type="button" disabled>
+                                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                                    <span role="status">Loading...</span>
+                                </button>
+                            </div>
                     </form>
                 </div>
             </div>
@@ -154,12 +178,12 @@
 
 @script
 <script>
-    $wire.on('hide-accomplishment-category-modal', () => {
-        $('#accomplishmentCategoryModal').modal('hide');
+    $wire.on('hide-incoming-document-category-modal', () => {
+        $('#incomingDocumentCategoryModal').modal('hide');
     });
 
-    $wire.on('show-accomplishment-category-modal', () => {
-        $('#accomplishmentCategoryModal').modal('show');
+    $wire.on('show-incoming-document-category-modal', () => {
+        $('#incomingDocumentCategoryModal').modal('show');
     });
 </script>
 @endscript

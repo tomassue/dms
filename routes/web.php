@@ -1,8 +1,10 @@
 <?php
 
 use App\Livewire\Shared\Accomplishments;
+use App\Livewire\Shared\Incoming\Documents;
 use App\Livewire\Shared\Settings\AccomplishmentCategory;
 use App\Livewire\Shared\Settings\Divisions;
+use App\Livewire\Shared\Settings\IncomingDocumentCategory;
 use App\Livewire\Shared\Settings\Signatories;
 use App\Livewire\Shared\Settings\UserManagement;
 use App\Livewire\SuperAdmin\RolesAndPermissions;
@@ -26,11 +28,16 @@ Route::middleware(['auth'])->group(function () {
     /* ------------------------------ SHARED ROUTES ----------------------------- */
     # Dashboard
 
+    # Incoming.Documents
+    Route::get('incoming/documents', Documents::class)->name('incoming-documents')->middleware('permission:incoming.documents.read');
+
     # Accomplishments
     Route::get('/accomplishments', Accomplishments::class)->name('accomplishments')->middleware('permission:accomplishments.read');
 
     # Settings.Accomplishment Category
     Route::get('/settings/accomplishment-category', AccomplishmentCategory::class)->name('accomplishment-category')->middleware('permission:reference.accomplishmentCategory.read');
+    # Settings.Incoming Document Category
+    Route::get('/settings/incoming-document-categories', IncomingDocumentCategory::class)->name('incoming-document-categories');
     # Settings.Signatories
     Route::get('/settings/signatories', Signatories::class)->name('settings.signatories')->middleware('permission:reference.signatories.read');
     # Settings.Divisions

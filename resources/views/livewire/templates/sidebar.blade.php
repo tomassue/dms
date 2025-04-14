@@ -59,7 +59,7 @@
 
                         @can('incoming.documents.read')
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'incoming.documents' ? 'active' : '' }}" href="#">
+                            <a class="menu-link {{ Route::currentRouteName() == 'incoming.documents' ? 'active' : '' }}" href="{{ route('incoming-documents') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>
@@ -181,7 +181,7 @@
 
                         @can('reference.incomingDocumentCategory.read')
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'incoming-document-category' ? 'active' : '' }}" href="#">
+                            <a class="menu-link {{ Route::currentRouteName() == 'incoming-document-category' ? 'active' : '' }}" href="{{ route('incoming-document-categories') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>

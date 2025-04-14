@@ -5,7 +5,10 @@ namespace App\Livewire\Shared;
 use App\Livewire\Components\GeneratePdfComponent;
 use App\Models\Accomplishment;
 use App\Models\Apo\Accomplishment as ApoAccomplishment;
+use App\Models\PdfAsset;
 use App\Models\RefAccomplishmentCategory;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
@@ -24,6 +27,7 @@ class Accomplishments extends Component
     public $ref_accomplishment_category_id,
         $date,
         $details;
+    public $pdf;
 
     //* begin::APO
     public $sub_category,
@@ -74,17 +78,23 @@ class Accomplishments extends Component
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
+    }
 
-        /**
-         * getCollection(): Returns a collection of the query results
-         * The loadAccomplishments() method returns a collection of Accomplishment objects, which is a collection of Accomplishment models.
-         * The getCollection() method returns a collection of the query results, which is a collection of Accomplishment objects.
-         * * The getCollection() removes pagination to use foreach loop.
-         * 
-         * Then we dispatch an event to the GeneratePdfComponent class with the accomplishments collection.
-         */
-        $accomplishments = $this->loadAccomplishments()->getCollection();
-        $this->dispatch('filtered-accomplishments', accomplishments: $accomplishments)->to(GeneratePdfComponent::class);
+    public function updated($property)
+    {
+        if ($property === "filter_start_date" || $property === "filter_end_date") {
+            dd('wew');
+            /**
+             * getCollection(): Returns a collection of the query results
+             * The loadAccomplishments() method returns a collection of Accomplishment objects, which is a collection of Accomplishment models.
+             * The getCollection() method returns a collection of the query results, which is a collection of Accomplishment objects.
+             * * The getCollection() removes pagination to use foreach loop.
+             * 
+             * Then we dispatch an event to the GeneratePdfComponent class with the accomplishments collection.
+             */
+            $accomplishments = $this->loadAccomplishments()->getCollection();
+            $this->dispatch('filtered-accomplishments', accomplishments: $accomplishments)->to(GeneratePdfComponent::class);
+        }
     }
 
     public function render()
@@ -96,6 +106,11 @@ class Accomplishments extends Component
                 'accomplishment_categories' => $this->loadAccomplishmentCategories() // Accomplishment Category dropdown
             ]
         );
+    }
+
+    public function updatedSearch()
+    {
+        $this->resetPage();
     }
 
     public function loadAccomplishments()
@@ -204,5 +219,85 @@ class Accomplishments extends Component
             report($th);
             $this->dispatch('error', message: 'Failed to load accomplishment data.');
         }
+    }
+
+    public function generatePDF()
+    {
+        // Prepare image data with proper base64 format
+        $data = [];
+
+        // Get all header assets
+        $pdf_asset_headers = PdfAsset::header()->get();
+        foreach ($pdf_asset_headers as $asset) {
+            // Ensure the base64 string has the proper data URI format
+            $data[$asset->title] = $this->formatBase64Image($asset->file);
+        }
+
+        // Get user's division
+        $user_division = auth()->user()->user_metadata->division->name ?? null;
+
+        // Prepare view data
+        $viewData = [
+            'cdo_seal' => $data['cdo seal'] ?? null,
+            'rise' => $data['rise'] ?? null,
+            'division' => $user_division,
+            'filter_start_date' => $this->filter_start_date,
+            'filter_end_date' => $this->filter_end_date,
+            'accomplishments' => $this->loadAccomplishments()
+        ];
+
+        $htmlContent = view('livewire.apo.reports.pdf.accomplishment-report', $viewData)->render();
+
+        $options = new Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isPhpEnabled', true); // Important for base64 support
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($htmlContent);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        $this->pdf = 'data:application/pdf;base64,' . base64_encode($dompdf->output());
+        $this->dispatch('show-pdf-modal');
+    }
+
+    /**
+     * Format base64 image string with proper data URI
+     */
+    protected function formatBase64Image($base64)
+    {
+        // If already formatted, return as-is
+        if (str_starts_with($base64, 'data:')) {
+            return $base64;
+        }
+
+        // Try to detect image type from the base64 content
+        $mime = $this->detectImageMimeType($base64);
+
+        return 'data:' . $mime . ';base64,' . $base64;
+    }
+
+    /**
+     * Detect image MIME type from base64 content
+     */
+    protected function detectImageMimeType($base64)
+    {
+        // Get the first few characters of the base64 string
+        $signature = substr($base64, 0, 20);
+
+        // Detect common image formats
+        if (str_starts_with($signature, '/9j/')) {
+            return 'image/jpeg';
+        } elseif (str_starts_with($signature, 'iVBORw')) {
+            return 'image/png';
+        } elseif (str_starts_with($signature, 'R0lGOD')) {
+            return 'image/gif';
+        } elseif (str_starts_with($signature, 'Qk2')) {
+            return 'image/bmp';
+        }
+
+        // Default to JPEG if unknown
+        return 'image/jpeg';
     }
 }
