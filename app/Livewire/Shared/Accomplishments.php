@@ -39,19 +39,20 @@ class Accomplishments extends Component
 
     public function rules()
     {
-        $rules = [
-            'ref_accomplishment_category_id' => 'required|exists:ref_accomplishment_categories,id',
-            'details' => 'required',
-            'date' => 'required|date'
-        ];
-
-        //* += Merged Rules Properly: Used += to merge the APO rules with the base rules instead of overwriting them.
         if (auth()->user()->hasRole('APO')) {
-            $rules += [
+            $rules = [
+                'ref_accomplishment_category_id' => 'required|exists:ref_accomplishment_categories,id',
+                'details' => 'required',
                 'sub_category' => 'required',
                 'start_date' => 'required|date|before_or_equal:end_date',
                 'end_date' => 'required|date|after_or_equal:start_date',
                 'next_steps' => 'required'
+            ];
+        } else {
+            $rules = [
+                'ref_accomplishment_category_id' => 'required|exists:ref_accomplishment_categories,id',
+                'details' => 'required',
+                'date' => 'required|date'
             ];
         }
 
@@ -80,22 +81,22 @@ class Accomplishments extends Component
         $this->filter_end_date = $end_date;
     }
 
-    public function updated($property)
-    {
-        if ($property === "filter_start_date" || $property === "filter_end_date") {
-            dd('wew');
-            /**
-             * getCollection(): Returns a collection of the query results
-             * The loadAccomplishments() method returns a collection of Accomplishment objects, which is a collection of Accomplishment models.
-             * The getCollection() method returns a collection of the query results, which is a collection of Accomplishment objects.
-             * * The getCollection() removes pagination to use foreach loop.
-             * 
-             * Then we dispatch an event to the GeneratePdfComponent class with the accomplishments collection.
-             */
-            $accomplishments = $this->loadAccomplishments()->getCollection();
-            $this->dispatch('filtered-accomplishments', accomplishments: $accomplishments)->to(GeneratePdfComponent::class);
-        }
-    }
+    // public function updated($property)
+    // {
+    //     if ($property === "filter_start_date" || $property === "filter_end_date") {
+    //         dd('wew');
+    //         /**
+    //          * getCollection(): Returns a collection of the query results
+    //          * The loadAccomplishments() method returns a collection of Accomplishment objects, which is a collection of Accomplishment models.
+    //          * The getCollection() method returns a collection of the query results, which is a collection of Accomplishment objects.
+    //          * * The getCollection() removes pagination to use foreach loop.
+    //          * 
+    //          * Then we dispatch an event to the GeneratePdfComponent class with the accomplishments collection.
+    //          */
+    //         $accomplishments = $this->loadAccomplishments()->getCollection();
+    //         $this->dispatch('filtered-accomplishments', accomplishments: $accomplishments)->to(GeneratePdfComponent::class);
+    //     }
+    // }
 
     public function render()
     {
@@ -176,9 +177,10 @@ class Accomplishments extends Component
             'details' => $this->details
         ];
 
-        return $this->accomplishmentId
-            ? Accomplishment::updateOrCreate(['id' => $this->accomplishmentId], $data)
-            : Accomplishment::create($data);
+        return Accomplishment::updateOrCreate(
+            ['id' => $this->accomplishmentId ?? null],
+            $data
+        );
     }
 
     protected function saveApoAccomplishment($accomplishment)

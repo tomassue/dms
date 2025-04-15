@@ -36,6 +36,7 @@
     <link rel="stylesheet" href="{{ asset('plugins/virtual-select/virtual-select.min.css') }}">
     <link rel="stylesheet" href="{{ asset('plugins/virtual-select/tooltip.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('plugins/daterangepicker-master/daterangepicker.css') }}" />
+    <link rel="stylesheet" type="text/css" href="{{ asset('plugins/dropzonejs/dropzone.min.css') }}" />
     <!-- end::Plugins -->
 
     <style>
@@ -268,6 +269,7 @@
     <script src="{{ asset('plugins/virtual-select/tooltip.min.js') }}"></script>
     <script src="{{ asset('plugins/daterangepicker-master/moment.min.js') }}"></script>
     <script src="{{ asset('plugins/daterangepicker-master/daterangepicker.js') }}"></script>
+    <script src="{{ asset('plugins/dropzonejs/dropzone.min.js') }}"></script>
     <!-- end::Plugins -->
 </body>
 

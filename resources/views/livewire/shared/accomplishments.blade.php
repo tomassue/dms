@@ -77,7 +77,9 @@
                                     <tr>
                                         <td>
                                             {{ $item->accomplishment_category->name }}
+                                            @role('APO')
                                             <span class="text-muted d-block">{{ $item->apo->sub_category }}</span>
+                                            @endrole
                                         </td>
                                         <td>
                                             @role('APO')

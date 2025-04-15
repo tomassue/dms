@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Apo\IncomingDocument as ApoIncomingDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -18,8 +19,7 @@ class IncomingDocument extends Model
         'ref_incoming_document_category_id',
         'document_info',
         'date',
-        'remarks',
-        'file_id'
+        'remarks'
     ];
 
     //* Activity Log
@@ -35,5 +35,20 @@ class IncomingDocument extends Model
     public function activities(): MorphMany
     {
         return $this->morphMany(Activity::class, 'subject');
+    }
+
+    public function files(): MorphMany
+    {
+        return $this->morphMany(File::class, 'fileable');
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(RefIncomingDocumentCategory::class, 'ref_incoming_document_category_id', 'id');
+    }
+
+    public function apoDocument()
+    {
+        return $this->hasOne(ApoIncomingDocument::class, 'incoming_document_id', 'id');
     }
 }

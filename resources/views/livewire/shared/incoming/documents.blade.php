@@ -22,7 +22,7 @@
                                 <!--begin::Menu 2-->
                                 @can('incoming.documents.create')
                                 <div class="vr"></div> <!-- Vertical Divider -->
-                                <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentModal"><i class="bi bi-plus-circle"></i></a>
+                                <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingDocumentsModal"><i class="bi bi-plus-circle"></i></a>
                                 @endcan
                                 <!--end::Menu 2-->
                             </div>
@@ -44,13 +44,14 @@
                             <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
-                                        <th>Accomplishment Category</th>
+                                        <th>Document Category</th>
+                                        <th>Info</th>
                                         <th>Date</th>
-                                        <th>Details</th>
+                                        <th>Remarks</th>
                                         @role('APO')
-                                        <th>Next Steps</th>
+                                        <th>Source</th>
                                         @endrole
-                                        @can('accomplishments.update')
+                                        @can('incoming.documents.update')
                                         <th class="text-center">Actions</th>
                                         @endcan
                                     </tr>
@@ -59,27 +60,25 @@
                                     @forelse($incoming_documents as $item)
                                     <tr>
                                         <td>
-                                            {{ $item->accomplishment_category->name }}
-                                            <span class="text-muted d-block">{{ $item->apo->sub_category }}</span>
+                                            {{ $item->category->name }}
                                         </td>
                                         <td>
-                                            @role('APO')
-                                            {{ $item->apo->start_date_formatted . ' - ' . $item->apo->end_date_formatted }}
-                                            @else
-                                            {{ $item->formatted_date }}
-                                            @endrole
+                                            {{ $item->document_info }}
                                         </td>
                                         <td>
-                                            {{ $item->details }}
+                                            {{ $item->date }}
+                                        </td>
+                                        <td>
+                                            {{ $item->remarks }}
                                         </td>
                                         @role('APO')
                                         <td>
-                                            {{ $item->apo->next_steps }}
+                                            {{ $item->apoDocument->source ?? '' }}
                                         </td>
                                         @endrole
                                         @can('incoming.documents.update')
                                         <td class="text-center" wire:loading.class="pe-none">
-                                            <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishment({{ $item->id }})">
+                                            <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
                                         </td>
@@ -116,4 +115,150 @@
         <!--end::Container-->
     </div>
     <!--end::Content-->
+
+    <!--begin::Modal - Incoming Documents-->
+    <div class="modal fade" tabindex="-1" id="incomingDocumentsModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Incoming Document</h5>
+                    <!--begin::Close-->
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <!--end::Close-->
+                </div>
+
+                <div class="modal-body">
+                    <form wire:submit="saveIncomingDocument">
+                        <div class="p-2">
+                            <div class="mb-10">
+                                <label class="form-label required">Document Category</label>
+                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_document_category_id">
+                                    <option>-Select-</option>
+                                    @foreach ($incoming_documents_categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_incoming_document_category_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @role('APO')
+                            <div class="mb-10">
+                                <label class="form-label required">Source</label>
+                                <input type="text" class="form-control" wire:model="source">
+                                @error('source')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @endrole
+                            <div class="mb-10">
+                                <label class="form-label required">Document Info</label>
+                                <textarea class="form-control" wire:model="document_info"></textarea>
+                                @error('document_info')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Date</label>
+                                <input type="date" class="form-control" wire:model="date">
+                                @error('date')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Remarks</label>
+                                <textarea class="form-control" wire:model="remarks"></textarea>
+                                @error('remarks')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">File Upload</label>
+                                <div wire:ignore>
+                                    <input type="file" class="form-control files" multiple>
+                                </div>
+                                @error('file_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <!-- Files -->
+                            <div class="col-12 mb-3">
+                                <table class="table table-row-dashed table-row-gray-300 gy-7">
+                                    <thead>
+                                        <tr class="fw-bolder fs-6 text-gray-800">
+                                            <th width="80%">File</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                    <div wire:loading.remove>
+                        <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                    </div>
+                    <div wire:loading wire:target="saveIncomingDocument">
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--end::Modal - Incoming Documents-->
 </div>
+
+@script
+<script>
+    $wire.on('hide-incoming-document-modal', () => {
+        $('#incomingDocumentsModal').modal('hide');
+    });
+
+    $wire.on('show-incoming-document-modal', () => {
+        $('#incomingDocumentsModal').modal('show');
+    });
+
+    /* -------------------------------------------------------------------------- */
+
+    // Register the plugin 
+    FilePond.registerPlugin(FilePondPluginFileValidateType); // for file type validation
+    FilePond.registerPlugin(FilePondPluginFileValidateSize); // for file size validation
+    FilePond.registerPlugin(FilePondPluginImagePreview); // for image preview
+
+    // Turn input element into a pond with configuration options
+    $('.files').filepond({
+        // required: true,
+        allowFileTypeValidation: true,
+        acceptedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+        labelFileTypeNotAllowed: 'File of invalid type',
+        allowFileSizeValidation: true,
+        maxFileSize: '10MB',
+        labelMaxFileSizeExceeded: 'File is too large',
+        server: {
+            // This will assign the data to the files[] property.
+            process: (fieldName, file, metadata, load, error, progress, abort) => {
+                @this.upload('file_id', file, load, error, progress);
+            },
+            revert: (uniqueFileId, load, error) => {
+                @this.removeUpload('file_id', uniqueFileId, load, error);
+            }
+        }
+    });
+
+    $wire.on('reset-files', () => {
+        $('.files').each(function() {
+            $(this).filepond('removeFiles');
+        });
+    });
+</script>
+@endscript
