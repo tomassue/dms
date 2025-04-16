@@ -10,13 +10,13 @@
                     <!--begin::Beader-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
-                            <span class="card-label fw-bolder fs-3 mb-1">Incoming Document Category</span>
-                            <span class="text-muted fw-bold fs-7">Over {{ $incoming_document_categories->count() }} categories</span>
+                            <span class="card-label fw-bolder fs-3 mb-1">Incoming Request Category</span>
+                            <span class="text-muted fw-bold fs-7">Over {{ $incoming_request_categories->count() }} categories</span>
                         </h3>
                         <div class="card-toolbar">
-                            @can('reference.incomingDocumentCategory.create')
+                            @can('reference.incomingRequestCategory.create')
                             <!--begin::Menu-->
-                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingDocumentCategoryModal"><i class="bi bi-plus-circle"></i></a>
+                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingRequestCategoryModal"><i class="bi bi-plus-circle"></i></a>
                             <!--end::Menu-->
                             @endcan
                         </div>
@@ -39,13 +39,13 @@
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
                                         <th>Name</th>
                                         <th>Status</th>
-                                        @can('reference.accomplishmentCategory.create')
+                                        @can('reference.incomingRequestCategory.update')
                                         <th>Actions</th>
                                         @endcan
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($incoming_document_categories as $item)
+                                    @forelse($incoming_request_categories as $item)
                                     <tr>
                                         <td>{{ $item->name }}</td>
                                         <td>
@@ -56,7 +56,7 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @can('reference.incomingDocumentCategory.update')
+                                            @can('reference.incomingRequestCategory.update')
                                             <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocumentCategory({{ $item->id }})">
                                                 <div wire:loading.remove wire:target="editIncomingDocumentCategory({{ $item->id }})">
                                                     <i class="bi bi-pencil"></i>
@@ -98,7 +98,7 @@
 
                         <!--begin::Pagination-->
                         <div class="pt-3">
-                            {{ $incoming_document_categories->links(data: ['scrollTo' => false]) }}
+                            {{ $incoming_request_categories->links(data: ['scrollTo' => false]) }}
                         </div>
                         <!--end::Pagination-->
 
@@ -119,8 +119,8 @@
     </div>
     <!--end::Content-->
 
-    <!--begin::Modal - Incoming Document Category-->
-    <div class="modal fade" tabindex="-1" id="incomingDocumentCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+    <!--begin::Modal - Incoming Request Category-->
+    <div class="modal fade" tabindex="-1" id="incomingRequestCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -133,7 +133,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="saveIncomingDocumentCategory">
+                    <form wire:submit="saveIncomingRequestCategory">
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label required">Name</label>
@@ -142,27 +142,13 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            @role('Super Admin')
-                            <div class="mb-10">
-                                <label class="form-label required">Office</label>
-                                <select class="form-select" aria-label="Select example" wire:model="role_id">
-                                    <option>Open this select menu</option>
-                                    @foreach($offices as $item)
-                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('role_id')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            @endrole
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
                             <div wire:loading.remove>
                                 <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
                             </div>
-                            <div wire:loading wire:target="saveIncomingDocumentCategory">
+                            <div wire:loading wire:target="saveIncomingRequestCategory">
                                 <button class="btn btn-primary" type="button" disabled>
                                     <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                                     <span role="status">Loading...</span>
@@ -173,17 +159,13 @@
             </div>
         </div>
     </div>
-    <!--end::Modal - Incoming Document Category-->
+    <!--end::Modal - Incoming Request Category-->
 </div>
 
 @script
 <script>
-    $wire.on('hide-incoming-document-category-modal', () => {
-        $('#incomingDocumentCategoryModal').modal('hide');
-    });
-
-    $wire.on('show-incoming-document-category-modal', () => {
-        $('#incomingDocumentCategoryModal').modal('show');
+    $wire.on('hide-incoming-request-category-modal', () => {
+        $('#incomingRequestCategoryModal').modal('hide');
     });
 </script>
 @endscript

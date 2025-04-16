@@ -193,7 +193,21 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-
+                                        @forelse($preview_file as $item)
+                                        <tr>
+                                            <td>
+                                                {{ $item->name }}
+                                            </td>
+                                            <td>
+                                                <a href="#" class="btn btn-sm btn-info" wire:click="viewFile({{ $item->id }})">View</a>
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="2" class="text-center">No files uploaded.</td>
+                                            <td class="text-center"></td>
+                                        </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
@@ -259,6 +273,13 @@
         $('.files').each(function() {
             $(this).filepond('removeFiles');
         });
+    });
+
+    /* -------------------------------------------------------------------------- */
+
+    // Listen for event
+    $wire.on('open-file', (url) => {
+        window.open(event.detail.url, '_blank'); // Open the signed URL in a new tab
     });
 </script>
 @endscript

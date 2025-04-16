@@ -170,7 +170,7 @@
 
                         @can('reference.incomingRequestCategory.read')
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'incoming-request-category' ? 'active' : '' }}" href="#">
+                            <a class="menu-link {{ Route::currentRouteName() == 'incoming-request-categories' ? 'active' : '' }}" href="{{ route('incoming-request-categories') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>

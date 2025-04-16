@@ -7,6 +7,7 @@ use App\Models\File;
 use App\Models\IncomingDocument;
 use App\Models\RefIncomingDocumentCategory;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -95,13 +96,12 @@ class Documents extends Component
 
     public function editIncomingDocument(IncomingDocument $incomingDocument)
     {
-        //TODO: Show files
-        dd($incomingDocument->files);
         try {
             $this->ref_incoming_document_category_id = $incomingDocument->ref_incoming_document_category_id;
             $this->document_info = $incomingDocument->document_info;
             $this->date = $incomingDocument->date;
             $this->remarks = $incomingDocument->remarks;
+            $this->preview_file = $incomingDocument->files;
 
             if (auth()->user()->hasRole('APO')) {
                 $this->source = $incomingDocument->apoDocument->source ?? '';
@@ -185,5 +185,17 @@ class Documents extends Component
         }
 
         return $uploadedFiles;
+    }
+
+    public function viewFile($id)
+    {
+        $signedURL = URL::temporarySignedRoute(
+            'file.view',
+            now()->addMinutes(10),
+            ['id' => $id]
+        );
+
+        // Dispatch an event to the browser to open the URL in a new tab
+        $this->dispatch('open-file', url: $signedURL);
     }
 }
