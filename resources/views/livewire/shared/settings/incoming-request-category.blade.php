@@ -57,12 +57,12 @@
                                         </td>
                                         <td>
                                             @can('reference.incomingRequestCategory.update')
-                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocumentCategory({{ $item->id }})">
-                                                <div wire:loading.remove wire:target="editIncomingDocumentCategory({{ $item->id }})">
+                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequestCategory({{ $item->id }})">
+                                                <div wire:loading.remove wire:target="editIncomingRequestCategory({{ $item->id }})">
                                                     <i class="bi bi-pencil"></i>
                                                 </div>
 
-                                                <div wire:loading wire:target="editIncomingDocumentCategory({{ $item->id }})">
+                                                <div wire:loading wire:target="editIncomingRequestCategory({{ $item->id }})">
                                                     <div class="spinner-border spinner-border-sm" role="status">
                                                         <span class="visually-hidden">Loading...</span>
                                                     </div>
@@ -72,13 +72,18 @@
                                             <a
                                                 href="#"
                                                 class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
-                                                title="Delete"
-                                                wire:click="{{ $item->deleted_at ? 'restoreIncomingDocumentCategory' : 'deleteIncomingDocumentCategory' }}({{ $item->id }})">
-                                                <div wire:loading.remove wire:target="deleteIncomingDocumentCategory, restoreIncomingDocumentCategory">
+                                                title="{{ $item->deleted_at ? 'Restore' : 'Delete' }}"
+                                                wire:click="{{ $item->deleted_at ? 'restoreIncomingRequestCategory' : 'deleteIncomingRequestCategory' }}({{ $item->id }})">
+
+                                                <!-- Show icon when NOT loading -->
+                                                <div wire:loading.remove
+                                                    wire:target="deleteIncomingRequestCategory({{ $item->id }}),restoreIncomingRequestCategory">
                                                     <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
                                                 </div>
 
-                                                <div wire:loading wire:target="deleteIncomingDocumentCategory, restoreIncomingDocumentCategory">
+                                                <!-- Show spinner when loading -->
+                                                <div wire:loading
+                                                    wire:target="deleteIncomingRequestCategory({{ $item->id }}),restoreIncomingRequestCategory">
                                                     <div class="spinner-border spinner-border-sm" role="status">
                                                         <span class="visually-hidden">Loading...</span>
                                                     </div>
@@ -166,6 +171,10 @@
 <script>
     $wire.on('hide-incoming-request-category-modal', () => {
         $('#incomingRequestCategoryModal').modal('hide');
+    });
+
+    $wire.on('show-incoming-request-category-modal', () => {
+        $('#incomingRequestCategoryModal').modal('show');
     });
 </script>
 @endscript
