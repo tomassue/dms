@@ -26,7 +26,7 @@ class Documents extends Component
         $document_info,
         $date,
         $remarks,
-        $file_id = [];
+        $file_id = []; // for file upload - MorphMany
     //* APO
     public $source;
     /* ----------------------------- end::Properties ---------------------------- */

@@ -229,6 +229,12 @@
                                             <label class="form-check-label" for="incomingRequestsUpdate"> Update </label>
                                         </div>
                                     </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.requests.update.status" id="incomingRequestsUpdateStatus" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingRequestsUpdateStatus"> Status </label>
+                                        </div>
+                                    </div>
 
                                     <!-- Incoming Documents -->
                                     <li class="d-flex align-items-center py-2">
@@ -252,6 +258,12 @@
                                             <label class="form-check-label" for="incomingDocumentsUpdate"> Update </label>
                                         </div>
                                     </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.documents.update.status" id="incomingDocumentsUpdateStatus" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingDocumentsUpdateStatus"> Status </label>
+                                        </div>
+                                    </div>
 
                                     <!-- Outgoing -->
                                     <li class="d-flex align-items-center py-2">
@@ -273,6 +285,12 @@
                                         <div class="form-check form-check-custom form-check-solid">
                                             <input class="form-check-input" type="checkbox" value="outgoing.update" id="outgoingUpdate" wire:model="permissions" />
                                             <label class="form-check-label" for="outgoingUpdate"> Update </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="outgoing.update.status" id="outgoingUpdateStatus" wire:model="permissions" />
+                                            <label class="form-check-label" for="outgoingUpdateStatus"> Status </label>
                                         </div>
                                     </div>
 

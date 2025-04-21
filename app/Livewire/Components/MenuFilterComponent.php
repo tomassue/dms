@@ -24,7 +24,7 @@ class MenuFilterComponent extends Component
         $this->reset();
         $this->dispatch('clear-filter-date'); // date range picker
 
-        $this->dispatch('clear-filter-data');
+        $this->dispatch('clear-filter-data'); // Clear ALL filter data for parent components
     }
 
     public function render()

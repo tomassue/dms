@@ -3,6 +3,7 @@
 use App\Http\Controllers\FileHandler;
 use App\Livewire\Shared\Accomplishments;
 use App\Livewire\Shared\Incoming\Documents;
+use App\Livewire\Shared\Incoming\Requests;
 use App\Livewire\Shared\Settings\AccomplishmentCategory;
 use App\Livewire\Shared\Settings\Divisions;
 use App\Livewire\Shared\Settings\IncomingDocumentCategory;
@@ -29,6 +30,9 @@ Route::middleware(['auth'])->group(function () {
 
     /* ------------------------------ SHARED ROUTES ----------------------------- */
     # Dashboard
+
+    # Incoming.Requests
+    Route::get('incoming/requests', Requests::class)->name('incoming-requests')->middleware('permission:incoming.requests.read');
 
     # Incoming.Documents
     Route::get('incoming/documents', Documents::class)->name('incoming-documents')->middleware('permission:incoming.documents.read');

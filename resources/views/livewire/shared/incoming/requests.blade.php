@@ -10,8 +10,8 @@
                     <!--begin::Header-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
-                            <span class="card-label fw-bolder fs-3 mb-1">Incoming Documents</span>
-                            <span class="text-muted fw-bold fs-7">Over {{ $incoming_documents->count() }} incoming documents</span>
+                            <span class="card-label fw-bolder fs-3 mb-1">Incoming Requests</span>
+                            <span class="text-muted fw-bold fs-7">Over {{ $incoming_requests->count() }} incoming documents</span>
                         </h3>
                         <div class="card-toolbar">
                             <div class="d-flex align-items-center gap-2">
@@ -20,9 +20,9 @@
                                 <!--end::Menu Filter-->
 
                                 <!--begin::Menu 2-->
-                                @can('incoming.documents.create')
+                                @can('incoming.requests.create')
                                 <div class="vr"></div> <!-- Vertical Divider -->
-                                <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingDocumentsModal"><i class="bi bi-plus-circle"></i></a>
+                                <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingRequestModal" wire:click="{{ $editMode ? '' : 'generateReferenceNo' }}"><i class="bi bi-plus-circle"></i></a>
                                 @endcan
                                 <!--end::Menu 2-->
                             </div>
@@ -40,53 +40,81 @@
                         </div>
                         <!-- end:search -->
 
-                        <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveIncomingDocument">
+                        <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveIncomingRequest, generateReferenceNo">
                             <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
-                                        <th>Document Category</th>
-                                        <th>Info</th>
-                                        <th>Date</th>
-                                        <th>Remarks</th>
-                                        @role('APO')
-                                        <th>Source</th>
-                                        @endrole
-                                        @can('incoming.documents.update')
+                                        <th>No.</th>
+                                        <th>Date Requested</th>
+                                        <th>Office/Brgy/Org</th>
+                                        <th>Category</th>
+                                        <th>Status</th>
+                                        @can('incoming.requests.update')
                                         <th class="text-center">Actions</th>
                                         @endcan
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($incoming_documents as $item)
+                                    @forelse($incoming_requests as $item)
                                     <tr>
+                                        <td>
+                                            {{ $item->no }}
+                                        </td>
+                                        <td>
+                                            {{ $item->formatted_date_requested }}
+                                        </td>
+                                        <td>
+                                            {{ $item->office_barangay_organization }}
+                                        </td>
                                         <td>
                                             {{ $item->category->name }}
                                         </td>
                                         <td>
-                                            {{ $item->document_info }}
+                                            <span class="badge
+                                            @switch($item->status->name)
+                                            @case('pending')
+                                            badge-light-danger
+                                            @break
+                                            @case('processed')
+                                            badge-light-primary
+                                            @break
+                                            @case('forwarded')
+                                            badge-light-warning
+                                            @break
+                                            @case('completed')
+                                            badge-light-success
+                                            @break
+                                            @case('cancelled')
+                                            badge-light-dark
+                                            @break
+                                            @default
+                                            badge-light-dark
+                                            @endswitch
+                                            text-capitalize
+                                            ">
+                                                {{ $item->status->name }}
+                                            </span>
                                         </td>
-                                        <td>
-                                            {{ $item->date }}
-                                        </td>
-                                        <td>
-                                            {{ $item->remarks }}
-                                        </td>
-                                        @role('APO')
-                                        <td>
-                                            {{ $item->apoDocument->source ?? '' }}
-                                        </td>
-                                        @endrole
-                                        @can('incoming.documents.update')
+
                                         <td class="text-center" wire:loading.class="pe-none">
-                                            <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+                                                @can('incoming.requests.update')
+                                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="editIncomingRequest({{ $item->id }})">
+                                                    <i class="bi bi-arrow-up-square"></i>
+                                                </button>
+                                                @endcan
+                                                <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})">
+                                                    <i class="bi bi-clock-history"></i>
+                                                </button>
+                                            </div>
                                         </td>
-                                        @endcan
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="5" class="text-center">No records found.</td>
+                                        <td colspan="6" class="text-center">No records found.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -95,7 +123,7 @@
 
                         <!--begin::Pagination-->
                         <div class="pt-3">
-                            {{ $incoming_documents->links(data: ['scrollTo' => false]) }}
+                            {{ $incoming_requests->links(data: ['scrollTo' => false]) }}
                         </div>
                         <!--end::Pagination-->
 
@@ -116,12 +144,14 @@
     </div>
     <!--end::Content-->
 
-    <!--begin::Modal - Incoming Documents-->
-    <div class="modal fade" tabindex="-1" id="incomingDocumentsModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+    @include('livewire.shared.modals.activity-log-modal')
+
+    <!--begin::Modal - Incoming Requests-->
+    <div class="modal fade" tabindex="-1" id="incomingRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Incoming Document</h5>
+                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Incoming Request</h5>
                     <!--begin::Close-->
                     <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
                         <i class="bi bi-x-circle"></i>
@@ -130,47 +160,83 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="saveIncomingDocument">
+                    <form wire:submit="saveIncomingRequest">
                         <div class="p-2">
-                            <div class="mb-10">
-                                <label class="form-label required">Document Category</label>
-                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_document_category_id">
+                            @can('incoming.requests.update.status')
+                            <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }};">
+                                <label class="form-label required">Status</label>
+                                <select class="form-select text-uppercase" aria-label="Select status" wire:model="ref_status_id">
                                     <option>-Select-</option>
-                                    @foreach ($incoming_documents_categories as $item)
+                                    @foreach ($status as $item)
                                     <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
-                                @error('ref_incoming_document_category_id')
+                                @error('ref_status_id')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            @role('APO')
+                            @endcan
                             <div class="mb-10">
-                                <label class="form-label required">Source</label>
-                                <input type="text" class="form-control" wire:model="source">
-                                @error('source')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            @endrole
-                            <div class="mb-10">
-                                <label class="form-label required">Document Info</label>
-                                <textarea class="form-control" wire:model="document_info"></textarea>
-                                @error('document_info')
+                                <label class="form-label required">No.</label>
+                                <input type="text" class="form-control" wire:model="no" disabled>
+                                @error('no')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Date</label>
-                                <input type="date" class="form-control" wire:model="date">
-                                @error('date')
+                                <label class="form-label required">Office/Brgy/Org</label>
+                                <input type="text" class="form-control" wire:model="office_barangay_organization">
+                                @error('office_barangay_organization')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Remarks</label>
-                                <textarea class="form-control" wire:model="remarks"></textarea>
-                                @error('remarks')
+                                <label class="form-label required">Date Requested</label>
+                                <input type="date" class="form-control" wire:model="date_requested">
+                                @error('date_requested')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Category</label>
+                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_request_category_id">
+                                    <option>-Select-</option>
+                                    @foreach ($incoming_request_categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_incoming_request_category_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Date and Time</label>
+                                <input type="datetime-local" class="form-control" wire:model="date_time">
+                                @error('date_time')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Contact Person (Name)</label>
+                                <input type="text" class="form-control" wire:model="contact_person_name">
+                                @error('contact_person_name')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Contact Number</label>
+                                <input type="text" class="form-control" wire:model="contact_person_number"
+                                    maxlength="11"
+                                    oninput="this.value = '09' + this.value.slice(2).replace(/\D/g, '');"
+                                    placeholder="09XXXXXXXXX">
+                                @error('contact_person_number')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Description</label>
+                                <textarea class="form-control" wire:model="description"></textarea>
+                                @error('description')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -184,7 +250,7 @@
                                 @enderror
                             </div>
                             <!-- Files -->
-                            <div class="col-12 mb-3">
+                            <div class="col-12 mb-3" style="display: {{ $editMode ? '' : 'none' }};">
                                 <table class="table table-row-dashed table-row-gray-300 gy-7">
                                     <thead>
                                         <tr class="fw-bolder fs-6 text-gray-800">
@@ -218,7 +284,7 @@
                     <div wire:loading.remove>
                         <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
                     </div>
-                    <div wire:loading wire:target="saveIncomingDocument">
+                    <div wire:loading wire:target="saveIncomingRequest">
                         <button class="btn btn-primary" type="button" disabled>
                             <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                             <span role="status">Loading...</span>
@@ -229,17 +295,17 @@
             </div>
         </div>
     </div>
-    <!--end::Modal - Incoming Documents-->
+    <!--end::Modal - Incoming Requests-->
 </div>
 
 @script
 <script>
-    $wire.on('hide-incoming-document-modal', () => {
-        $('#incomingDocumentsModal').modal('hide');
+    $wire.on('hide-incoming-request-modal', () => {
+        $('#incomingRequestModal').modal('hide');
     });
 
-    $wire.on('show-incoming-document-modal', () => {
-        $('#incomingDocumentsModal').modal('show');
+    $wire.on('show-incoming-request-modal', () => {
+        $('#incomingRequestModal').modal('show');
     });
 
     /* -------------------------------------------------------------------------- */

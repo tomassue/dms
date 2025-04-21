@@ -21,7 +21,7 @@ return new class extends Migration
             $table->string('contact_person_name');
             $table->string('contact_person_number');
             $table->text('description');
-            $table->foreignId('reF_status_id')->constrained('ref_status');
+            $table->foreignId('ref_status_id')->constrained('ref_status');
             //TODO: Forwarded to will be a morph table
             $table->text('remarks');
             $table->softDeletes();

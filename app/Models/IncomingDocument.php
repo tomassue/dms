@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Apo\IncomingDocument as ApoIncomingDocument;
+use App\Models\Scopes\RoleBasedFilterScope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
@@ -10,6 +12,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Spatie\Activitylog\Models\Activity;
 
+#[ScopedBy([RoleBasedFilterScope::class])]
 class IncomingDocument extends Model
 {
     use SoftDeletes, LogsActivity;
