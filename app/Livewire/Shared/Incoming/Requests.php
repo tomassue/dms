@@ -3,7 +3,9 @@
 namespace App\Livewire\Shared\Incoming;
 
 use App\Models\File;
+use App\Models\Forwarded;
 use App\Models\IncomingRequest;
+use App\Models\RefDivision;
 use App\Models\RefIncomingRequestCategory;
 use App\Models\RefStatus;
 use Carbon\Carbon;
@@ -24,6 +26,8 @@ class Requests extends Component
         $filter_start_date,
         $filter_end_date;
     public $incomingRequestId;
+    public $selected_divisions = []; // for forwarded
+    //// public $recent_forwards = [];
     public $preview_file = [];
     public $activity_log = [];
 
@@ -82,6 +86,7 @@ class Requests extends Component
         $this->reset();
         $this->resetValidation();
         $this->dispatch('reset-files');
+        $this->dispatch('reset-division-select');
     }
 
     public function generateReferenceNo()
@@ -97,6 +102,8 @@ class Requests extends Component
                 'incoming_requests' => $this->loadIncomingRequests(),
                 'incoming_request_categories' => $this->loadIncomingRequestCategories(), // Incoming Request Category dropdown
                 'status' => $this->loadStatus(), // Status dropdown
+                'divisions' => $this->loadDivisions(), // Division dropdown
+                'recent_forwards' => $this->loadRecentForwards(),
             ]
         );
     }
@@ -114,7 +121,17 @@ class Requests extends Component
                     Carbon::parse($this->filter_end_date)->endOfDay()
                 ]);
             })
+            ->latest()
             ->paginate(10);
+    }
+
+    public function loadRecentForwards()
+    {
+        return Forwarded::query()
+            ->Requests()
+            ->latest()
+            ->take(10)
+            ->get();
     }
 
     public function loadIncomingRequestCategories()
@@ -125,6 +142,18 @@ class Requests extends Component
     public function loadStatus()
     {
         return RefStatus::all();
+    }
+
+    public function loadDivisions()
+    {
+        return RefDivision::where('role_id', auth()->user()->roles()->first()->id)
+            ->get()
+            ->map(function ($division) {
+                return [
+                    'value' => $division->id,
+                    'label' => $division->name
+                ];
+            });
     }
 
     public function saveIncomingRequest()
@@ -157,7 +186,7 @@ class Requests extends Component
                 $this->dispatch('success', message: 'Incoming Request successfully saved.');
             });
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -181,27 +210,64 @@ class Requests extends Component
         return $uploadedFiles;
     }
 
-    public function editIncomingRequest(IncomingRequest $incomingRequestId)
+    public function editIncomingRequest(IncomingRequest $incomingRequest)
     {
         try {
+            // Get all forwarded requests for current division
+            $divisionForwards = $incomingRequest->forwards()
+                ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
+                ->get();
+
+            // Check if any forwarded document is already opened by this division
+            if ($divisionForwards->where('is_opened', true)->isNotEmpty()) {
+                $this->dispatch('error', message: 'This request is already being processed by your division.');
+                return;
+            }
+
+            // Mark all forwarded documents to this division as opened
+            $incomingRequest->forwards()
+                ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
+                ->update([
+                    'is_opened' => true
+                ]);
+
+            // Check if all divisions have opened their copies
+            $this->checkAllDivisionsOpened($incomingRequest);
+
             $this->editMode = true;
-            $this->incomingRequestId = $incomingRequestId->id;
-            $this->no = $incomingRequestId->no;
-            $this->office_barangay_organization = $incomingRequestId->office_barangay_organization;
-            $this->date_requested = $incomingRequestId->date_requested;
-            $this->ref_incoming_request_category_id = $incomingRequestId->ref_incoming_request_category_id;
-            $this->date_time = $incomingRequestId->date_time;
-            $this->contact_person_name = $incomingRequestId->contact_person_name;
-            $this->contact_person_number = $incomingRequestId->contact_person_number;
-            $this->description = $incomingRequestId->description;
-            $this->ref_status_id = $incomingRequestId->ref_status_id;
-            $this->remarks = $incomingRequestId->remarks;
-            $this->preview_file = $incomingRequestId->files;
+            $this->incomingRequestId = $incomingRequest->id;
+
+            $this->no = $incomingRequest->no;
+            $this->office_barangay_organization = $incomingRequest->office_barangay_organization;
+            $this->date_requested = $incomingRequest->date_requested;
+            $this->ref_incoming_request_category_id = $incomingRequest->ref_incoming_request_category_id;
+            $this->date_time = $incomingRequest->date_time;
+            $this->contact_person_name = $incomingRequest->contact_person_name;
+            $this->contact_person_number = $incomingRequest->contact_person_number;
+            $this->description = $incomingRequest->description;
+            $this->ref_status_id = $incomingRequest->ref_status_id;
+            $this->remarks = $incomingRequest->remarks;
+            $this->preview_file = $incomingRequest->files;
 
             $this->dispatch('show-incoming-request-modal');
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    protected function checkAllDivisionsOpened(IncomingRequest $incomingRequest)
+    {
+        $unopenedForwards = $incomingRequest->forwards()
+            ->where('is_opened', false)
+            ->exists();
+
+        if (!$unopenedForwards) {
+            $incomingRequest->update([
+                'ref_status_id' => RefStatus::where('name', 'processed')->first()->id
+            ]);
+
+            $this->dispatch('error', message: 'All divisions have opened this request.');
         }
     }
 
@@ -219,10 +285,11 @@ class Requests extends Component
     public function activityLog($id)
     {
         try {
-            $this->activity_log = Activity::where('subject_type', IncomingRequest::class)
-                ->where('subject_id', $id)
-                ->where('log_name', 'incoming_request')
-                ->whereNot('event', 'created')
+            $this->activity_log = Activity::whereIn('subject_type', [IncomingRequest::class, Forwarded::class])
+                ->whereIn('log_name', ['incoming_request', 'forwarded'])
+                //TODO maybe, event created from incoming_request (log_name) should be excluded
+                //// ->whereNot('event', 'created')
+                //TODO: should only show specific subject_id
                 ->latest()
                 ->get()
                 ->map(function ($activity) {
@@ -232,9 +299,22 @@ class Requests extends Component
                         'causer' => $activity->causer?->name ?? 'System',
                         'created_at' => Carbon::parse($activity->created_at)->format('M d, Y h:i A'),
                         'changes' => collect($activity->properties['attributes'] ?? [])
-                            ->except(['id', 'created_at', 'updated_at', 'deleted_at']) // Exclude timestamps
+                            ->except(['id', 'created_at', 'updated_at', 'deleted_at', 'forwardable_id', 'forwardable_type']) // Exclude
                             ->map(function ($newValue, $key) use ($activity) {
                                 $oldValue = $activity->properties['old'][$key] ?? 'N/A';
+
+                                // Custom field name mapping
+                                $fieldName = match ($key) {
+                                    'file_id' => 'Files',
+                                    'ref_status_id' => 'Status',
+                                    'ref_incoming_request_category_id' => 'Category',
+                                    'office_barangay_organization' => 'Office/Brgy/Org',
+                                    'ref_division_id' => 'Division',
+                                    'is_opened' => 'Opened',
+                                    // Add other field mappings here as needed
+                                    // 'another_field' => 'Friendly Name',
+                                    default => ucfirst(str_replace('_', ' ', $key))
+                                };
 
                                 // Format date fields
                                 if (in_array($key, ['date_requested', 'deleted_at'])) {
@@ -242,10 +322,31 @@ class Requests extends Component
                                     $newValue = $newValue !== 'N/A' ? Carbon::parse($newValue)->format('M d, Y') : 'N/A';
                                 }
 
+                                if ($key === 'date_time') {
+                                    $oldValue = $oldValue !== 'N/A' ? Carbon::parse($oldValue)->format('M d, Y h:i A') : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? Carbon::parse($newValue)->format('M d, Y h:i A') : 'N/A';
+                                }
+
                                 // Replace foreign keys with related names
                                 if ($key === 'ref_incoming_request_category_id') {
                                     $oldValue = $oldValue !== 'N/A' ? RefIncomingRequestCategory::find($oldValue)?->name : 'N/A';
                                     $newValue = $newValue !== 'N/A' ? RefIncomingRequestCategory::find($newValue)?->name : 'N/A';
+                                }
+
+                                if ($key === "ref_status_id") {
+                                    $oldValue = $oldValue !== 'N/A' ? RefStatus::find($oldValue)?->name : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? RefStatus::find($newValue)?->name : 'N/A';
+                                }
+
+                                if ($key === "ref_division_id") {
+                                    $oldValue = $oldValue !== 'N/A' ? RefDivision::find($oldValue)?->name : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? RefDivision::find($newValue)?->name : 'N/A';
+                                }
+
+                                // Replace boolean values with "Yes" or "No"
+                                if ($key === "is_opened") {
+                                    $oldValue = $oldValue !== 'N/A' ? $oldValue ? 'Yes' : 'No' : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? $newValue ? 'Yes' : 'No' : 'N/A';
                                 }
 
                                 // Convert array values to a string (e.g., file IDs to filenames)
@@ -266,7 +367,7 @@ class Requests extends Component
                                 }
 
                                 return [
-                                    'field' => ucfirst(str_replace('_', ' ', $key)), // Format key
+                                    'field' => $fieldName, // Format key
                                     'old' => $oldValue,
                                     'new' => $newValue,
                                 ];
@@ -288,4 +389,34 @@ class Requests extends Component
      * Create a morphed table for forwarded documents.
      * Forwarded documents should have a read indicator that the user in which the document is forwarded.
      */
+    public function forward()
+    {
+        $this->validate([
+            'selected_divisions' => 'required|min:1',
+            'selected_divisions.*' => 'exists:ref_divisions,id',
+        ], [], [
+            'selected_divisions' => 'division'
+        ]);
+
+        try {
+            $incomingRequest = IncomingRequest::find($this->incomingRequestId);
+
+            foreach ($this->selected_divisions as $division) {
+                $incomingRequest->forwards()->create([
+                    'ref_division_id' => $division,
+                ]);
+            }
+
+            $incomingRequest->update([
+                'ref_status_id' => RefStatus::where('name', 'forwarded')->first()->id,
+            ]);
+
+            $this->clear();
+            $this->dispatch('hide-forward-modal');
+            $this->dispatch('success', message: 'Request forwarded successfully.');
+        } catch (\Throwable $th) {
+            // throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
 }

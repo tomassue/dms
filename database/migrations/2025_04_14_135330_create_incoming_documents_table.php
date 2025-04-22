@@ -14,7 +14,8 @@ return new class extends Migration
     {
         Schema::create('incoming_documents', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(RefIncomingDocumentCategory::class);
+            //// $table->foreignIdFor(RefIncomingDocumentCategory::class);
+            $table->foreignId('ref_incoming_document_category_id')->constrained('ref_incoming_documents_categories');
             $table->string('document_info');
             $table->date('date');
             $table->longText('remarks')->nullable();

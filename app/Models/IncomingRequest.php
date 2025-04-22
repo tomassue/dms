@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\IsForwardedFilterScope;
 use App\Models\Scopes\RoleBasedFilterScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
@@ -11,7 +12,7 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-#[ScopedBy([RoleBasedFilterScope::class])]
+#[ScopedBy([RoleBasedFilterScope::class, IsForwardedFilterScope::class])]
 class IncomingRequest extends Model
 {
     use SoftDeletes, LogsActivity;
@@ -39,6 +40,12 @@ class IncomingRequest extends Model
     public function getFormattedDateRequestedAttribute()
     {
         return $this->date_requested ? $this->date_requested->format('F j, Y') : null;
+    }
+
+    // Scopes
+    public function scopeIsForwarded()
+    {
+        return $this->forwards()->exists();
     }
 
     // Generate Unique Reference No.
@@ -92,5 +99,10 @@ class IncomingRequest extends Model
     public function status()
     {
         return $this->belongsTo(RefStatus::class, 'ref_status_id', 'id');
+    }
+
+    public function forwards()
+    {
+        return $this->morphMany(Forwarded::class, 'forwardable');
     }
 }

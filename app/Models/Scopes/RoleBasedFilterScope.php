@@ -54,5 +54,7 @@ class RoleBasedFilterScope implements Scope
                 });
             });
         });
+
+        // TODO: Records added by the super admin should be visible to all roles.
     }
 }
