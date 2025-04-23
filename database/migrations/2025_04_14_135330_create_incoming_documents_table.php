@@ -18,6 +18,7 @@ return new class extends Migration
             $table->foreignId('ref_incoming_document_category_id')->constrained('ref_incoming_documents_categories');
             $table->string('document_info');
             $table->date('date');
+            $table->foreignId('ref_status_id')->constrained('ref_statuses')->default(1);
             $table->longText('remarks')->nullable();
             $table->softDeletes();
             $table->timestamps();

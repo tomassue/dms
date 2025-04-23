@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Scopes\IsForwardedFilterScope;
 use App\Models\Scopes\RoleBasedFilterScope;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
@@ -32,14 +33,10 @@ class IncomingRequest extends Model
         'remarks'
     ];
 
-    protected $casts = [
-        'date_requested' => 'date'
-    ];
-
     // Accessors
     public function getFormattedDateRequestedAttribute()
     {
-        return $this->date_requested ? $this->date_requested->format('F j, Y') : null;
+        return $this->date_requested ? Carbon::parse($this->date_requested)->format('M d, Y') : null;
     }
 
     // Scopes

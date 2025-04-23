@@ -99,9 +99,9 @@
                                                 </td>
 
                                                 <td class="text-center" wire:loading.class="pe-none">
-                                                    <div class="btn-group" role="group" aria-label="Basic example">
+                                                    <div class="btn-group" role="group" aria-label="Actions">
                                                         @can('incoming.requests.update')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})">
+                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})" {{ $item->status->name == 'completed' ? 'disabled' : '' }}>
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
                                                         @endcan
@@ -145,68 +145,7 @@
                 </div>
                 <!--end::Row-->
 
-                <!--begin::Row-->
-                <div class="row g-5 g-xl-8 col-xxl-4">
-                    <div class="col-xxl-12">
-                        <!--begin::Mixed Widget 5-->
-                        <div class="card card-xxl-stretch">
-                            <!--begin::Header-->
-                            <div class="card-header border-0 py-5">
-                                <h3 class="card-title align-items-start flex-column">
-                                    <span class="card-label fw-bolder fs-3 mb-1">Recents</span>
-                                    <span class="text-muted fw-bold fs-7">-</span>
-                                </h3>
-                            </div>
-                            <!--end::Header-->
-
-                            <!--begin::Body-->
-                            <div class="card-body d-flex flex-column" style="position: relative;">
-
-                                <!-- begin::Items -->
-                                <div class="timeline-label">
-                                    @foreach ($recent_forwards as $item)
-                                    <!--begin::Item-->
-                                    <div class="timeline-item">
-                                        <!--begin::Label-->
-                                        <div class="timeline-label fw-bolder text-gray-800 fs-9">
-                                            {{ $item->updated_at->diffForHumans() }}
-                                        </div>
-                                        <!--end::Label-->
-
-                                        <!--begin::Badge-->
-                                        <div class="timeline-badge">
-                                            <i class="fa fa-genderless
-                                            text-dark
-                                            fs-1"></i>
-                                        </div>
-                                        <!--end::Badge-->
-
-                                        <!--begin::Text-->
-                                        <div class="fw-mormal timeline-content text-muted ps-3">
-                                            {{ $item->forwardable->no ?? '' }}
-                                            forwarded to
-                                            {{ $item->division->name ?? '' }}
-                                        </div>
-                                        <!--end::Text-->
-                                    </div>
-                                    <!--end::Item-->
-                                    @endforeach
-                                </div>
-                                <!-- end::Items -->
-
-                                <div class="resize-triggers">
-                                    <div class="expand-trigger">
-                                        <div style="width: 404px; height: 426px;"></div>
-                                    </div>
-                                    <div class="contract-trigger"></div>
-                                </div>
-                            </div>
-                            <!--end::Body-->
-                        </div>
-                        <!--end::Mixed Widget 5-->
-                    </div>
-                </div>
-                <!--end::Row-->
+                @include('livewire.directives.recent-forwards-directive')
             </div>
         </div>
         <!--end::Container-->
@@ -214,6 +153,7 @@
     <!--end::Content-->
 
     @include('livewire.shared.modals.activity-log-modal')
+    @include('livewire.shared.modals.forward-modal')
 
     <!--begin::Modal - Incoming Requests-->
     <div class="modal fade" tabindex="-1" id="incomingRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
@@ -309,6 +249,13 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }};">
+                                <label class="form-label">Remarks</label>
+                                <textarea class="form-control" wire:model="remarks"></textarea>
+                                @error('remarks')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
                             <div class="mb-10">
                                 <label class="form-label">File Upload</label>
                                 <div wire:ignore>
@@ -365,51 +312,6 @@
         </div>
     </div>
     <!--end::Modal - Incoming Requests-->
-
-    <!--begin::Modal - Forward-->
-    <div class="modal fade" tabindex="-1" id="forwardModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
-        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Forward</h5>
-                    <!--begin::Close-->
-                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
-                        <i class="bi bi-x-circle"></i>
-                    </div>
-                    <!--end::Close-->
-                </div>
-
-                <div class="modal-body">
-                    <form wire:submit="forward">
-                        <div class="p-2">
-                            <div class="mb-10">
-                                <label class="form-label required">Division</label>
-                                <div wire:ignore>
-                                    <div id="division-select"></div>
-                                </div>
-                                @error('selected_divisions')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                        </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                    <div wire:loading.remove>
-                        <button type="submit" class="btn btn-primary">Forward</button>
-                    </div>
-                    <div wire:loading wire:target="saveIncomingRequest">
-                        <button class="btn btn-primary" type="button" disabled>
-                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                            <span role="status">Loading...</span>
-                        </button>
-                    </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!--end::Modal - Forward-->
 </div>
 
 @script
@@ -420,15 +322,6 @@
 
     $wire.on('show-incoming-request-modal', () => {
         $('#incomingRequestModal').modal('show');
-    });
-
-    $wire.on('show-forward-modal', (id) => {
-        @this.set('incomingRequestId', id.id);
-        $('#forwardModal').modal('show');
-    });
-
-    $wire.on('hide-forward-modal', (id) => {
-        $('#forwardModal').modal('hide');
     });
 
     /* -------------------------------------------------------------------------- */

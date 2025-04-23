@@ -25,6 +25,12 @@ class Forwarded extends Model
         return $this->where('forwardable_type', IncomingRequest::class);
     }
 
+    public function scopeDocuments()
+    {
+        // return forwarded incoming documents
+        return $this->where('forwardable_type', IncomingDocument::class);
+    }
+
     // Activity Log
     public function getActivitylogOptions(): LogOptions
     {

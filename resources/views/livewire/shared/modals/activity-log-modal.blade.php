@@ -20,14 +20,18 @@
                             @forelse ($activity_log as $history)
                             <tr>
                                 <td>{{ $history['created_at'] }}</td>
-                                <td>{{ $history['causer'] }}</td>
+                                <td>{{ $history['causer'] . ' ' . $history['division'] }}</td>
                                 <td>
                                     <ul class="list-unstyled mb-0">
                                         @foreach ($history['changes'] as $change)
                                         <li>
                                             <strong>{{ $change['field'] }}:</strong>
-                                            <span class="text-danger">{{ $change['old'] }}</span> →
+                                            <!-- Removed the $change['old'] ➡ -->
                                             <span class="text-success">{{ $change['new'] }}</span>
+                                            @if($change['new'] == 'forwarded')
+                                            ➡
+                                            {{ implode(', ', array_column($forwarded_divisions->toArray(), 'division_name')) }}
+                                            @endif
                                         </li>
                                         @endforeach
                                     </ul>

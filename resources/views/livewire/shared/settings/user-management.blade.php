@@ -64,23 +64,25 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @can('reference.userManagement.update')
-                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
+                                            <div class="btn-group" role="group" aria-label="Actions">
+                                                @can('reference.userManagement.update')
+                                                <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
 
-                                            <a href="#" class="btn btn-icon btn-sm btn-warning" title="Reset Password" wire:click="resetPasswordUser({{ $item->id }})">
-                                                <i class="bi bi-key"></i>
-                                            </a>
+                                                <a href="#" class="btn btn-icon btn-sm btn-warning" title="Reset Password" wire:click="resetPasswordUser({{ $item->id }})">
+                                                    <i class="bi bi-key"></i>
+                                                </a>
 
-                                            <a
-                                                href="#"
-                                                class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
-                                                title="Delete"
-                                                wire:click="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
-                                                <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
-                                            </a>
-                                            @endcan
+                                                <a
+                                                    href="#"
+                                                    class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
+                                                    title="Delete"
+                                                    wire:click="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
+                                                    <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                                </a>
+                                                @endcan
+                                            </div>
                                         </td>
                                     </tr>
                                     @empty
@@ -256,6 +258,12 @@
                                         <div class="form-check form-check-custom form-check-solid">
                                             <input class="form-check-input" type="checkbox" value="incoming.documents.read" id="incomingDocumentsRead" wire:model="permissions" />
                                             <label class="form-check-label" for="incomingDocumentsRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.documents.forward" id="incomingDocumentsForward" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingDocumentsForward"> Forward </label>
                                         </div>
                                     </div>
                                     <div class="row py-2 ms-8">

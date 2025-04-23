@@ -3,118 +3,157 @@
     <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
         <!--begin::Container-->
         <div class="container-xxl" id="kt_content_container">
-            <!--begin::Row-->
-            <div class="row g-5 g-xl-12">
-                <!--begin::Mixed Widget 5-->
-                <div class="card card-xxl-stretch">
-                    <!--begin::Header-->
-                    <div class="card-header border-0 py-5">
-                        <h3 class="card-title align-items-start flex-column">
-                            <span class="card-label fw-bolder fs-3 mb-1">Incoming Documents</span>
-                            <span class="text-muted fw-bold fs-7">Over {{ $incoming_documents->count() }} incoming documents</span>
-                        </h3>
-                        <div class="card-toolbar">
-                            <div class="d-flex align-items-center gap-2">
-                                <!--begin::Menu Filter-->
-                                <livewire:components.menu-filter-component />
-                                <!--end::Menu Filter-->
+            <div class="row col-xxl-12">
+                <!--begin::Row-->
+                <div class="row g-5 g-xl-8 col-xxl-8">
+                    <!--begin::Mixed Widget 5-->
+                    <div class="card card-xxl-stretch">
+                        <!--begin::Header-->
+                        <div class="card-header border-0 py-5">
+                            <h3 class="card-title align-items-start flex-column">
+                                <span class="card-label fw-bolder fs-3 mb-1">Incoming Documents</span>
+                                <span class="text-muted fw-bold fs-7">Over {{ $incoming_documents->count() }} incoming documents</span>
+                            </h3>
+                            <div class="card-toolbar">
+                                <div class="d-flex align-items-center gap-2">
+                                    <!--begin::Menu Filter-->
+                                    <livewire:components.menu-filter-component />
+                                    <!--end::Menu Filter-->
 
-                                <!--begin::Menu 2-->
-                                @can('incoming.documents.create')
-                                <div class="vr"></div> <!-- Vertical Divider -->
-                                <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingDocumentsModal"><i class="bi bi-plus-circle"></i></a>
-                                @endcan
-                                <!--end::Menu 2-->
+                                    <!--begin::Menu 2-->
+                                    @can('incoming.documents.create')
+                                    <div class="vr"></div> <!-- Vertical Divider -->
+                                    <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingDocumentsModal"><i class="bi bi-plus-circle"></i></a>
+                                    @endcan
+                                    <!--end::Menu 2-->
+                                </div>
                             </div>
                         </div>
+                        <!--end::Header-->
+
+                        <!--begin::Body-->
+                        <div class="card-body d-flex flex-column" style="position: relative;">
+                            <!-- begin:search -->
+                            <div class="row py-5 justify-content-between">
+                                <div class="col-sm-12 col-md-12 col-lg-4">
+                                    <input type="search" wire:model.live="search" class="form-control" placeholder="Type a keyword..." aria-label="Type a keyword..." style="appearance: none; background-color: #fff; border: 1px solid #eff2f5; border-radius: 5px; font-size: 14px; line-height: 1.45; outline: 0; padding: 10px 13px;">
+                                </div>
+                            </div>
+                            <!-- end:search -->
+
+                            <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveIncomingDocument">
+                                <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
+                                    <thead>
+                                        <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
+                                            <th>Document Category</th>
+                                            <th>Info</th>
+                                            <th>Date</th>
+                                            <th>Status</th>
+                                            @role('APO')
+                                            <th>Source</th>
+                                            @endrole
+                                            @can('incoming.documents.update')
+                                            <th class="text-center">Actions</th>
+                                            @endcan
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($incoming_documents as $item)
+                                        <tr>
+                                            <td>
+                                                {{ $item->category->name }}
+                                            </td>
+                                            <td>
+                                                {{ $item->document_info }}
+                                            </td>
+                                            <td>
+                                                {{ $item->formatted_date }}
+                                            </td>
+                                            <td>
+                                                <span class="badge
+                                            @switch($item->status->name)
+                                            @case('pending')
+                                            badge-light-danger
+                                            @break
+                                            @case('processed')
+                                            badge-light-primary
+                                            @break
+                                            @case('forwarded')
+                                            badge-light-warning
+                                            @break
+                                            @case('completed')
+                                            badge-light-success
+                                            @break
+                                            @case('cancelled')
+                                            badge-light-dark
+                                            @break
+                                            @default
+                                            badge-light-dark
+                                            @endswitch
+                                            text-capitalize
+                                            ">
+                                                    {{ $item->status->name }}
+                                                </span>
+                                            </td>
+                                            @role('APO')
+                                            <td>
+                                                {{ $item->apoDocument->source ?? '' }}
+                                            </td>
+                                            @endrole
+                                            <td class="text-center" wire:loading.class="pe-none">
+                                                <div class="btn-group" role="group" aria-label="Actions">
+                                                    @can('incoming.documents.update')
+                                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                    @endcan
+                                                    @can('incoming.documents.forward')
+                                                    <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" {{ $item->isForwarded() ? 'disabled' : '' }}>
+                                                        <i class="bi bi-arrow-up-square"></i>
+                                                    </button>
+                                                    @endcan
+                                                    <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})">
+                                                        <i class="bi bi-clock-history"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="5" class="text-center">No records found.</td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!--begin::Pagination-->
+                            <div class="pt-3">
+                                {{ $incoming_documents->links(data: ['scrollTo' => false]) }}
+                            </div>
+                            <!--end::Pagination-->
+
+                            <div class="resize-triggers">
+                                <div class="expand-trigger">
+                                    <div style="width: 404px; height: 426px;"></div>
+                                </div>
+                                <div class="contract-trigger"></div>
+                            </div>
+                        </div>
+                        <!--end::Body-->
                     </div>
-                    <!--end::Header-->
-
-                    <!--begin::Body-->
-                    <div class="card-body d-flex flex-column" style="position: relative;">
-                        <!-- begin:search -->
-                        <div class="row py-5 justify-content-between">
-                            <div class="col-sm-12 col-md-12 col-lg-4">
-                                <input type="search" wire:model.live="search" class="form-control" placeholder="Type a keyword..." aria-label="Type a keyword..." style="appearance: none; background-color: #fff; border: 1px solid #eff2f5; border-radius: 5px; font-size: 14px; line-height: 1.45; outline: 0; padding: 10px 13px;">
-                            </div>
-                        </div>
-                        <!-- end:search -->
-
-                        <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveIncomingDocument">
-                            <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
-                                <thead>
-                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
-                                        <th>Document Category</th>
-                                        <th>Info</th>
-                                        <th>Date</th>
-                                        <th>Remarks</th>
-                                        @role('APO')
-                                        <th>Source</th>
-                                        @endrole
-                                        @can('incoming.documents.update')
-                                        <th class="text-center">Actions</th>
-                                        @endcan
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($incoming_documents as $item)
-                                    <tr>
-                                        <td>
-                                            {{ $item->category->name }}
-                                        </td>
-                                        <td>
-                                            {{ $item->document_info }}
-                                        </td>
-                                        <td>
-                                            {{ $item->date }}
-                                        </td>
-                                        <td>
-                                            {{ $item->remarks }}
-                                        </td>
-                                        @role('APO')
-                                        <td>
-                                            {{ $item->apoDocument->source ?? '' }}
-                                        </td>
-                                        @endrole
-                                        @can('incoming.documents.update')
-                                        <td class="text-center" wire:loading.class="pe-none">
-                                            <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                        </td>
-                                        @endcan
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="5" class="text-center">No records found.</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <!--begin::Pagination-->
-                        <div class="pt-3">
-                            {{ $incoming_documents->links(data: ['scrollTo' => false]) }}
-                        </div>
-                        <!--end::Pagination-->
-
-                        <div class="resize-triggers">
-                            <div class="expand-trigger">
-                                <div style="width: 404px; height: 426px;"></div>
-                            </div>
-                            <div class="contract-trigger"></div>
-                        </div>
-                    </div>
-                    <!--end::Body-->
+                    <!--end::Mixed Widget 5-->
                 </div>
-                <!--end::Mixed Widget 5-->
+                <!--end::Row-->
+
+                @include('livewire.directives.recent-forwards-directive')
             </div>
-            <!--end::Row-->
         </div>
         <!--end::Container-->
     </div>
     <!--end::Content-->
+
+    @include('livewire.shared.modals.activity-log-modal')
 
     <!--begin::Modal - Incoming Documents-->
     <div class="modal fade" tabindex="-1" id="incomingDocumentsModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
@@ -132,6 +171,20 @@
                 <div class="modal-body">
                     <form wire:submit="saveIncomingDocument">
                         <div class="p-2">
+                            @can('incoming.documents.update.status')
+                            <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }};">
+                                <label class="form-label required">Status</label>
+                                <select class="form-select text-uppercase" aria-label="Select status" wire:model="ref_status_id">
+                                    <option>-Select-</option>
+                                    @foreach ($status as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_status_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @endcan
                             <div class="mb-10">
                                 <label class="form-label required">Document Category</label>
                                 <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_document_category_id">
@@ -167,8 +220,8 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="mb-10">
-                                <label class="form-label required">Remarks</label>
+                            <div class="mb-10" display="{{ $editMode ? '' : 'none' }}">
+                                <label class="form-label">Remarks</label>
                                 <textarea class="form-control" wire:model="remarks"></textarea>
                                 @error('remarks')
                                 <span class="text-danger">{{ $message }}</span>

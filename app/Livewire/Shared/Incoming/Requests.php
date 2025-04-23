@@ -21,13 +21,14 @@ class Requests extends Component
 {
     use WithPagination, WithFileUploads;
 
+    public $page = 'incoming requests'; // For recent-forwards-directive
     public $editMode;
     public $search,
         $filter_start_date,
         $filter_end_date;
     public $incomingRequestId;
-    public $selected_divisions = []; // for forwarded
-    //// public $recent_forwards = [];
+    public $selected_divisions = [], // for forwarded
+        $forwarded_divisions = [];
     public $preview_file = [];
     public $activity_log = [];
 
@@ -125,6 +126,11 @@ class Requests extends Component
             ->paginate(10);
     }
 
+    /**
+     * loadRecentForwards
+     * * Returns the last 10 forwarded requests to our directive file.
+     * path: livewire.directives.recent-forwards-directive
+     */
     public function loadRecentForwards()
     {
         return Forwarded::query()
@@ -173,7 +179,7 @@ class Requests extends Component
                         'contact_person_name' => $this->contact_person_name,
                         'contact_person_number' => $this->contact_person_number,
                         'description' => $this->description,
-                        'ref_status_id' => 1,
+                        'ref_status_id' => $this->ref_status_id ?? '1', //! Default value set in the database is not working. - Set to pending.
                         'remarks' => $this->remarks
                     ]
                 );
@@ -214,15 +220,15 @@ class Requests extends Component
     {
         try {
             // Get all forwarded requests for current division
-            $divisionForwards = $incomingRequest->forwards()
-                ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
-                ->get();
+            // $divisionForwards = $incomingRequest->forwards()
+            //     ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
+            //     ->get();
 
             // Check if any forwarded document is already opened by this division
-            if ($divisionForwards->where('is_opened', true)->isNotEmpty()) {
-                $this->dispatch('error', message: 'This request is already being processed by your division.');
-                return;
-            }
+            // if ($divisionForwards->where('is_opened', true)->isNotEmpty()) {
+            //     $this->dispatch('error', message: 'This request is already being processed by your division.');
+            //     return;
+            // }
 
             // Mark all forwarded documents to this division as opened
             $incomingRequest->forwards()
@@ -246,7 +252,10 @@ class Requests extends Component
             $this->contact_person_number = $incomingRequest->contact_person_number;
             $this->description = $incomingRequest->description;
             $this->ref_status_id = $incomingRequest->ref_status_id;
-            $this->remarks = $incomingRequest->remarks;
+
+            //* Hide it so that other divisions won't see it. Remarks inputted can only be seen inside activity log modal.
+            //// $this->remarks = $incomingRequest->remarks; 
+
             $this->preview_file = $incomingRequest->files;
 
             $this->dispatch('show-incoming-request-modal');
@@ -262,12 +271,15 @@ class Requests extends Component
             ->where('is_opened', false)
             ->exists();
 
+        //TODO: Fix this where requests are automatically updates to processed.
+        dd('here');
+
         if (!$unopenedForwards) {
             $incomingRequest->update([
                 'ref_status_id' => RefStatus::where('name', 'processed')->first()->id
             ]);
 
-            $this->dispatch('error', message: 'All divisions have opened this request.');
+            // $this->dispatch('error', message: 'All divisions have opened this request.');
         }
     }
 
@@ -285,11 +297,12 @@ class Requests extends Component
     public function activityLog($id)
     {
         try {
-            $this->activity_log = Activity::whereIn('subject_type', [IncomingRequest::class, Forwarded::class])
-                ->whereIn('log_name', ['incoming_request', 'forwarded'])
-                //TODO maybe, event created from incoming_request (log_name) should be excluded
-                //// ->whereNot('event', 'created')
-                //TODO: should only show specific subject_id
+            // Shows activity log
+            $this->activity_log = Activity::where('subject_type', IncomingRequest::class)
+                ->where('log_name', 'incoming_request')
+                ->whereNot('event', 'created')
+                ->where('subject_id', $id)
+                ->with(['causer.user_metadata.division']) // ✅ Eager-load nested relations
                 ->latest()
                 ->get()
                 ->map(function ($activity) {
@@ -297,9 +310,10 @@ class Requests extends Component
                         'id' => $activity->id,
                         'description' => $activity->description,
                         'causer' => $activity->causer?->name ?? 'System',
+                        'division' => $activity->causer?->user_metadata?->division?->name ? '[' . $activity->causer?->user_metadata?->division?->name . ']' : '', // ✅ Access nested data
                         'created_at' => Carbon::parse($activity->created_at)->format('M d, Y h:i A'),
                         'changes' => collect($activity->properties['attributes'] ?? [])
-                            ->except(['id', 'created_at', 'updated_at', 'deleted_at', 'forwardable_id', 'forwardable_type']) // Exclude
+                            ->except(['id', 'created_at', 'updated_at', 'deleted_at']) // Exclude
                             ->map(function ($newValue, $key) use ($activity) {
                                 $oldValue = $activity->properties['old'][$key] ?? 'N/A';
 
@@ -377,6 +391,17 @@ class Requests extends Component
                     ];
                 });
 
+            // 2. Get Forward records (only ref_division_id)
+            $this->forwarded_divisions = Forwarded::where('forwardable_id', $id)
+                ->with(['division']) // Assuming 'division' is a relationship
+                ->latest()
+                ->get()
+                ->map(function ($forward) {
+                    return [
+                        'division_name' => $forward->division?->name ?? 'N/A',
+                    ];
+                });
+
             $this->dispatch('show-activity-log-modal');
         } catch (\Throwable $th) {
             // throw $th;
@@ -384,11 +409,6 @@ class Requests extends Component
         }
     }
 
-    /**
-     * TODO
-     * Create a morphed table for forwarded documents.
-     * Forwarded documents should have a read indicator that the user in which the document is forwarded.
-     */
     public function forward()
     {
         $this->validate([
