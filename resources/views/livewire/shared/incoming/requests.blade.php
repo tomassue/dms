@@ -101,12 +101,12 @@
                                                 <td class="text-center" wire:loading.class="pe-none">
                                                     <div class="btn-group" role="group" aria-label="Actions">
                                                         @can('incoming.requests.update')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})" {{ $item->status->name == 'completed' ? 'disabled' : '' }}>
+                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})" {{ ($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '' }}>
                                                             <i class="bi bi-pencil"></i>
                                                         </button>
                                                         @endcan
                                                         @can('incoming.requests.forward')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" {{ $item->isForwarded() ? 'disabled' : '' }}>
+                                                        <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" {{ ($item->IsForwarded() || $item->IsCancelled()) ? 'disabled' : '' }}>
                                                             <i class="bi bi-arrow-up-square"></i>
                                                         </button>
                                                         @endcan
@@ -362,27 +362,6 @@
     // Listen for event
     $wire.on('open-file', (url) => {
         window.open(event.detail.url, '_blank'); // Open the signed URL in a new tab
-    });
-
-    /* -------------------------------------------------------------------------- */
-
-    VirtualSelect.init({
-        ele: '#division-select',
-        options: @json($divisions),
-        multiple: true,
-        maxWidth: '100%',
-        dropboxWrapper: 'body', // Append to body instead of parent
-        zIndex: 1060, // Higher than modal's z-index
-    });
-
-    let selected_divisions = document.querySelector('#division-select');
-    selected_divisions.addEventListener('change', () => {
-        let data = selected_divisions.value;
-        @this.set('selected_divisions', data);
-    });
-
-    $wire.on('reset-division-select', () => {
-        document.querySelector('#division-select').reset();
     });
 </script>
 @endscript

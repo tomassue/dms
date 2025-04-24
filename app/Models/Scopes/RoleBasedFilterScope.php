@@ -9,6 +9,13 @@ use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * RoleBasedFilterScope
+ * This scope helps to filter records based on the roles of the user.
+ * For example, users under role (office) APO created a record and only users under role APO should be able to see that record.
+ * * This behavior is based on the activity_log table.
+ * * The causer_id is the id of the user who created the record then we check the role of that user to validate and apply the scope.
+ */
 class RoleBasedFilterScope implements Scope
 {
     /**

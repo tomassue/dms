@@ -96,6 +96,18 @@ class Documents extends Component
         return RefStatus::all();
     }
 
+    public function loadDivisions()
+    {
+        return RefDivision::where('role_id', auth()->user()->roles()->first()->id)
+            ->get()
+            ->map(function ($division) {
+                return [
+                    'value' => $division->id,
+                    'label' => $division->name
+                ];
+            });
+    }
+
     /**
      * loadRecentForwards
      * * Returns the last 10 forwarded requests to our directive file.
@@ -119,6 +131,7 @@ class Documents extends Component
                 'incoming_documents_categories' => $this->loadRefIncomingDocumentCategory(), // Incoming Document Category dropdown
                 'recent_forwards' => $this->loadRecentForwards(),
                 'status' => $this->loadRefStatus(), // Status dropdown
+                'divisions' => $this->loadDivisions(), // Division dropdown
             ]
         );
     }

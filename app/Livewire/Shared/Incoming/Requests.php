@@ -136,7 +136,7 @@ class Requests extends Component
         return Forwarded::query()
             ->Requests()
             ->latest()
-            ->take(10)
+            ->take(5)
             ->get();
     }
 
@@ -219,17 +219,6 @@ class Requests extends Component
     public function editIncomingRequest(IncomingRequest $incomingRequest)
     {
         try {
-            // Get all forwarded requests for current division
-            // $divisionForwards = $incomingRequest->forwards()
-            //     ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
-            //     ->get();
-
-            // Check if any forwarded document is already opened by this division
-            // if ($divisionForwards->where('is_opened', true)->isNotEmpty()) {
-            //     $this->dispatch('error', message: 'This request is already being processed by your division.');
-            //     return;
-            // }
-
             // Mark all forwarded documents to this division as opened
             $incomingRequest->forwards()
                 ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
@@ -267,19 +256,44 @@ class Requests extends Component
 
     protected function checkAllDivisionsOpened(IncomingRequest $incomingRequest)
     {
-        $unopenedForwards = $incomingRequest->forwards()
-            ->where('is_opened', false)
-            ->exists();
+        /**
+         * if (auth()->user()->user_metadata->ref_division_id != null)
+         * Users assigned as the office admin are not assigned with ref_division_id and ref_position_id.
+         * Because it doesn't make sense to have an assigned division if the user is an office admin.
+         * * In this dynamic DMS, we have division admin that can manipulate forwarded requests, documents, etc.
+         * Since the system is always checking for opened forwarded requests, documents, etc., we constantly update its status if all divisions that forwarded the request, documents, etc. are opened.
+         * * We skip the automatic status update for office admins.
+         */
+        if (auth()->user()->user_metadata->ref_division_id != null) {
+            // Get all forwarded requests for current division
+            // $divisionForwards = $incomingRequest->forwards()
+            //     ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
+            //     ->get();
 
-        //TODO: Fix this where requests are automatically updates to processed.
-        dd('here');
+            // Check if any forwarded document is already opened by this division
+            // if ($divisionForwards->where('is_opened', true)->isNotEmpty()) {
+            //     $this->dispatch('error', message: 'This request is already being processed by your division.');
+            //     return;
+            // }
 
-        if (!$unopenedForwards) {
-            $incomingRequest->update([
-                'ref_status_id' => RefStatus::where('name', 'processed')->first()->id
-            ]);
+            /**
+             * if ($incomingRequest->ref_status_id == RefStatus::where('name', 'forwarded')->first()->id)
+             * * We update the status to "received" if all divisions have opened their forwarded documents.
+             * Only update status when the status is "forwarded".
+             */
+            if ($incomingRequest->ref_status_id == RefStatus::where('name', 'forwarded')->first()->id) {
+                $unopenedForwards = $incomingRequest->forwards()
+                    ->where('is_opened', false)
+                    ->exists();
 
-            // $this->dispatch('error', message: 'All divisions have opened this request.');
+                if (!$unopenedForwards) {
+                    $incomingRequest->update([
+                        'ref_status_id' => RefStatus::where('name', 'received')->first()->id
+                    ]);
+
+                    // $this->dispatch('error', message: 'All divisions have opened this request.');
+                }
+            }
         }
     }
 

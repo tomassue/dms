@@ -46,12 +46,40 @@
 @script
 <script>
     $wire.on('show-forward-modal', (id) => {
-        @this.set('incomingRequestId', id.id);
+        if ($wire.page == 'incoming documents') {
+            @this.set('incomingDocumentId', id.id);
+        }
+
+        if ($wire.page == 'incoming requests') {
+            @this.set('incomingRequestId', id.id);
+        }
+
         $('#forwardModal').modal('show');
     });
 
     $wire.on('hide-forward-modal', (id) => {
         $('#forwardModal').modal('hide');
+    });
+
+    /* -------------------------------------------------------------------------- */
+
+    VirtualSelect.init({
+        ele: '#division-select',
+        options: @json($divisions),
+        multiple: true,
+        maxWidth: '100%',
+        dropboxWrapper: 'body', // Append to body instead of parent
+        zIndex: 1060, // Higher than modal's z-index
+    });
+
+    let selected_divisions = document.querySelector('#division-select');
+    selected_divisions.addEventListener('change', () => {
+        let data = selected_divisions.value;
+        @this.set('selected_divisions', data);
+    });
+
+    $wire.on('reset-division-select', () => {
+        document.querySelector('#division-select').reset();
     });
 </script>
 @endscript

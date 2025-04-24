@@ -154,6 +154,7 @@
     <!--end::Content-->
 
     @include('livewire.shared.modals.activity-log-modal')
+    @include('livewire.shared.modals.forward-modal')
 
     <!--begin::Modal - Incoming Documents-->
     <div class="modal fade" tabindex="-1" id="incomingDocumentsModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>

@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * isForwardedFilterScope
+ * This scope lets only divisions see requests, documents, etc. that have been forwarded.
+ * However, it also lets office admins and superadmin see all requests, documents, etc.
+ */
 class IsForwardedFilterScope implements Scope
 {
     /**

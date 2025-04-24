@@ -45,6 +45,16 @@ class IncomingRequest extends Model
         return $this->forwards()->exists();
     }
 
+    public function scopeIsCompleted()
+    {
+        return $this->status()->where('name', 'completed')->exists();
+    }
+
+    public function scopeIsCancelled()
+    {
+        return $this->status()->where('name', 'cancelled')->exists();
+    }
+
     // Generate Unique Reference No.
     protected static function boot()
     {
