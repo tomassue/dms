@@ -103,12 +103,12 @@
                                             <td class="text-center" wire:loading.class="pe-none">
                                                 <div class="btn-group" role="group" aria-label="Actions">
                                                     @can('incoming.documents.update')
-                                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})">
+                                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})" {{ ($item->isCompleted() || $item->isCancelled()) ? 'disabled' : '' }}>
                                                         <i class="bi bi-pencil"></i>
                                                     </button>
                                                     @endcan
                                                     @can('incoming.documents.forward')
-                                                    <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" {{ $item->isForwarded() ? 'disabled' : '' }}>
+                                                    <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" {{ $item->isForwarded() || $item->isCancelled() || $item->isCompleted() ? 'disabled' : '' }}>
                                                         <i class="bi bi-arrow-up-square"></i>
                                                     </button>
                                                     @endcan
@@ -221,7 +221,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="mb-10" display="{{ $editMode ? '' : 'none' }}">
+                            <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }}">
                                 <label class="form-label">Remarks</label>
                                 <textarea class="form-control" wire:model="remarks"></textarea>
                                 @error('remarks')
@@ -238,7 +238,7 @@
                                 @enderror
                             </div>
                             <!-- Files -->
-                            <div class="col-12 mb-3">
+                            <div class="col-12 mb-3" style="display:{{ $editMode ? '' : 'none' }};">
                                 <table class="table table-row-dashed table-row-gray-300 gy-7">
                                     <thead>
                                         <tr class="fw-bolder fs-6 text-gray-800">

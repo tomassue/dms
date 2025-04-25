@@ -12,6 +12,7 @@ use App\Models\RefStatus;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -23,7 +24,9 @@ class Documents extends Component
 
     public $page = 'incoming documents'; // For recent-forwards-directive
     public $editMode;
-    public $search;
+    public $search,
+        $filter_start_date,
+        $filter_end_date;
     public $incomingDocumentId;
     public $selected_divisions = [],
         $forwarded_divisions = [];
@@ -66,6 +69,14 @@ class Documents extends Component
         ];
     }
 
+    #[On('filter')]
+    public function filter($start_date, $end_date)
+    {
+        $this->filter_start_date = $start_date;
+        $this->filter_end_date = $end_date;
+    }
+
+    #[On('clear-filter-data')]
     public function clear()
     {
         $this->reset();
@@ -83,6 +94,13 @@ class Documents extends Component
     {
         return IncomingDocument::query()
             ->with('apoDocument')
+            ->when($this->search, function ($query) {
+                $query->search($this->search);
+            })
+            ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
+                $query->DateRangeFilter($this->filter_start_date, $this->filter_end_date);
+            })
+            ->latest()
             ->paginate(10);
     }
 
@@ -139,12 +157,24 @@ class Documents extends Component
     public function editIncomingDocument(IncomingDocument $incomingDocument)
     {
         try {
+            // Mark all forwarded documents to this division (division level) as opened
+            $incomingDocument->forwards()
+                ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
+                ->update([
+                    'is_opened' => true
+                ]);
+
+            // Check if all divisions have opened their copies
+            $this->checkAllDivisionsOpened($incomingDocument);
+
             $this->ref_incoming_document_category_id = $incomingDocument->ref_incoming_document_category_id;
             $this->document_info = $incomingDocument->document_info;
             $this->date = $incomingDocument->date;
             $this->ref_status_id = $incomingDocument->ref_status_id;
-            $this->remarks = $incomingDocument->remarks;
             $this->preview_file = $incomingDocument->files;
+
+            //* Hide it so that other divisions won't see it. Remarks inputted can only be seen inside activity log modal.
+            //// $this->remarks = $incomingDocument->remarks;
 
             if (auth()->user()->hasRole('APO')) {
                 $this->source = $incomingDocument->apoDocument->source ?? '';
@@ -155,6 +185,49 @@ class Documents extends Component
             $this->dispatch('show-incoming-document-modal');
         } catch (\Throwable $th) {
             $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    protected function checkAllDivisionsOpened(IncomingDocument $incomingDocument)
+    {
+        /**
+         * if (auth()->user()->user_metadata->ref_division_id != null)
+         * Users assigned as the office admin are not assigned with ref_division_id and ref_position_id.
+         * Because it doesn't make sense to have an assigned division if the user is an office admin.
+         * * In this dynamic DMS, we have division admin that can manipulate forwarded requests, documents, etc.
+         * Since the system is always checking for opened forwarded requests, documents, etc., we constantly update its status if all divisions that forwarded the request, documents, etc. are opened.
+         * * We skip the automatic status update for office admins.
+         */
+        if (auth()->user()->user_metadata->ref_division_id != null) {
+            // Get all forwarded requests for current division
+            // $divisionForwards = $incomingRequest->forwards()
+            //     ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
+            //     ->get();
+
+            // Check if any forwarded document is already opened by this division
+            // if ($divisionForwards->where('is_opened', true)->isNotEmpty()) {
+            //     $this->dispatch('error', message: 'This request is already being processed by your division.');
+            //     return;
+            // }
+
+            /**
+             * if (incomingDocument->ref_status_id == RefStatus::where('name', 'forwarded')->first()->id)
+             * * We update the status to "received" if all divisions have opened their forwarded documents.
+             * Only update status when the status is "forwarded".
+             */
+            if ($incomingDocument->ref_status_id == RefStatus::where('name', 'forwarded')->first()->id) {
+                $unopenedForwards = $incomingDocument->forwards()
+                    ->where('is_opened', false)
+                    ->exists();
+
+                if (!$unopenedForwards) {
+                    $incomingDocument->update([
+                        'ref_status_id' => RefStatus::where('name', 'received')->first()->id
+                    ]);
+
+                    // $this->dispatch('error', message: 'All divisions have opened this request.');
+                }
+            }
         }
     }
 
@@ -189,6 +262,7 @@ class Documents extends Component
             'ref_incoming_document_category_id' => $this->ref_incoming_document_category_id,
             'document_info' => $this->document_info,
             'date' => $this->date,
+            'ref_status_id' => $this->ref_status_id ?? '1', //! Default value set in the database is not working. - Set to pending.
             'remarks' => $this->remarks
         ];
 
@@ -340,7 +414,8 @@ class Documents extends Component
                 });
 
             // 2. Get Forward records (only ref_division_id)
-            $this->forwarded_divisions = Forwarded::where('forwardable_id', $id)
+            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingDocument::class)
+                ->where('forwardable_id', $id)
                 ->with(['division']) // Assuming 'division' is a relationship
                 ->latest()
                 ->get()

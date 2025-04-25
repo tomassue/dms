@@ -69,16 +69,16 @@ class Requests extends Component
         ];
     }
 
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
     #[On('filter')]
     public function filter($start_date, $end_date)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
-    }
-
-    public function updatedSearch()
-    {
-        $this->resetPage();
     }
 
     #[On('clear-filter-data')]
@@ -219,7 +219,7 @@ class Requests extends Component
     public function editIncomingRequest(IncomingRequest $incomingRequest)
     {
         try {
-            // Mark all forwarded documents to this division as opened
+            // Mark all forwarded requests to this division as opened
             $incomingRequest->forwards()
                 ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
                 ->update([
@@ -406,7 +406,8 @@ class Requests extends Component
                 });
 
             // 2. Get Forward records (only ref_division_id)
-            $this->forwarded_divisions = Forwarded::where('forwardable_id', $id)
+            $this->forwarded_divisions = Forwarded::where('forwadable_type', IncomingRequest::class)
+                ->where('forwardable_id', $id)
                 ->with(['division']) // Assuming 'division' is a relationship
                 ->latest()
                 ->get()

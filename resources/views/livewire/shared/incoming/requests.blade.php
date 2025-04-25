@@ -106,7 +106,7 @@
                                                         </button>
                                                         @endcan
                                                         @can('incoming.requests.forward')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" {{ ($item->IsForwarded() || $item->IsCancelled()) ? 'disabled' : '' }}>
+                                                        <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" {{ ($item->IsForwarded() || $item->IsCancelled() || $item->IsCompleted()) ? 'disabled' : '' }}>
                                                             <i class="bi bi-arrow-up-square"></i>
                                                         </button>
                                                         @endcan

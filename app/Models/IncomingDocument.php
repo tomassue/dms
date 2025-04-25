@@ -34,6 +34,31 @@ class IncomingDocument extends Model
         return $this->forwards()->exists();
     }
 
+    public function scopeIsCompleted()
+    {
+        return $this->status()->where('name', 'completed')->exists();
+    }
+
+    public function scopeIsCancelled()
+    {
+        return $this->status()->where('name', 'cancelled')->exists();
+    }
+
+    public function scopeSearch($query, $search)
+    {
+        return $query->where(function ($query) use ($search) {
+            $query->where('document_info', 'like', '%' . $search . '%')
+                ->orWhereHas('apoDocument', function ($q) use ($search) {
+                    $q->where('source', 'like', '%' . $search . '%');
+                });
+        });
+    }
+
+    public function scopeDateRangeFilter($query, $start_date, $end_date)
+    {
+        return $query->whereBetween('date', [$start_date, $end_date]);
+    }
+
     //* Mutators
     public function getFormattedDateAttribute()
     {
