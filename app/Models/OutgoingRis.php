@@ -9,21 +9,25 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-#[ScopedBy([RoleBasedFilterScope::class])]
 class OutgoingRis extends Model
 {
     use SoftDeletes, LogsActivity;
 
     protected $table = "outgoing_ris";
     protected $fillable = [
-        "document_name",
-        "ppmp_code"
+        'document_name',
+        'ppmp_code'
     ];
 
     // Relationship
     public function outgoing()
     {
         return $this->morphOne(Outgoing::class, 'outgoingable');
+    }
+
+    public function files()
+    {
+        return $this->morphMany(File::class, 'fileable');
     }
 
     // Activity Log

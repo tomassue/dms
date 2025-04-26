@@ -131,7 +131,7 @@
                 </div>
                 @php
                 /**
-                * TODO: Add a card or an alert message to warn the user that when adding user as an office admin, division and position should not be selected.
+                * TODO: Add the user.name in modal title
                 * ! When office is selected, division and position options should be updated.
                 */
                 @endphp

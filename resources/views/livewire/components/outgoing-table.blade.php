@@ -53,6 +53,70 @@
                     <tbody>
                         @forelse($outgoings as $item)
                         <tr>
+                            <td>
+                                {{ $item->id }}
+                            </td>
+                            <td>
+                                @php
+                                switch ($item->outgoingable_type) {
+                                case 'App\Models\OutgoingVoucher':
+                                echo 'Voucher';
+                                break;
+                                case 'App\Models\OutgoingRis':
+                                echo 'RIS';
+                                break;
+                                case 'App\Models\OutgoingProcurement':
+                                echo 'Procurement';
+                                break;
+                                case 'App\Models\OutgoingPayrolls':
+                                echo 'Payroll';
+                                break;
+                                case 'App\Models\OutgoingOthers':
+                                echo 'Other';
+                                break;
+                                default:
+                                echo 'Unknown';
+                                }
+                                @endphp
+                            </td>
+                            <td>
+                                {{ $item->formatted_date }}
+                            </td>
+                            <td>
+                                {{ $item->details }}
+                            </td>
+                            <td>
+                                {{ $item->destination }}
+                            </td>
+                            <td>
+                                {{ $item->person_responsible }}
+                            </td>
+                            <td>
+                                <span class="badge
+                                            @switch($item->status->name)
+                                            @case('pending')
+                                            badge-light-danger
+                                            @break
+                                            @case('processed')
+                                            badge-light-primary
+                                            @break
+                                            @case('forwarded')
+                                            badge-light-warning
+                                            @break
+                                            @case('completed')
+                                            badge-light-success
+                                            @break
+                                            @case('cancelled')
+                                            badge-light-dark
+                                            @break
+                                            @default
+                                            badge-light-dark
+                                            @endswitch
+                                            text-capitalize
+                                            ">
+                                    {{ $item->status->name }}
+                                </span>
+                            </td>
                             @can('outgoing.update')
                             <td class="text-center" wire:loading.class="pe-none">
                                 <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishment({{ $item->id }})">
@@ -99,9 +163,11 @@
                     </div>
                     <!--end::Close-->
                 </div>
-
+                @if($errors->any())
+                {!! implode('', $errors->all('<div>:message</div>')) !!}
+                @endif
                 <div class="modal-body">
-                    <form wire:submit="saveAccomplishment">
+                    <form wire:submit="saveOutgoing">
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label required">Type</label>
@@ -132,8 +198,8 @@
                                 @case('voucher')
                                 <div class="mb-10">
                                     <label class="form-label required">Voucher Name</label>
-                                    <input type="text" class="form-control" wire:model="voucher">
-                                    @error('voucher')
+                                    <input type="text" class="form-control" wire:model="voucher_name">
+                                    @error('voucher_name')
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -162,12 +228,21 @@
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
+                                <div class="mb-10">
+                                    <label class="form-label required">PO No.</label>
+                                    <input type="text" class="form-control" wire:model="po_no">
+                                    @error('po_no')
+                                    <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
                                 @break
                                 @case('payroll')
                                 <div class="mb-10">
                                     <label class="form-label required">Payroll type</label>
                                     <select class="form-select" aria-label="Type" wire:model="payroll_type">
                                         <option>--Select--</option>
+                                        <option value="job_order">Job Order</option>
+                                        <option value="regular">Regular</option>
                                     </select>
                                     @error('payroll_type')
                                     <span class="text-danger">{{ $message }}</span>
@@ -214,6 +289,15 @@
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
+                                <div class="mb-10">
+                                    <label class="form-label">File Upload</label>
+                                    <div wire:ignore>
+                                        <input type="file" class="form-control files" multiple>
+                                    </div>
+                                    @error('file_id')
+                                    <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
                 </div>
@@ -237,6 +321,48 @@
 
     @script
     <script>
+        $wire.on('hide-outgoing-modal', () => {
+            $('#outgoingModal').modal('hide');
+        });
 
+        /* -------------------------------------------------------------------------- */
+
+        // Register the plugin 
+        FilePond.registerPlugin(FilePondPluginFileValidateType); // for file type validation
+        FilePond.registerPlugin(FilePondPluginFileValidateSize); // for file size validation
+        FilePond.registerPlugin(FilePondPluginImagePreview); // for image preview
+
+        // Turn input element into a pond with configuration options
+        $('.files').filepond({
+            // required: true,
+            allowFileTypeValidation: true,
+            acceptedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+            labelFileTypeNotAllowed: 'File of invalid type',
+            allowFileSizeValidation: true,
+            maxFileSize: '10MB',
+            labelMaxFileSizeExceeded: 'File is too large',
+            server: {
+                // This will assign the data to the files[] property.
+                process: (fieldName, file, metadata, load, error, progress, abort) => {
+                    @this.upload('file_id', file, load, error, progress);
+                },
+                revert: (uniqueFileId, load, error) => {
+                    @this.removeUpload('file_id', uniqueFileId, load, error);
+                }
+            }
+        });
+
+        $wire.on('reset-files', () => {
+            $('.files').each(function() {
+                $(this).filepond('removeFiles');
+            });
+        });
+
+        /* -------------------------------------------------------------------------- */
+
+        // Listen for event
+        $wire.on('open-file', (url) => {
+            window.open(event.detail.url, '_blank'); // Open the signed URL in a new tab
+        });
     </script>
     @endscript

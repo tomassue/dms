@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-#[ScopedBy([RoleBasedFilterScope::class])]
 class OutgoingProcurement extends Model
 {
     use SoftDeletes, LogsActivity;
@@ -24,6 +23,11 @@ class OutgoingProcurement extends Model
     public function outgoing()
     {
         return $this->morphOne(Outgoing::class, 'outgoingable');
+    }
+
+    public function files()
+    {
+        return $this->morphMany(File::class, 'fileable');
     }
 
     // Activity Log
