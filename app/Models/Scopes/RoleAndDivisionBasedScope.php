@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Scope;
 use Illuminate\Support\Facades\Auth;
 
 /**
- * DivisionBasedScope
+ * RoleAndDivisionBasedScope
  * This global scope has the same logic from RoleBasedFilterScope
  * The only difference is that in RoleBasedFilterScope, we are using the "role" of the user is under as basis for the scope.
  * * In this scope, we use the "role" AND "division" the user is under as basis. Of course, through activities.
@@ -24,10 +24,11 @@ use Illuminate\Support\Facades\Auth;
  *   ->whereHas('user_metadata', function ($q) use ($divisionId) {
  *       $q->where('ref_division_id', $divisionId);
  *   });
+ * However, we have to create user_metadata connection.
  * 
  * * The code below, nests both conditions within the activity/causer relationship
  */
-class DivisionBasedScope implements Scope
+class RoleAndDivisionBasedScope implements Scope
 {
     /**
      * Apply the scope to a given Eloquent query builder.
@@ -40,7 +41,7 @@ class DivisionBasedScope implements Scope
 
         $user = Auth::user();
         $roles = $user->roles->pluck('name')->toArray();
-        $divisionId = $user->user_metadata->division->id;
+        $divisionId = $user->user_metadata->division->id ?? null; // If the user has no division, it will be null. They can access their inputted outgoing documents.
 
         $builder->where(function ($query) use ($roles, $divisionId) {
             // Both conditions must be true (AND)

@@ -2,8 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\DivisionBasedScope;
-use App\Models\Scopes\RoleBasedFilterScope;
+use App\Models\Scopes\RoleAndDivisionBasedScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -11,7 +10,7 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-#[ScopedBy([DivisionBasedScope::class])]
+#[ScopedBy([RoleAndDivisionBasedScope::class])]
 class Outgoing extends Model
 {
     use SoftDeletes, LogsActivity;

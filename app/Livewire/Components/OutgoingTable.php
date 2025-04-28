@@ -239,4 +239,13 @@ class OutgoingTable extends Component
     }
 
     //TODO: UPDATE for outgoing.
+    public function editOutgoing(Outgoing $outgoing)
+    {
+        try {
+            //code...
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
 }

@@ -34,7 +34,7 @@
             </div>
             <!-- end:search -->
 
-            <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveAccomplishment">
+            <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveOutgoing">
                 <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                     <thead>
                         <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
@@ -119,7 +119,7 @@
                             </td>
                             @can('outgoing.update')
                             <td class="text-center" wire:loading.class="pe-none">
-                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishment({{ $item->id }})">
+                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})">
                                     <i class="bi bi-pencil"></i>
                                 </button>
                             </td>
@@ -307,7 +307,7 @@
                         <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
                     </div>
                     </form>
-                    <div wire:loading wire:target="saveAccomplishment">
+                    <div wire:loading wire:target="saveOutgoing">
                         <button class="btn btn-primary" type="button" disabled>
                             <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                             <span role="status">Loading...</span>
