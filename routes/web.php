@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\FileHandler;
+use App\Livewire\Apo\MinutesOfMeeting;
 use App\Livewire\Shared\Accomplishments;
 use App\Livewire\Shared\Incoming\Documents;
 use App\Livewire\Shared\Incoming\Requests;
@@ -59,6 +60,9 @@ Route::middleware(['auth'])->group(function () {
 
     # File Handler
     Route::get('/file/view/{id}', [FileHandler::class, 'viewFile'])->name('file.view')->middleware('signed');
+
+    /* ------------------------------- APO ROUTES ------------------------------- */
+    Route::get('/minutes-of-meeting', MinutesOfMeeting::class)->name('minutes-of-meeting');
 
     /* --------------------------- SUPER ADMIN ROUTES --------------------------- */
     Route::group(['middleware' => ['role:Super Admin']], function () {

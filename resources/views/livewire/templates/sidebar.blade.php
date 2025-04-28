@@ -105,13 +105,28 @@
 
                 @can('accomplishments.read')
                 <div class="menu-item py-3">
-                    <a class="menu-link menu-center" href="{{ route('accomplishments') }}" title="Accomplishments" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
+                    <a class="menu-link menu-center {{ Route::currentRouteName() == 'accomplishments' ? 'active' : '' }}" href="{{ route('accomplishments') }}" title="Accomplishments" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
                             <!--begin::Svg Icon | path: assets/media/icons/duotune/general/gen003.svg-->
                             <span class="svg-icon svg-icon-muted svg-icon-2hx"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
                                     <path d="M13.0079 2.6L15.7079 7.2L21.0079 8.4C21.9079 8.6 22.3079 9.7 21.7079 10.4L18.1079 14.4L18.6079 19.8C18.7079 20.7 17.7079 21.4 16.9079 21L12.0079 18.8L7.10785 21C6.20785 21.4 5.30786 20.7 5.40786 19.8L5.90786 14.4L2.30785 10.4C1.70785 9.7 2.00786 8.6 3.00786 8.4L8.30785 7.2L11.0079 2.6C11.3079 1.8 12.5079 1.8 13.0079 2.6Z" fill="black" />
                                 </svg>
                             </span>
+                            <!--end::Svg Icon-->
+                        </span>
+                    </a>
+                </div>
+                @endcan
+
+                @can('minutesOfMeeting.read')
+                <div class="menu-item py-3">
+                    <a class="menu-link menu-center {{ Route::currentRouteName() == 'minutes-of-meeting' ? 'active' : '' }}" href="{{ route('minutes-of-meeting') }}" title="Minutes of Meeting" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
+                        <span class="menu-icon me-0">
+                            <!--begin::Svg Icon | path: assets/media/icons/duotune/general/gen012.svg-->
+                            <span class="svg-icon svg-icon-muted svg-icon-2hx"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="21" viewBox="0 0 14 21" fill="none">
+                                    <path opacity="0.3" d="M12 6.20001V1.20001H2V6.20001C2 6.50001 2.1 6.70001 2.3 6.90001L5.6 10.2L2.3 13.5C2.1 13.7 2 13.9 2 14.2V19.2H12V14.2C12 13.9 11.9 13.7 11.7 13.5L8.4 10.2L11.7 6.90001C11.9 6.70001 12 6.50001 12 6.20001Z" fill="black" />
+                                    <path d="M13 2.20001H1C0.4 2.20001 0 1.80001 0 1.20001C0 0.600012 0.4 0.200012 1 0.200012H13C13.6 0.200012 14 0.600012 14 1.20001C14 1.80001 13.6 2.20001 13 2.20001ZM13 18.2H10V16.2L7.7 13.9C7.3 13.5 6.7 13.5 6.3 13.9L4 16.2V18.2H1C0.4 18.2 0 18.6 0 19.2C0 19.8 0.4 20.2 1 20.2H13C13.6 20.2 14 19.8 14 19.2C14 18.6 13.6 18.2 13 18.2ZM4.4 6.20001L6.3 8.10001C6.7 8.50001 7.3 8.50001 7.7 8.10001L9.6 6.20001H4.4Z" fill="black" />
+                                </svg></span>
                             <!--end::Svg Icon-->
                         </span>
                     </a>

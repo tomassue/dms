@@ -372,6 +372,29 @@
                                         </div>
                                     </div>
 
+                                    <!-- Minutes of Meeting -->
+                                    <li class="d-flex align-items-center py-2">
+                                        <span class="bullet me-5"></span> Min. of Meeting
+                                    </li>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="minutesOfMeeting.create" id="minutesOfMeetingCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="minutesOfMeetingCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="minutesOfMeeting.read" id="minutesOfMeetingRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="minutesOfMeetingRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="minutesOfMeeting.update" id="minutesOfMeetingUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="minutesOfMeetingUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
                                     <!-- References -->
                                     <li class="d-flex align-items-center py-2">
                                         <span class="bullet me-5"></span> References
