@@ -8,7 +8,10 @@ use App\Models\OutgoingPayrolls;
 use App\Models\OutgoingProcurement;
 use App\Models\OutgoingRis;
 use App\Models\OutgoingVoucher;
+use App\Models\RefStatus;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\URL;
+use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
@@ -18,7 +21,9 @@ class OutgoingTable extends Component
     use WithPagination, WithFileUploads;
 
     public $editMode;
-    public $search;
+    public $search,
+        $filter_start_date,
+        $filter_end_date;
     public $outgoingId;
     public $type;
     public $preview_file = [];
@@ -85,7 +90,14 @@ class OutgoingTable extends Component
 
         return $rules;
     }
+    #[On('filter')]
+    public function filter($start_date, $end_date)
+    {
+        $this->filter_start_date = $start_date;
+        $this->filter_end_date = $end_date;
+    }
 
+    #[On('clear-filter-data')]
     public function clear()
     {
         $this->reset();
@@ -99,7 +111,8 @@ class OutgoingTable extends Component
         return view(
             'livewire.components.outgoing-table',
             [
-                'outgoings' => $this->loadOutgoings()
+                'outgoings' => $this->loadOutgoings(),
+                'status' => $this->loadStatus(), // for status dropdown
             ]
         );
     }
@@ -107,7 +120,19 @@ class OutgoingTable extends Component
     public function loadOutgoings()
     {
         return Outgoing::query()
+            ->when($this->search, function ($query) {
+                $query->search($this->search);
+            })
+            ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
+                $query->dateRange($this->filter_start_date, $this->filter_end_date);
+            })
             ->paginate(10);
+    }
+
+    public function loadStatus()
+    {
+        return RefStatus::outgoing()
+            ->get();
     }
 
     public function saveOutgoing()
@@ -116,136 +141,140 @@ class OutgoingTable extends Component
 
         try {
             DB::transaction(function () {
+                // First create/update the main outgoing record
+                $outgoing = Outgoing::updateOrCreate(
+                    ['id' => $this->outgoingId],
+                    [
+                        'date' => $this->date,
+                        'details' => $this->details,
+                        'destination' => $this->destination,
+                        'person_responsible' => $this->person_responsible,
+                        'ref_status_id' => $this->ref_status_id ?? '1', // Pending
+                    ]
+                );
+
+                // Then handle the specific type
                 switch ($this->type) {
                     case 'other':
-                        $outgoing_other = OutgoingOthers::updateOrCreate(
-                            [
-                                'id' => $this->outgoingId,
-                            ],
-                            [
-                                'document_name' => $this->document_name,
-                            ]
+                        $outgoing->outgoingable()->updateOrCreate(
+                            [],
+                            ['document_name' => $this->document_name]
                         );
-
-                        $this->saveMainOutgoing($outgoing_other);
-                        $this->saveFiles($outgoing_other);
-
-                        $this->dispatch('hide-outgoing-modal');
-                        $this->dispatch('success', message: 'Outgoing saved successfully.');
                         break;
+
                     case 'payroll':
-                        $outgoing_payroll = OutgoingPayrolls::updateOrCreate(
-                            [
-                                'id' => $this->outgoingId
-                            ],
-                            [
-                                'payroll_type' => $this->payroll_type,
-                            ]
+                        $outgoing->outgoingable()->updateOrCreate(
+                            [],
+                            ['payroll_type' => $this->payroll_type]
                         );
-
-                        $this->saveMainOutgoing($outgoing_payroll);
-                        $this->saveFiles($outgoing_payroll);
-
-                        $this->dispatch('hide-outgoing-modal');
-                        $this->dispatch('success', message: 'Outgoing saved successfully.');
                         break;
+
                     case 'procurement':
-                        $outgoing_procurement = OutgoingProcurement::updateOrCreate(
-                            ['id' => $this->outgoingId],
+                        $outgoing->outgoingable()->updateOrCreate(
+                            [],
                             [
                                 'pr_no' => $this->pr_no,
                                 'po_no' => $this->po_no,
                             ]
                         );
-
-                        $this->saveMainOutgoing($outgoing_procurement);
-                        $this->saveFiles($outgoing_procurement);
-
-                        $this->dispatch('hide-outgoing-modal');
-                        $this->dispatch('success', message: 'Outgoing saved successfully.');
                         break;
+
                     case 'ris':
-                        $outgoing_ris = OutgoingRis::updateOrCreate(
-                            ['id' => $this->outgoingId],
+                        $outgoing->outgoingable()->updateOrCreate(
+                            [],
                             [
                                 'document_name' => $this->document_name,
                                 'ppmp_code' => $this->ppmp_code
                             ]
                         );
-
-                        $this->saveMainOutgoing($outgoing_ris);
-                        $this->saveFiles($outgoing_ris);
-
-                        $this->dispatch('hide-outgoing-modal');
-                        $this->dispatch('success', message: 'Outgoing saved successfully.');
                         break;
+
                     case 'voucher':
-                        $outgoing_voucher = OutgoingVoucher::updateOrCreate(
-                            ['id' => $this->outgoingId],
-                            [
-                                'voucher_name' => $this->voucher_name
-                            ]
+                        $outgoing->outgoingable()->updateOrCreate(
+                            [],
+                            ['voucher_name' => $this->voucher_name]
                         );
-
-                        $this->saveMainOutgoing($outgoing_voucher);
-                        $this->saveFiles($outgoing_voucher);
-
-                        $this->dispatch('hide-outgoing-modal');
-                        $this->dispatch('success', message: 'Outgoing saved successfully.');
                         break;
                 }
+
+                // Handle file uploads if needed
+                if (!empty($this->file_id)) {
+                    $outgoingable = $outgoing->outgoingable;
+                    foreach ((array)$this->file_id as $file) {
+                        $outgoingable->files()->create([
+                            'name' => $file->getClientOriginalName(),
+                            'size' => $file->getSize(),
+                            'type' => $file->getMimeType(),
+                            'file' => file_get_contents($file->getRealPath()),
+                        ]);
+                    }
+                }
+
+                $this->dispatch('hide-outgoing-modal');
+                $this->dispatch('success', message: 'Outgoing saved successfully.');
             });
         } catch (\Throwable $th) {
-            // throw $th;
+            // You might want to log the error for debugging:
+            // \Log::error('Error saving outgoing: ' . $th->getMessage());
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
 
-    protected function saveMainOutgoing($model)
-    {
-        $outgoing = $model->outgoing()->updateOrCreate(
-            [
-                'id' => $this->outgoingId,
-            ],
-            [
-                'date' => $this->date,
-                'details' => $this->details,
-                'destination' => $this->destination,
-                'person_responsible' => $this->person_responsible,
-                'ref_status_id' => $this->ref_status_id ?? '1', // Pending
-            ]
-        );
-
-        return $outgoing;
-    }
-
-    protected function saveFiles($model)
-    {
-        if (empty($this->file_id)) return null;
-
-        $uploadedFiles = [];
-
-        foreach ((array)$this->file_id as $file) {
-            $uploadedFiles[] = $model->files()->create([
-                'name' => $file->getClientOriginalName(),
-                'size' => $file->getSize(),
-                'type' => $file->getMimeType(),
-                'file' => file_get_contents($file->getRealPath()),
-                // fileable_id and fileable_type are auto-set by morphMany
-            ]);
-        }
-
-        return $uploadedFiles;
-    }
-
-    //TODO: UPDATE for outgoing.
     public function editOutgoing(Outgoing $outgoing)
     {
         try {
-            //code...
+            $this->outgoingId = $outgoing->id;
+            $this->editMode = true;
+
+            $this->date = $outgoing->date;
+            $this->details = $outgoing->details;
+            $this->destination = $outgoing->destination;
+            $this->person_responsible = $outgoing->person_responsible;
+            $this->ref_status_id = $outgoing->ref_status_id;
+
+            switch ($outgoing->outgoingable_type) {
+                case 'App\Models\OutgoingOthers':
+                    $this->type = 'other';
+                    $this->document_name = $outgoing->outgoingable->document_name;
+                    break;
+                case 'App\Models\OutgoingPayrolls':
+                    $this->type = 'payroll';
+                    $this->payroll_type = $outgoing->outgoingable->payroll_type;
+                    break;
+                case 'App\Models\OutgoingProcurement':
+                    $this->type = 'procurement';
+                    $this->pr_no = $outgoing->outgoingable->pr_no;
+                    $this->po_no = $outgoing->outgoingable->po_no;
+                    break;
+                case 'App\Models\OutgoingRis':
+                    $this->type = 'ris';
+                    $this->document_name = $outgoing->outgoingable->document_name;
+                    $this->ppmp_code = $outgoing->outgoingable->ppmp_code;
+                    break;
+                case 'App\Models\OutgoingVoucher':
+                    $this->type = 'voucher';
+                    $this->voucher_name = $outgoing->outgoingable->voucher_name;
+                    break;
+            }
+
+            $this->preview_file = $outgoing->outgoingable->files;
+
+            $this->dispatch('show-outgoing-modal');
         } catch (\Throwable $th) {
             //throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
+    }
+
+    public function viewFile($id)
+    {
+        $signedURL = URL::temporarySignedRoute(
+            'file.view',
+            now()->addMinutes(10),
+            ['id' => $id]
+        );
+
+        // Dispatch an event to the browser to open the URL in a new tab
+        $this->dispatch('open-file', url: $signedURL);
     }
 }

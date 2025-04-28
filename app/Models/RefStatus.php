@@ -11,4 +11,10 @@ class RefStatus extends Model
     use SoftDeletes;
 
     protected $table = 'ref_status';
+
+    //Scope
+    public function scopeOutgoing($query)
+    {
+        return $query->whereNotIn('name', ['forwarded', 'cancelled', 'received']);
+    }
 }

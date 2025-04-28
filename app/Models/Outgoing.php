@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Scopes\RoleAndDivisionBasedScope;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -23,14 +24,30 @@ class Outgoing extends Model
         'person_responsible',
         'ref_status_id'
     ];
-    protected $casts = [
-        'date' => 'date',
-    ];
+
+    // Local Scope
+    public function scopeSearch($query, $search)
+    {
+        return $query->where('details', $search)
+            ->orWhere('destination', $search)
+            ->orWhere('person_responsible', $search);
+    }
+
+    public function scopeDateRange($query, $start_date, $end_date)
+    {
+        return $query->whereBetween('date', [$start_date, $end_date]);
+    }
+
+    public function scopeCompleted()
+    {
+        return $this->status()->where('name', 'completed')->exists();
+    }
 
     // Accessors
     public function getFormattedDateAttribute()
     {
-        return $this->date->format('F j, Y');
+        // return $this->date->format('F j, Y');
+        return Carbon::parse($this->date)->format('F j, Y');
     }
 
     // Relationship

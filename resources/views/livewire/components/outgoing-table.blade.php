@@ -119,7 +119,7 @@
                             </td>
                             @can('outgoing.update')
                             <td class="text-center" wire:loading.class="pe-none">
-                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})">
+                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})" {{ $item->completed() ? 'disabled' : '' }}>
                                     <i class="bi bi-pencil"></i>
                                 </button>
                             </td>
@@ -163,15 +163,13 @@
                     </div>
                     <!--end::Close-->
                 </div>
-                @if($errors->any())
-                {!! implode('', $errors->all('<div>:message</div>')) !!}
-                @endif
+
                 <div class="modal-body">
                     <form wire:submit="saveOutgoing">
                         <div class="p-2">
                             <div class="mb-10">
-                                <label class="form-label required">Type</label>
-                                <select class="form-select" aria-label="Type" wire:model.live="type">
+                                <label class="form-label {{ $editMode ? '' : 'required' }}">Type</label>
+                                <select class="form-select" aria-label="Type" wire:model.live="type" {{ $editMode ? 'disabled' : '' }}>
                                     <option>--Select--</option>
                                     <option value="voucher">Voucher</option>
                                     <option value="ris">RIS</option>
@@ -186,8 +184,11 @@
                             <div style="display: {{ empty($type) ? 'none' : '' }};">
                                 <div class="mb-10" style="display: {{ $editMode ? '' : 'none' }};">
                                     <label class="form-label required">Status</label>
-                                    <select class="form-select" aria-label="Type" wire:model="ref_status_id">
+                                    <select class="form-select text-uppercase" aria-label="Type" wire:model="ref_status_id">
                                         <option>--Select--</option>
+                                        @foreach($status as $item)
+                                        <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                        @endforeach
                                     </select>
                                     @error('type')
                                     <span class="text-danger">{{ $message }}</span>
@@ -298,6 +299,35 @@
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
+                                <!-- begin:: Files -->
+                                <div class="col-12 mb-3" style="display:{{ $editMode ? '' : 'none' }};">
+                                    <table class="table table-row-dashed table-row-gray-300 gy-7">
+                                        <thead>
+                                            <tr class="fw-bolder fs-6 text-gray-800">
+                                                <th width="80%">File</th>
+                                                <th>Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @forelse($preview_file as $item)
+                                            <tr>
+                                                <td>
+                                                    {{ $item->name }}
+                                                </td>
+                                                <td>
+                                                    <a href="#" class="btn btn-sm btn-info" wire:click="viewFile({{ $item->id }})">View</a>
+                                                </td>
+                                            </tr>
+                                            @empty
+                                            <tr>
+                                                <td colspan="2" class="text-center">No files uploaded.</td>
+                                                <td class="text-center"></td>
+                                            </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- end:: Files -->
                             </div>
                         </div>
                 </div>
@@ -323,6 +353,10 @@
     <script>
         $wire.on('hide-outgoing-modal', () => {
             $('#outgoingModal').modal('hide');
+        });
+
+        $wire.on('show-outgoing-modal', () => {
+            $('#outgoingModal').modal('show');
         });
 
         /* -------------------------------------------------------------------------- */
