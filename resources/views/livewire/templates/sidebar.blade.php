@@ -120,7 +120,7 @@
 
                 @can('minutesOfMeeting.read')
                 <div class="menu-item py-3">
-                    <a class="menu-link menu-center {{ Route::currentRouteName() == 'minutes-of-meeting' ? 'active' : '' }}" href="{{ route('minutes-of-meeting') }}" title="Minutes of Meeting" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
+                    <a class="menu-link menu-center {{ Route::currentRouteName() == 'meetings' ? 'active' : '' }}" href="{{ route('meetings') }}" title="Meetings" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
                             <!--begin::Svg Icon | path: assets/media/icons/duotune/general/gen012.svg-->
                             <span class="svg-icon svg-icon-muted svg-icon-2hx"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="21" viewBox="0 0 14 21" fill="none">

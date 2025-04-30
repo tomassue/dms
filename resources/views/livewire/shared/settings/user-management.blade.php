@@ -132,6 +132,7 @@
                 @php
                 /**
                 * TODO: Add the user.name in modal title
+                * TODO: Make the permissions associated to a specific role; hidden to other users from other roles
                 * ! When office is selected, division and position options should be updated.
                 */
                 @endphp
@@ -372,23 +373,46 @@
                                         </div>
                                     </div>
 
-                                    <!-- Minutes of Meeting -->
+                                    <!-- Meeting -->
                                     <li class="d-flex align-items-center py-2">
-                                        <span class="bullet me-5"></span> Min. of Meeting
+                                        <span class="bullet me-5"></span> Meetings
                                     </li>
                                     <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="meeting.create" id="meetingCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="meetingCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="meeting.read" id="meetingRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="meetingRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="meeting.update" id="meetingUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="meetingUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Minutes of Meeting -->
+                                    <li class="d-flex align-items-center py-2 ms-8">
+                                        <span class="bullet me-5"></span> Min. of Meeting
+                                    </li>
+                                    <div class="row py-2 ms-16">
                                         <div class="form-check form-check-custom form-check-solid">
                                             <input class="form-check-input" type="checkbox" value="minutesOfMeeting.create" id="minutesOfMeetingCreate" wire:model="permissions" />
                                             <label class="form-check-label" for="minutesOfMeetingCreate"> Create </label>
                                         </div>
                                     </div>
-                                    <div class="row py-2 ms-8">
+                                    <div class="row py-2 ms-16">
                                         <div class="form-check form-check-custom form-check-solid">
                                             <input class="form-check-input" type="checkbox" value="minutesOfMeeting.read" id="minutesOfMeetingRead" wire:model="permissions" />
                                             <label class="form-check-label" for="minutesOfMeetingRead"> Read </label>
                                         </div>
                                     </div>
-                                    <div class="row py-2 ms-8">
+                                    <div class="row py-2 ms-16">
                                         <div class="form-check form-check-custom form-check-solid">
                                             <input class="form-check-input" type="checkbox" value="minutesOfMeeting.update" id="minutesOfMeetingUpdate" wire:model="permissions" />
                                             <label class="form-check-label" for="minutesOfMeetingUpdate"> Update </label>

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->date('date');
             $table->string('description');
             $table->time('time_start');
-            $table->time('time_end');
+            $table->time('time_end')->nullable();
             $table->string('venue');
             $table->foreignId('prepared_by')->nullable();
             $table->foreignId('approved_by')->nullable();
@@ -27,7 +27,7 @@ return new class extends Migration
 
         Schema::create('apo_minutes_of_meetings', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('meeting_id');
+            $table->foreignId('apo_meeting_id');
             $table->text('activity');
             $table->text('point_person');
             $table->text('expected_output');

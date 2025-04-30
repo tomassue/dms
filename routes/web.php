@@ -1,7 +1,7 @@
 <?php
 
 use App\Http\Controllers\FileHandler;
-use App\Livewire\Apo\MinutesOfMeeting;
+use App\Livewire\Apo\Meetings;
 use App\Livewire\Shared\Accomplishments;
 use App\Livewire\Shared\Incoming\Documents;
 use App\Livewire\Shared\Incoming\Requests;
@@ -65,7 +65,7 @@ Route::middleware(['auth'])->group(function () {
 
 
     /* ------------------------------- APO ROUTES ------------------------------- */
-    Route::get('/minutes-of-meeting', MinutesOfMeeting::class)->name('minutes-of-meeting');
+    Route::get('/meetings', Meetings::class)->name('meetings')->middleware('permission:meeting.read');
 
 
 
