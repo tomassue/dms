@@ -52,6 +52,16 @@ class Meeting extends Model
         return $this->belongsTo(User::class, 'prepared_by', 'id');
     }
 
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by', 'id');
+    }
+
+    public function notedBy()
+    {
+        return $this->belongsTo(User::class, 'noted_by', 'id');
+    }
+
     // Activity Log
     public function getActivitylogOptions(): LogOptions
     {

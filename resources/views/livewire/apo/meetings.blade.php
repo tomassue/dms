@@ -34,7 +34,7 @@
             </div>
             <!-- end:search -->
 
-            <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveOutgoing">
+            <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveMeeting">
                 <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                     <thead>
                         <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
@@ -51,26 +51,34 @@
                     </thead>
                     <tbody>
                         @forelse($meetings as $item)
-                        <td>{{ $item->formatted_date }}</td>
-                        <td>{{ $item->time_range }}</td>
-                        <td>{{ $item->description }}</td>
-                        <td>{{ $item->preparedBy->name }}</td>
-                        <td>{{ $item->approved_by ?? '-' }}</td>
-                        <td>{{ $item->noted_by ?? '-' }}</td>
-                        <td class="text-center" wire:loading.class="pe-none">
-                            <div class="btn-group" role="group" aria-label="Actions">
-                                @can('meeting.update')
-                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editMeeting({{ $item->id }})">
-                                    <i class="bi bi-pencil"></i>
-                                </button>
-                                @endcan
-                                @can('minutesOfMeeting.read')
-                                <button type="button" class="btn btn-icon btn-sm btn-info" title="Read" wire:click="readMinutesOfMeeting({{ $item->id }})">
-                                    <i class="bi bi-file-text"></i>
-                                </button>
-                                @endcan
-                            </div>
-                        </td>
+                        <tr>
+                            <td>{{ $item->formatted_date }}</td>
+                            <td>{{ $item->time_range }}</td>
+                            <td>{{ $item->description }}</td>
+                            <td>{{ $item->preparedBy->name }}</td>
+                            <td>{{ $item->approvedBy->name ?? '-' }}</td>
+                            <td>{{ $item->notedBy->name ?? '-' }}</td>
+                            <td class="text-center" wire:loading.class="pe-none">
+                                <div class="btn-group" role="group" aria-label="Actions">
+                                    @can('meeting.update')
+                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editMeeting({{ $item->id }})">
+                                        <i class="bi bi-pencil" wire:loading.remove wire:target="editMeeting({{ $item->id }})"></i>
+                                        <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="editMeeting({{ $item->id }})">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                    </button>
+                                    @endcan
+                                    @can('minutesOfMeeting.read')
+                                    <button type="button" class="btn btn-icon btn-sm btn-info" title="Read" wire:click="readMinutesOfMeeting({{ $item->id }})">
+                                        <i class="bi bi-eye" wire:loading.remove wire:target="readMinutesOfMeeting({{ $item->id }})"></i>
+                                        <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="readMinutesOfMeeting({{ $item->id }})">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                    </button>
+                                    @endcan
+                                </div>
+                            </td>
+                        </tr>
                         @empty
                         <tr>
                             <td colspan="8" class="text-center">No records found.</td>
@@ -145,6 +153,30 @@
                                 <label class="form-label">Prepared by</label>
                                 <input type="text" class="form-control" wire:model="prepared_by" disabled>
                             </div>
+                            <div class="mb-10">
+                                <label class="form-label">Approved by</label>
+                                <select class="form-select" aria-label="Select approved by" wire:model="approved_by">
+                                    <option>-Select-</option>
+                                    @foreach ($signatories as $item)
+                                    <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('approved_by')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label">Noted by</label>
+                                <select class="form-select" aria-label="Select noted by" wire:model="noted_by">
+                                    <option>-Select-</option>
+                                    @foreach ($signatories as $item)
+                                    <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('noted_by')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
                         </div>
                 </div>
                 <div class="modal-footer">
@@ -153,7 +185,7 @@
                         <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
                     </div>
                     </form>
-                    <div wire:loading wire:target="saveOutgoing">
+                    <div wire:loading wire:target="saveMeeting">
                         <button class="btn btn-primary" type="button" disabled>
                             <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                             <span role="status">Loading...</span>
@@ -165,7 +197,9 @@
         <!--end::Modal - Meeting-->
     </div>
 
+    @if ($meetingId)
     <livewire:components.minutes-of-a-meeting :apoMeetingId="$meetingId" :$show />
+    @endif
 </div>
 
 @script

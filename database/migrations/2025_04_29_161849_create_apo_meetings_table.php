@@ -28,10 +28,10 @@ return new class extends Migration
         Schema::create('apo_minutes_of_meetings', function (Blueprint $table) {
             $table->id();
             $table->foreignId('apo_meeting_id');
-            $table->text('activity');
-            $table->text('point_person');
-            $table->text('expected_output');
-            $table->text('agreements');
+            $table->text('activity')->nullable();
+            $table->text('point_person')->nullable();
+            $table->text('expected_output')->nullable();
+            $table->text('agreements')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

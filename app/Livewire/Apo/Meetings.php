@@ -3,6 +3,7 @@
 namespace App\Livewire\Apo;
 
 use App\Models\Apo\Meeting;
+use App\Models\RefSignatories;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -67,7 +68,8 @@ class Meetings extends Component
         return view(
             'livewire.apo.meetings',
             [
-                'meetings' => $this->loadMeetings()
+                'meetings' => $this->loadMeetings(),
+                'signatories' => $this->loadSignatories(), // signatories dropdown
             ]
         );
     }
@@ -75,6 +77,11 @@ class Meetings extends Component
     public function loadMeetings()
     {
         return Meeting::paginate(10);
+    }
+
+    public function loadSignatories()
+    {
+        return RefSignatories::all();
     }
 
     public function saveMeeting()
@@ -92,6 +99,8 @@ class Meetings extends Component
                         'time_end' => $this->time_end,
                         'venue' => $this->venue,
                         'prepared_by' => Auth::user()->id,
+                        'approved_by' => $this->approved_by,
+                        'noted_by' => $this->noted_by
                     ]
                 );
 
