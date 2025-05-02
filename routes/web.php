@@ -3,6 +3,7 @@
 use App\Http\Controllers\FileHandler;
 use App\Livewire\Apo\Meetings;
 use App\Livewire\Shared\Accomplishments;
+use App\Livewire\Shared\Calendar;
 use App\Livewire\Shared\Incoming\Documents;
 use App\Livewire\Shared\Incoming\Requests;
 use App\Livewire\Shared\Outgoing;
@@ -42,6 +43,9 @@ Route::middleware(['auth'])->group(function () {
     # Outgoing
     Route::get('/outgoing', Outgoing::class)->name('outgoing')->middleware('permission:outgoing.read');
 
+    # Calendar
+    Route::get('/calendar', Calendar::class)->name('calendar')->middleware('permission:calendar.read');
+
     # Accomplishments
     Route::get('/accomplishments', Accomplishments::class)->name('accomplishments')->middleware('permission:accomplishments.read');
 
@@ -73,5 +77,14 @@ Route::middleware(['auth'])->group(function () {
     /* --------------------------- SUPER ADMIN ROUTES --------------------------- */
     Route::group(['middleware' => ['role:Super Admin']], function () {
         Route::get('/roles-and-permissions', RolesAndPermissions::class)->name('roles-and-permissions');
+    });
+
+    /* -------------------------------------------------------------------------- */
+
+    Livewire::setScriptRoute(function ($handle) {
+        return Route::get('/cdo-dms/livewire/livewire.js', $handle);
+    });
+    Livewire::setUpdateRoute(function ($handle) {
+        return Route::post('/cdo-dms/livewire/update', $handle);
     });
 });
