@@ -162,6 +162,23 @@
                         <span class="card-label fw-bolder fs-3 mb-1">Minutes of a Meeting</span>
                         <span class="text-muted fw-bold fs-7">Over {{ $minutes_of_meeting->count() }} entries</span>
                     </h3>
+
+                    <div class="card-toolbar">
+                        <div class="d-flex align-items-center gap-2">
+                            <!-- begin::Menu -->
+                            <div class="btn-group" role="group" aria-label="Actions">
+                                <button type="button" class="btn btn-icon btn-sm btn-warning" title="Print" wire:click="printMinutesOfMeeting({{ $apoMeetingId }})">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filetype-pdf" viewBox="0 0 16 16" wire:loading.remove wire:target="printMinutesOfMeeting({{ $apoMeetingId }})">
+                                        <path fill-rule="evenodd" d="M14 4.5V14a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V4.5h-2A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v9H2V2a2 2 0 0 1 2-2h5.5zM1.6 11.85H0v3.999h.791v-1.342h.803q.43 0 .732-.173.305-.175.463-.474a1.4 1.4 0 0 0 .161-.677q0-.375-.158-.677a1.2 1.2 0 0 0-.46-.477q-.3-.18-.732-.179m.545 1.333a.8.8 0 0 1-.085.38.57.57 0 0 1-.238.241.8.8 0 0 1-.375.082H.788V12.48h.66q.327 0 .512.181.185.183.185.522m1.217-1.333v3.999h1.46q.602 0 .998-.237a1.45 1.45 0 0 0 .595-.689q.196-.45.196-1.084 0-.63-.196-1.075a1.43 1.43 0 0 0-.589-.68q-.396-.234-1.005-.234zm.791.645h.563q.371 0 .609.152a.9.9 0 0 1 .354.454q.118.302.118.753a2.3 2.3 0 0 1-.068.592 1.1 1.1 0 0 1-.196.422.8.8 0 0 1-.334.252 1.3 1.3 0 0 1-.483.082h-.563zm3.743 1.763v1.591h-.79V11.85h2.548v.653H7.896v1.117h1.606v.638z" />
+                                    </svg>
+                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="printMinutesOfMeeting({{ $apoMeetingId }})">
+                                        <span class="sr-only">Loading...</span>
+                                    </div>
+                                </button>
+                            </div>
+                            <!-- end::Menu -->
+                        </div>
+                    </div>
                 </div>
                 <!--end::Header-->
 
@@ -199,7 +216,7 @@
                                                     <span class="sr-only">Loading...</span>
                                                 </div>
                                             </button>
-                                            <button type="button" class="btn btn-icon btn-sm btn-danger" title="Remove" wire:click="removeMinute({{ $item->id }})" wire:loading.attr="disabled">
+                                            <button type="button" class="btn btn-icon btn-sm btn-danger" title="Remove" wire:confirm="Are you sure you want to remove this record?" wire:click="removeMinute({{ $item->id }})" wire:loading.attr="disabled">
                                                 <i class="bi bi-dash-circle-dotted" wire:loading.remove wire:target="removeMinute({{ $item->id }})"></i>
                                                 <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="removeMinute({{ $item->id }})">
                                                     <span class="sr-only">Loading...</span>
@@ -232,6 +249,34 @@
         </div>
         <!-- end::Meeting Minutes -->
     </div>
+
+    <!--begin::Modal - PDF-->
+    <div class="modal fade" tabindex="-1" id="pdfModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Accomplishment</h5>
+                    <!--begin::Close-->
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="cancel">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <!--end::Close-->
+                </div>
+
+                <div class="modal-body">
+                    @if ($pdf)
+                    <iframe src="{{ $pdf }}" class="w-100" height="650px" frameborder="0"></iframe>
+                    @endif
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="cancel">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--end::Modal - PDF-->
 </div>
 
 @script
@@ -241,6 +286,10 @@
             top: 0,
             behavior: 'smooth'
         });
+    });
+
+    $wire.on('show-pdf-modal', () => {
+        $('#pdfModal').modal('show');
     });
 </script>
 @endscript

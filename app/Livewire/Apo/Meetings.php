@@ -126,6 +126,9 @@ class Meetings extends Component
             $this->time_end = $meeting->time_end;
             $this->venue = $meeting->venue;
             $this->prepared_by = $meeting->preparedby->name;
+            $this->approved_by = $meeting->approvedby->name ?? '';
+            $this->noted_by = $meeting->notedby->name ?? '';
+
             $this->dispatch('show-meeting-modal');
         } catch (\Throwable $th) {
             //throw $th;

@@ -4,7 +4,11 @@ namespace App\Livewire\Components;
 
 use App\Models\Apo\Meeting;
 use App\Models\Apo\MinutesOfMeeting;
+use App\Models\PdfAsset;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
@@ -19,6 +23,7 @@ class MinutesOfAMeeting extends Component
     #[Reactive]
     public $apoMeetingId;
     public $activity, $point_person, $expected_output, $agreements;
+    public $pdf;
 
     public function rules()
     {
@@ -129,5 +134,81 @@ class MinutesOfAMeeting extends Component
             // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
+    }
+
+    public function printMinutesOfMeeting($apoMeetingId)
+    {
+        // Prepare image data with proper base64 format
+        $data = [];
+
+        // Get all header assets
+        $pdf_asset_headers = PdfAsset::header()->get();
+        foreach ($pdf_asset_headers as $asset) {
+            // Ensure the base64 string has the proper data URI format
+            $data[$asset->title] = $this->formatBase64Image($asset->file);
+        }
+
+        $viewData = [
+            'apo_meeting' => $this->loadApoMeeting($apoMeetingId),
+            'minutes_of_meeting' => $this->loadMinutesofAMeeting(new MinutesOfMeeting()),
+            'cdo_seal' => $data['cdo seal'] ?? null,
+            'bagong_pilipinas' => $data['bagong pilipinas'] ?? null,
+            'golden_cdo' => $data['cdo city of golden friendship'] ?? null
+        ];
+
+        $htmlContent = view('livewire.apo.reports.pdf.minutes-of-a-meeting', $viewData)->render();
+
+        $options = new Options();
+        $options->set('isRemoteEnabled', true);
+        $options->set('isHtml5ParserEnabled', true);
+        $options->set('isPhpEnabled', true); // Important for base64 support
+
+        $dompdf = new Dompdf($options);
+        $dompdf->loadHtml($htmlContent);
+        $dompdf->setPaper('A4', 'landscape');
+        $dompdf->render();
+
+        $this->pdf = 'data:application/pdf;base64,' . base64_encode($dompdf->output());
+
+        $this->dispatch('show-pdf-modal');
+    }
+
+    /**
+     * Format base64 image string with proper data URI
+     */
+    protected function formatBase64Image($base64)
+    {
+        // If already formatted, return as-is
+        if (str_starts_with($base64, 'data:')) {
+            return $base64;
+        }
+
+        // Try to detect image type from the base64 content
+        $mime = $this->detectImageMimeType($base64);
+
+        return 'data:' . $mime . ';base64,' . $base64;
+    }
+
+    /**
+     * Detect image MIME type from base64 content
+     */
+    protected function detectImageMimeType($base64)
+    {
+        // Get the first few characters of the base64 string
+        $signature = substr($base64, 0, 20);
+
+        // Detect common image formats
+        if (str_starts_with($signature, '/9j/')) {
+            return 'image/jpeg';
+        } elseif (str_starts_with($signature, 'iVBORw')) {
+            return 'image/png';
+        } elseif (str_starts_with($signature, 'R0lGOD')) {
+            return 'image/gif';
+        } elseif (str_starts_with($signature, 'Qk2')) {
+            return 'image/bmp';
+        }
+
+        // Default to JPEG if unknown
+        return 'image/jpeg';
     }
 }
