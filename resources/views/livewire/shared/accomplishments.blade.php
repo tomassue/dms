@@ -222,35 +222,36 @@
                             </div>
                             @endrole
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                            <div wire:loading.remove>
-                                <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
-                            </div>
-                            <div wire:loading wire:target="saveAccomplishment">
-                                <button class="btn btn-primary" type="button" disabled>
-                                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                                    <span role="status">Loading...</span>
-                                </button>
-                            </div>
-                    </form>
                 </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                    <div wire:loading.remove>
+                        <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                    </div>
+                    <div wire:loading wire:target="saveAccomplishment">
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    </div>
+                </div>
+                </form>
             </div>
         </div>
+        <!--end::Modal - Accomplishment-->
     </div>
-    <!--end::Modal - Accomplishment-->
-</div>
 
-@script
-<script>
-    $wire.on('hide-accomplishment-modal', () => {
-        $('#accomplishmentModal').modal('hide');
-    });
+    @script
+    <script>
+        $wire.on('hide-accomplishment-modal', () => {
+            $('#accomplishmentModal').modal('hide');
+        });
 
-    $wire.on('show-accomplishment-modal', () => {
-        $('#accomplishmentModal').modal('show');
-    });
+        $wire.on('show-accomplishment-modal', () => {
+            $('#accomplishmentModal').modal('show');
+        });
 
-    /* -------------------------------------------------------------------------- */
-</script>
-@endscript
+        /* -------------------------------------------------------------------------- */
+    </script>
+    @endscript

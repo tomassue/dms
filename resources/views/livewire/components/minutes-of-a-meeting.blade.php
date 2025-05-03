@@ -121,10 +121,7 @@
                             </div>
                             <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 gap-sm-5 my-10">
                                 <button type="button" class="btn btn-danger" wire:click="cancel">
-                                    <span wire:loading.remove wire:target="cancel">Cancel</span>
-                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="cancel">
-                                        <span class="sr-only">Loading...</span>
-                                    </div>
+                                    <span>Cancel</span>
                                 </button>
                                 <button type="submit" class="btn btn-primary"
                                     @if(!$apoMeetingId || !$activity) disabled @endif

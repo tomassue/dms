@@ -2,13 +2,16 @@
 
 namespace App\Models\Apo;
 
+use App\Models\Scopes\RoleAndDivisionBasedScope;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
+#[ScopedBy([RoleAndDivisionBasedScope::class])]
 class Meeting extends Model
 {
     use SoftDeletes, LogsActivity;

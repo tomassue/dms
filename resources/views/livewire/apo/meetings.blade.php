@@ -143,7 +143,7 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Time (end)</label>
+                                <label class="form-label">Time (end)</label>
                                 <input type="time" class="form-control" wire:model="time_end">
                                 @error('time_end')
                                 <span class="text-danger">{{ $message }}</span>
