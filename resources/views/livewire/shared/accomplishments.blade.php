@@ -16,7 +16,12 @@
                         <div class="card-toolbar">
                             <div class="d-flex align-items-center gap-2">
                                 <!-- begin::Generate PDF -->
-                                <button type="button" class="btn btn-icon btn-color-warning btn-light-warning" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end" wire:click="generatePDF">
+                                <button type="button" class="btn btn-icon btn-color-warning btn-light-warning" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end"
+                                    @role('APO')
+                                    wire:click="$dispatch('show-accomplishment-signatories-modal')"
+                                    @else
+                                    wire:click="generatePDF"
+                                    @endrole>
                                     <div wire:loading.remove wire:target="generatePDF">
                                         <!--begin::Svg Icon | path: icons/duotune/general/gen024.svg-->
                                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filetype-pdf" viewBox="0 0 16 16">
@@ -242,6 +247,76 @@
         <!--end::Modal - Accomplishment-->
     </div>
 
+    @role('APO')
+    <!--begin::Modal - Accomplishment Signatory-->
+    <div class="modal fade" tabindex="-1" id="accomplishmentSignatoriesModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Accomplishment</h5>
+                    <!--begin::Close-->
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <!--end::Close-->
+                </div>
+
+                <div class="modal-body">
+                    <form wire:submit="generatePDF">
+                        <div class="p-2">
+                            <div class="mb-10">
+                                <label class="form-label required">Prepared by:</label>
+                                <input type="text" class="form-control" wire:model="prepared_by" disabled>
+                                @error('prepared_by')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Conforme:</label>
+                                <select class="form-select" wire:model="conforme">
+                                    <option value="">-Select-</option>
+                                    @foreach($signatories as $item)
+                                    <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('conforme')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Approved:</label>
+                                <select class="form-select" wire:model="approved">
+                                    <option value="">-Select-</option>
+                                    @foreach($signatories as $item)
+                                    <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('approved')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                    <div wire:loading.remove>
+                        <button type="submit" class="btn btn-primary">Generate PDF</button>
+                    </div>
+                    <div wire:loading wire:target="generatePDF">
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    </div>
+                </div>
+                </form>
+            </div>
+        </div>
+        <!--end::Modal - Accomplishment Signatory-->
+    </div>
+    @endrole
+
     @script
     <script>
         $wire.on('hide-accomplishment-modal', () => {
@@ -250,6 +325,14 @@
 
         $wire.on('show-accomplishment-modal', () => {
             $('#accomplishmentModal').modal('show');
+        });
+
+        $wire.on('show-accomplishment-signatories-modal', () => {
+            $('#accomplishmentSignatoriesModal').modal('show');
+        });
+
+        $wire.on('hide-accomplishment-signatories-modal', () => {
+            $('#accomplishmentSignatoriesModal').modal('hide');
         });
 
         /* -------------------------------------------------------------------------- */

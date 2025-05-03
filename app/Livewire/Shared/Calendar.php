@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Shared;
 
+use App\Models\Forwarded;
 use App\Models\IncomingRequest;
 use Illuminate\Support\Facades\URL;
 use Livewire\Component;
@@ -10,6 +11,7 @@ class Calendar extends Component
 {
     public $incomingRequest, //* Holds incoming request details
         $previewFile = [];
+    public $forwarded_divisions = [];
 
     public function clear()
     {
@@ -60,6 +62,17 @@ class Calendar extends Component
             if ($incomingRequest->files()->exists()) {
                 $this->previewFile = $incomingRequest->files;
             }
+
+            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingRequest::class)
+                ->where('forwardable_id', $incomingRequest->id)
+                ->with(['division']) // Assuming 'division' is a relationship
+                ->latest()
+                ->get()
+                ->map(function ($forward) {
+                    return [
+                        'division_name' => $forward->division?->name ?? 'N/A',
+                    ];
+                });
 
             $this->dispatch('show-detailsModal');
         } catch (\Throwable $th) {

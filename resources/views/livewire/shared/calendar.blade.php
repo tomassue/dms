@@ -74,11 +74,15 @@
                         </div>
                         <div class="row">
                             <div class="col-4 fw-bold">Forwarded to:</div>
-                            <div class="col-8">{{ $incomingRequest->division->name ?? '-' }}</div>
+                            <div class="col-8">
+                                @foreach($forwarded_divisions as $item)
+                                {{ $item['division_name'] }}@if(!$loop->last), @endif
+                                @endforeach
+                            </div>
                         </div>
                         <div class="row">
                             <div class="col-4 fw-bold">No.:</div>
-                            <div class="col-8">{{ $incomingRequest->incoming_request_no ?? '-' }}</div>
+                            <div class="col-8">{{ $incomingRequest->no ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-4 fw-bold">Office/Brgy/Org:</div>

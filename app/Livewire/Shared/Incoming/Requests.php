@@ -406,7 +406,7 @@ class Requests extends Component
                 });
 
             // 2. Get Forward records (only ref_division_id)
-            $this->forwarded_divisions = Forwarded::where('forwadable_type', IncomingRequest::class)
+            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingRequest::class)
                 ->where('forwardable_id', $id)
                 ->with(['division']) // Assuming 'division' is a relationship
                 ->latest()

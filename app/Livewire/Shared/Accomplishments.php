@@ -2,16 +2,16 @@
 
 namespace App\Livewire\Shared;
 
-use App\Livewire\Components\GeneratePdfComponent;
 use App\Models\Accomplishment;
 use App\Models\Apo\Accomplishment as ApoAccomplishment;
 use App\Models\PdfAsset;
 use App\Models\RefAccomplishmentCategory;
+use App\Models\RefSignatories;
+use App\Models\User;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
-use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Livewire\WithPagination;
 
@@ -27,7 +27,10 @@ class Accomplishments extends Component
     public $ref_accomplishment_category_id,
         $date,
         $details;
-    public $pdf;
+    public $pdf,
+        $prepared_by,
+        $conforme,
+        $approved;
 
     //* begin::APO
     public $sub_category,
@@ -36,6 +39,11 @@ class Accomplishments extends Component
         $next_steps;
     public $report = "accomplishments";
     //* end:: APO
+
+    public function mount()
+    {
+        $this->prepared_by = auth()->user()->name;
+    }
 
     public function rules()
     {
@@ -104,9 +112,15 @@ class Accomplishments extends Component
             'livewire.shared.accomplishments',
             [
                 'accomplishments' => $this->loadAccomplishments(),
-                'accomplishment_categories' => $this->loadAccomplishmentCategories() // Accomplishment Category dropdown
+                'accomplishment_categories' => $this->loadAccomplishmentCategories(), // Accomplishment Category dropdown
+                'signatories' => $this->loadSignatories() // Signatories dropdown
             ]
         );
+    }
+
+    public function loadSignatories()
+    {
+        return RefSignatories::get();
     }
 
     public function updatedSearch()
@@ -227,6 +241,7 @@ class Accomplishments extends Component
     {
         // Prepare image data with proper base64 format
         $data = [];
+        $viewData = [];
 
         // Get all header assets
         $pdf_asset_headers = PdfAsset::header()->get();
@@ -248,6 +263,26 @@ class Accomplishments extends Component
             'accomplishments' => $this->loadAccomplishments()
         ];
 
+        if (auth()->user()->hasRole('APO')) {
+            $this->validate([
+                'conforme' => 'required',
+                'approved' => 'required'
+            ]);
+
+            // Get the user data for all three fields
+            $viewData['prepared_by'] = "<span style='text-transform: uppercase;'><u><b>" . auth()->user()->name . '</b></u></span>' . '<br>' . auth()->user()->user_metadata->position->name;
+
+            // Get conforme user data
+            $conformeUser = User::with('user_metadata.position')->find($this->conforme);
+            $viewData['conforme'] = "<span style='text-transform: uppercase;'><u><b>" . $conformeUser->name . '</b></u></span>' . '<br>' . ($conformeUser->user_metadata->position->name ?? 'N/A');
+
+            // Get approved user data
+            $approvedUser = User::with('user_metadata.position')->find($this->approved);
+            $viewData['approved'] = "<span style='text-transform: uppercase;'><u><b>" . $approvedUser->name . '</b></u></span>' . '<br>' . ($approvedUser->user_metadata->position->name ?? 'N/A');
+
+            $this->dispatch('hide-accomplishment-signatories-modal');
+        }
+
         $htmlContent = view('livewire.apo.reports.pdf.accomplishment-report', $viewData)->render();
 
         $options = new Options();
@@ -261,6 +296,7 @@ class Accomplishments extends Component
         $dompdf->render();
 
         $this->pdf = 'data:application/pdf;base64,' . base64_encode($dompdf->output());
+
         $this->dispatch('show-pdf-modal');
     }
 

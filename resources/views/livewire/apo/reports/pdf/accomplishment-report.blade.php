@@ -138,8 +138,10 @@
 
     <!-- Fixed Footer -->
     <div id="footer">
+        @role('APO')
         <span style="font-weight: bold;">Vision:</span> <span style="font-style: italic;">"A Leading Hub for Resilient Agri-Technology and Innovation for Fishery and Farm Product"</span> <br>
         <span style="font-weight: bold;">Mission:</span> <span style="font-style: italic;">"To enhance Agri-Productivity Towards Better Household Income"</span>
+        @endrole
     </div>
 
     <!-- Main Content -->
@@ -195,18 +197,20 @@
             @endforeach
         </table>
 
-        <table class="bordered" style="margin-top: 20px;">
-            <tr>
+        @role('APO')
+        <table style="margin-top: 25px;">
+            <tr style="font-weight: bold;">
                 <td>Prepared by:</td>
                 <td>Conforme:</td>
                 <td>Approved:</td>
             </tr>
             <tr>
-                <td>--prepared by--</td>
-                <td>--conforme--</td>
-                <td>--approved--</td>
+                <td style="height: 55px; vertical-align: bottom">{!! $prepared_by !!}</td>
+                <td style="height: 55px; vertical-align: bottom">{!! $conforme !!}</td>
+                <td style="height: 55px; vertical-align: bottom">{!! $approved !!}</td>
             </tr>
         </table>
+        @endrole
     </div>
 </body>
 
