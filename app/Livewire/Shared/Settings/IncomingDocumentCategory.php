@@ -4,9 +4,11 @@ namespace App\Livewire\Shared\Settings;
 
 use App\Models\RefIncomingDocumentCategory;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Title('Incoming Document Category')]
 class IncomingDocumentCategory extends Component
 {
     use WithPagination;

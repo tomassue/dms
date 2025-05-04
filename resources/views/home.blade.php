@@ -19,7 +19,7 @@
         <!--end::Message-->
         <!--begin::Action-->
         <div class="text-center">
-            <a href="#" class="btn btn-lg btn-primary fw-bolder">Go to dashboard</a>
+            <a href="{{ route('dashboard') }}" class="btn btn-lg btn-primary fw-bolder">Go to dashboard</a>
         </div>
         <!--end::Action-->
     </div>

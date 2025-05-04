@@ -98,7 +98,7 @@
                         </div>
                         <div class="row">
                             <div class="col-4 fw-bold">Date and Time:</div>
-                            <div class="col-8">{{ $incomingRequest->date_time ?? '-' }}</div>
+                            <div class="col-8">{{ $incomingRequest->formatted_date_time ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-4 fw-bold">Contact person name:</div>

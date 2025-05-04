@@ -5,10 +5,12 @@ namespace App\Livewire\Shared\Settings;
 use App\Models\RefAccomplishmentCategory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
 
+#[Title('Accomplishment Category')]
 class AccomplishmentCategory extends Component
 {
     use WithPagination;

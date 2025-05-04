@@ -8,10 +8,12 @@ use App\Models\User;
 use App\Models\UserMetadata;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 use Spatie\Permission\Models\Role;
 
+#[Title('User Management')]
 class UserManagement extends Component
 {
     use WithPagination;

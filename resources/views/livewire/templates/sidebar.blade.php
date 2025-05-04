@@ -196,7 +196,7 @@
 
                         @can('reference.incomingDocumentCategory.read')
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'incoming-document-category' ? 'active' : '' }}" href="{{ route('incoming-document-categories') }}">
+                            <a class="menu-link {{ Route::currentRouteName() == 'incoming-document-categories' ? 'active' : '' }}" href="{{ route('incoming-document-categories') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>
@@ -205,16 +205,7 @@
                         </div>
                         @endcan
 
-                        @can('reference.outgoingCategory.read')
-                        <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'outgoing-category' ? 'active' : '' }}" href="#">
-                                <span class="menu-bullet">
-                                    <span class="bullet bullet-dot"></span>
-                                </span>
-                                <span class="menu-title">Outgoing (Category)</span>
-                            </a>
-                        </div>
-                        @endcan
+                        <!-- Outgoing Category -->
 
                         @can('reference.divisions.read')
                         <div class="menu-item">

@@ -142,20 +142,6 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            @role('Super Admin')
-                            <div class="mb-10">
-                                <label class="form-label required">Office</label>
-                                <select class="form-select" aria-label="Select example" wire:model="role_id">
-                                    <option>Open this select menu</option>
-                                    @foreach($offices as $item)
-                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('role_id')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            @endrole
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>

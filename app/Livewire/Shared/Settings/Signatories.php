@@ -8,9 +8,11 @@ use App\Models\RefSignatories;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Title('Signatories')]
 class Signatories extends Component
 {
     use WithPagination;

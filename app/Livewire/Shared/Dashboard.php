@@ -3,9 +3,11 @@
 namespace App\Livewire\Shared;
 
 use App\Models\IncomingRequest;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Title('Dashboard')]
 class Dashboard extends Component
 {
     use WithPagination;

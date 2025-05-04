@@ -5,9 +5,11 @@ namespace App\Livewire\Shared\Settings;
 use App\Models\RefIncomingDocumentCategory;
 use App\Models\RefIncomingRequestCategory;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
 
+#[Title('Incoming Request Category')]
 class IncomingRequestCategory extends Component
 {
     use WithPagination;

@@ -12,11 +12,13 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\On;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Spatie\Activitylog\Models\Activity;
 
+#[Title('Incoming Requests')]
 class Requests extends Component
 {
     use WithPagination, WithFileUploads;

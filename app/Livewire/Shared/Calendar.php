@@ -5,8 +5,10 @@ namespace App\Livewire\Shared;
 use App\Models\Forwarded;
 use App\Models\IncomingRequest;
 use Illuminate\Support\Facades\URL;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
+#[Title('Calendar')]
 class Calendar extends Component
 {
     public $incomingRequest, //* Holds incoming request details

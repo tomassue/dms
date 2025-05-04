@@ -39,6 +39,11 @@ class IncomingRequest extends Model
         return $this->date_requested ? Carbon::parse($this->date_requested)->format('M d, Y') : null;
     }
 
+    public function getFormattedDateTimeAttribute()
+    {
+        return $this->date_time ? Carbon::parse($this->date_time)->format('M d, Y h:i A') : null;
+    }
+
     // Scopes
     public function scopeIsForwarded()
     {
