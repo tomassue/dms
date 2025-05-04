@@ -55,6 +55,27 @@ class IncomingRequest extends Model
         return $this->status()->where('name', 'cancelled')->exists();
     }
 
+    public function scopePending($query)
+    {
+        return $query->whereHas('status', function ($query) {
+            $query->where('name', 'pending');
+        });
+    }
+
+    public function scopeCompleted($query)
+    {
+        return $query->whereHas('status', function ($query) {
+            $query->where('name', 'completed');
+        });
+    }
+
+    public function scopeForwarded($query)
+    {
+        return $query->whereHas('status', function ($query) {
+            $query->where('name', 'forwarded');
+        });
+    }
+
     // Generate Unique Reference No.
     protected static function boot()
     {

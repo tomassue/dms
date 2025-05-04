@@ -4,6 +4,7 @@ use App\Http\Controllers\FileHandler;
 use App\Livewire\Apo\Meetings;
 use App\Livewire\Shared\Accomplishments;
 use App\Livewire\Shared\Calendar;
+use App\Livewire\Shared\Dashboard;
 use App\Livewire\Shared\Incoming\Documents;
 use App\Livewire\Shared\Incoming\Requests;
 use App\Livewire\Shared\Outgoing;
@@ -33,6 +34,7 @@ Route::middleware(['auth'])->group(function () {
 
     /* ------------------------------ SHARED ROUTES ----------------------------- */
     # Dashboard
+    Route::get('/dashboard', Dashboard::class)->name('dashboard')->middleware('permission:dashboard.read');
 
     # Incoming.Requests
     Route::get('/incoming/requests', Requests::class)->name('incoming-requests')->middleware('permission:incoming.requests.read');

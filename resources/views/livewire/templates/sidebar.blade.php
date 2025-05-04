@@ -13,7 +13,7 @@
 
                 @can('dashboard.read')
                 <div class="menu-item py-3">
-                    <a class="menu-link {{ Route::currentRouteName() == 'dashboard' ? 'active' : '' }} menu-center" href="#" title="Dashboard" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
+                    <a class="menu-link {{ Route::currentRouteName() == 'dashboard' ? 'active' : '' }} menu-center" href="{{ route('dashboard') }}" title="Dashboard" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
                             <!--begin::Svg Icon | path: assets/media/icons/duotune/general/gen001.svg-->
                             <span class="svg-icon svg-icon-muted svg-icon-2hx"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
