@@ -77,16 +77,16 @@ Route::group(['middleware' => ['role:Super Admin|APO']], function () {
         Route::group(['middleware' => ['role:Super Admin']], function () {
             Route::get('/roles-and-permissions', RolesAndPermissions::class)->name('roles-and-permissions');
         });
-
-        /* -------------------------------------------------------------------------- */
-
-        //* Always uncomment this when uploading to production
-
-        // Livewire::setScriptRoute(function ($handle) {
-        //     return Route::get('/cdo-dms/livewire/livewire.js', $handle);
-        // });
-        // Livewire::setUpdateRoute(function ($handle) {
-        //     return Route::post('/cdo-dms/livewire/update', $handle);
-        // });
     });
+});
+
+/* -------------------------------------------------------------------------- */
+
+//* Always uncomment this when uploading to production
+
+Livewire::setScriptRoute(function ($handle) {
+    return Route::get('/cdo-dms/livewire/livewire.js', $handle);
+});
+Livewire::setUpdateRoute(function ($handle) {
+    return Route::post('/cdo-dms/livewire/update', $handle);
 });
