@@ -3,6 +3,7 @@
 use App\Http\Controllers\FileHandler;
 use App\Livewire\Apo\Meetings;
 use App\Livewire\Shared\Accomplishments;
+use App\Livewire\Shared\AccountSettings;
 use App\Livewire\Shared\Calendar;
 use App\Livewire\Shared\Dashboard;
 use App\Livewire\Shared\Incoming\Documents;
@@ -60,6 +61,9 @@ Route::group(['middleware' => ['role:Super Admin|APO']], function () {
         Route::get('/settings/divisions', Divisions::class)->name('settings.divisions')->middleware('permission:reference.divisions.read');
         # Settings.User Management
         Route::get('/settings/user-management', UserManagement::class)->name('settings.user-management')->middleware('permission:reference.userManagement.read');
+
+        # Account Settings
+        Route::get('/account-settings', AccountSettings::class)->name('account-settings');
 
         # File Handler
         Route::get('/file/view/{id}', [FileHandler::class, 'viewFile'])->name('file.view')->middleware('signed');
