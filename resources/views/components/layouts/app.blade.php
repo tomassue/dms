@@ -176,6 +176,26 @@
             background-color: #f8f5ff !important;
         }
 
+        .nav-line-tabs .nav-item .nav-link.active,
+        .nav-line-tabs .nav-item .nav-link:hover:not(.disabled),
+        .nav-line-tabs .nav-item.show .nav-link {
+            background-color: transparent;
+            border: 0;
+            border-bottom: 1px solid #639a56;
+            transition: color .2s ease, background-color .2s ease;
+        }
+
+        .text-active-primary.active {
+            transition: color .2s ease, background-color .2s ease;
+            color: #639a56 !important;
+        }
+
+        .menu-state-primary .menu-item .menu-link:hover:not(.disabled):not(.active),
+        .menu-state-primary .menu-item.hover>.menu-link:not(.disabled):not(.active) {
+            transition: color .2s ease, background-color .2s ease;
+            color: #639a56;
+        }
+
         /* end:: CUSTOM COLORS */
 
         /* begin::Separator */

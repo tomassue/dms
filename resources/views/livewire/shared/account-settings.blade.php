@@ -39,12 +39,19 @@
                         <ul class="nav nav-stretch nav-line-tabs nav-line-tabs-2x border-transparent fs-5 fw-bolder flex-nowrap">
                             <!--begin::Nav item-->
                             <li class="nav-item">
-                                <a class="nav-link text-active-primary me-6 active" href="#">Overview</a>
+                                <a class="nav-link text-active-primary me-6 {{ $page == 1 ? 'active' : '' }}" href="#" wire:click="$set('page', 1)">
+                                    Personal Details
+                                </a>
                             </li>
                             <!--end::Nav item-->
                             <!--begin::Nav item-->
                             <li class="nav-item">
-                                <a class="nav-link text-active-primary me-6" href="#">Security</a>
+                                <a class="nav-link text-active-primary me-6 {{ $page == 2 ? 'active' : '' }}" href="#" wire:click="$set('page', 2)">
+                                    Security
+                                    @session('warning')
+                                    <span class="badge ms-2 badge-circle badge-warning"></span>
+                                    @endsession
+                                </a>
                             </li>
                             <!--end::Nav item-->
                         </ul>
@@ -54,8 +61,27 @@
             </div>
             <!--end::Navbar-->
 
-            <!--begin::details View-->
-            <div class="card mb-5 mb-xl-10" id="kt_profile_details_view">
+            @session('warning')
+            <!-- begin:: Alert -->
+            <div class="alert alert-warning d-flex align-items-center p-5 mb-10">
+                <!--begin::Svg Icon | path: icons/duotune/general/gen048.svg-->
+                <span class="svg-icon svg-icon-2hx svg-icon-warning me-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                        <path opacity="0.3" d="M20.5543 4.37824L12.1798 2.02473C12.0626 1.99176 11.9376 1.99176 11.8203 2.02473L3.44572 4.37824C3.18118 4.45258 3 4.6807 3 4.93945V13.569C3 14.6914 3.48509 15.8404 4.4417 16.984C5.17231 17.8575 6.18314 18.7345 7.446 19.5909C9.56752 21.0295 11.6566 21.912 11.7445 21.9488C11.8258 21.9829 11.9129 22 12.0001 22C12.0872 22 12.1744 21.983 12.2557 21.9488C12.3435 21.912 14.4326 21.0295 16.5541 19.5909C17.8169 18.7345 18.8277 17.8575 19.5584 16.984C20.515 15.8404 21 14.6914 21 13.569V4.93945C21 4.6807 20.8189 4.45258 20.5543 4.37824Z" fill="black"></path>
+                        <path d="M10.5606 11.3042L9.57283 10.3018C9.28174 10.0065 8.80522 10.0065 8.51412 10.3018C8.22897 10.5912 8.22897 11.0559 8.51412 11.3452L10.4182 13.2773C10.8099 13.6747 11.451 13.6747 11.8427 13.2773L15.4859 9.58051C15.771 9.29117 15.771 8.82648 15.4859 8.53714C15.1948 8.24176 14.7183 8.24176 14.4272 8.53714L11.7002 11.3042C11.3869 11.6221 10.874 11.6221 10.5606 11.3042Z" fill="black"></path>
+                    </svg>
+                </span>
+                <!--end::Svg Icon-->
+                <div class="d-flex flex-column">
+                    <h4 class="mb-1 text-warning">Warning!</h4>
+                    <span>Please change your default password for security reasons. Go to the <b>Security ➡ Change Password</b>.</span>
+                </div>
+            </div>
+            <!-- end:: Alert -->
+            @endsession
+
+            <!--begin::personal details View-->
+            <div class="card mb-5 mb-xl-10" id="kt_profile_details_view" style="display: {{ $page == 1 ? '' : 'none' }};">
                 <form wire:submit="savePersonalDetails">
                     <!--begin::Card header-->
                     <div class="card-header cursor-pointer">
@@ -68,7 +94,7 @@
                         @if ($editProfile)
                         <div class="btn-group align-self-center" role="group" aria-label="Basic example">
                             <button type="submit" class="btn btn-info">Save</button>
-                            <button type="button" class="btn btn-secondary" wire:click="$refresh">Cancel</button>
+                            <button type="button" class="btn btn-secondary" wire:click="clear">Cancel</button>
                         </div>
                         @else
                         <a href="#" class="btn btn-primary align-self-center" wire:click="editPersonalDetails">Edit Profile</a>
@@ -95,6 +121,9 @@
                                 @else
                                 <span class="fw-bolder fs-6 text-gray-800">{{ $name }}</span>
                                 @endif
+                                @error('name')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
                             </div>
                             <!--end::Col-->
                         </div>
@@ -130,7 +159,7 @@
                             <!--end::Label-->
                             <!--begin::Col-->
                             <div class="col-lg-8">
-                                <a href="#" class="fw-bold fs-6 text-gray-800 text-hover-primary">{{ $office }}</a>
+                                <span class="fw-bolder fs-6 text-gray-800">{{ $office }}</span>
                             </div>
                             <!--end::Col-->
                         </div>
@@ -159,38 +188,129 @@
                             <!--end::Col-->
                         </div>
                         <!--end::Input group-->
-                        <!--begin::Notice-->
-                        <div class="notice d-flex bg-light-info rounded border-info border border-dashed p-6">
-                            <!--begin::Icon-->
-                            <!--begin::Svg Icon | path: icons/duotune/general/gen044.svg-->
-                            <span class="svg-icon svg-icon-2tx svg-icon-info me-4">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                    <rect opacity="0.3" x="2" y="2" width="20" height="20" rx="10" fill="black"></rect>
-                                    <rect x="11" y="14" width="7" height="2" rx="1" transform="rotate(-90 11 14)" fill="black"></rect>
-                                    <rect x="11" y="17" width="2" height="2" rx="1" transform="rotate(-90 11 17)" fill="black"></rect>
-                                </svg>
-                            </span>
-                            <!--end::Svg Icon-->
-                            <!--end::Icon-->
-                            <!--begin::Wrapper-->
-                            <div class="d-flex flex-stack flex-grow-1">
-                                <!--begin::Content-->
-                                <div class="fw-bold">
-                                    <h4 class="text-gray-900 fw-bolder">Note:</h4>
-                                    <div class="fs-6 text-gray-700">You can only edit your name, if you have concerns with your other details such as your email, etc. <br> Please contact your administrator.
-                                    </div>
-                                </div>
-                                <!--end::Content-->
-                            </div>
-                            <!--end::Wrapper-->
-                        </div>
-                        <!--end::Notice-->
                     </div>
                     <!--end::Card body-->
                 </form>
             </div>
-            <!--end::details View-->
+            <!--end::personal details View-->
 
+            <!--begin::change password View-->
+            <div class="card mb-5 mb-xl-10" id="kt_profile_details_view" style="display: {{ $page == 2 ? '' : 'none' }};">
+                <form wire:submit="saveNewPassword">
+                    <!--begin::Card header-->
+                    <div class="card-header cursor-pointer">
+                        <!--begin::Card title-->
+                        <div class="card-title m-0">
+                            <h3 class="fw-bolder m-0">Change Password</h3>
+                        </div>
+                        <!--end::Card title-->
+                        <!--begin::Action-->
+                        <button type="submit" class="btn btn-primary align-self-center">Save changes</button>
+                        <!--end::Action-->
+                    </div>
+                    <!--begin::Card header-->
+                    <!--begin::Card body-->
+                    <div class="card-body p-9">
+                        <!--begin::Row-->
+                        <div class="row mb-7">
+                            <!--begin::Col-->
+                            <!--begin::Wrapper-->
+                            <div class="mb-10">
+                                <!--begin::Label-->
+                                <label class="form-label fw-bold fs-6 mb-2">
+                                    Current Password
+                                </label>
+                                <!--end::Label-->
+
+                                <!--begin::Input wrapper-->
+                                <div class="position-relative mb-3">
+                                    <input class="form-control form-control-lg form-control-solid"
+                                        type="password" placeholder="" name="current_password" wire:model="current_password" autocomplete="off" />
+                                </div>
+                                <!--end::Input wrapper-->
+
+                                @error('current_password')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <!--end::Wrapper-->
+
+                            <!--begin::Main wrapper-->
+                            <div class="fv-row" data-kt-password-meter="true">
+                                <!--begin::Wrapper-->
+                                <div class="mb-1">
+                                    <!--begin::Label-->
+                                    <label class="form-label fw-bold fs-6 mb-2">
+                                        New Password
+                                    </label>
+                                    <!--end::Label-->
+
+                                    <!--begin::Input wrapper-->
+                                    <div class="position-relative mb-3">
+                                        <input class="form-control form-control-lg form-control-solid"
+                                            type="password" placeholder="" name="new_password" wire:model="new_password" autocomplete="off" />
+
+                                        @error('new_password')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+
+                                        <!--begin::Visibility toggle-->
+                                        <span class="btn btn-sm btn-icon position-absolute translate-middle top-50 end-0 me-n2"
+                                            data-kt-password-meter-control="visibility">
+                                            <i class="bi bi-eye-slash fs-2"></i>
+
+                                            <i class="bi bi-eye fs-2 d-none"></i>
+                                        </span>
+                                        <!--end::Visibility toggle-->
+                                    </div>
+                                    <!--end::Input wrapper-->
+
+                                    <!--begin::Highlight meter-->
+                                    <div class="d-flex align-items-center mb-3" data-kt-password-meter-control="highlight">
+                                        <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                        <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                        <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px me-2"></div>
+                                        <div class="flex-grow-1 bg-secondary bg-active-success rounded h-5px"></div>
+                                    </div>
+                                    <!--end::Highlight meter-->
+                                </div>
+                                <!--end::Wrapper-->
+
+                                <!--begin::Hint-->
+                                <div class="text-muted mb-10">
+                                    Use 8 or more characters with a mix of letters, numbers & symbols.
+                                </div>
+                                <!--end::Hint-->
+                            </div>
+                            <!--end::Main wrapper-->
+                            <!--begin::Wrapper-->
+                            <div class="mb-1">
+                                <!--begin::Label-->
+                                <label class="form-label fw-bold fs-6 mb-2">
+                                    Confirm Password
+                                </label>
+                                <!--end::Label-->
+
+                                <!--begin::Input wrapper-->
+                                <div class="position-relative mb-3">
+                                    <input class="form-control form-control-lg form-control-solid"
+                                        type="password" placeholder="" name="confirm_password" wire:model="confirm_password" autocomplete="off" />
+
+                                    @error('confirm_password')
+                                    <span class="text-danger">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                <!--end::Input wrapper-->
+                            </div>
+                            <!--end::Wrapper-->
+                            <!--end::Col-->
+                        </div>
+                        <!--end::Row-->
+                    </div>
+                    <!--end::Card body-->
+                </form>
+            </div>
+            <!--end::change password View-->
         </div>
         <!--end::Container-->
     </div>

@@ -25,10 +25,14 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::group(['middleware' => ['role:Super Admin|APO']], function () {
+
     // Routes accessible only by admin of team 1
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
-    Route::middleware(['auth'])->group(function () {
+    # Account Settings
+    Route::get('/account-settings', AccountSettings::class)->name('account-settings');
+
+    Route::middleware(['auth', 'check_password_if_updated'])->group(function () {
 
         /* ------------------------------ SHARED ROUTES ----------------------------- */
         # Dashboard
@@ -61,9 +65,6 @@ Route::group(['middleware' => ['role:Super Admin|APO']], function () {
         Route::get('/settings/divisions', Divisions::class)->name('settings.divisions')->middleware('permission:reference.divisions.read');
         # Settings.User Management
         Route::get('/settings/user-management', UserManagement::class)->name('settings.user-management')->middleware('permission:reference.userManagement.read');
-
-        # Account Settings
-        Route::get('/account-settings', AccountSettings::class)->name('account-settings');
 
         # File Handler
         Route::get('/file/view/{id}', [FileHandler::class, 'viewFile'])->name('file.view')->middleware('signed');
