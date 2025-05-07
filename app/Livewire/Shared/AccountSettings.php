@@ -31,12 +31,12 @@ class AccountSettings extends Component
         $this->loadPersonalDetails();
     }
 
-    public function refresh()
-    {
-        $this->user = auth()->user();
-        $this->loadPersonalDetails();
-        $this->render();
-    }
+    // public function refresh()
+    // {
+    //     $this->user = auth()->user();
+    //     $this->loadPersonalDetails();
+    //     $this->render();
+    // }
 
     public function clear()
     {
