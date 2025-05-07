@@ -1,0 +1,239 @@
+/* Random Profile Picture */
+.profile-picture {
+    width: 50px;
+    /* Adjust the size as needed */
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    /* Adjust the font size as needed */
+    font-weight: bold;
+    color: white;
+    background-color: #3498db;
+    /* Default color if dynamic color is not set */
+}
+
+/* Optional: Dynamic color classes */
+/* Teal */
+.bg-color-1 {
+    background-color: #1abc9c;
+}
+
+/* Red */
+.bg-color-2 {
+    background-color: #e74c3c;
+}
+
+/* Yellow */
+.bg-color-3 {
+    background-color: rgb(182, 165, 89);
+}
+
+/* Orange */
+.bg-color-4 {
+    background-color: #f39c12;
+}
+
+/* Green */
+.bg-color-5 {
+    background-color: #2ecc71;
+}
+
+/* End Random Profile Picture */
+
+/* Buttons */
+.btn.btn-primary {
+    color: rgb(255, 255, 255);
+    border-color: #639a56;
+    background-color: #639a56;
+}
+
+/* End Buttons */
+
+/* begin:: CUSTOM COLORS */
+
+.bg-primary2 {
+    --bs-bg-opacity: 1;
+    background-color: #639a56 !important;
+}
+
+.aside
+    .menu
+    > .menu-item
+    > .menu-link.active
+    .menu-icon
+    .svg-icon
+    svg
+    [fill]:not(.permanent):not(g) {
+    transition: fill 0.3s ease;
+    fill: #639a56 !important;
+}
+
+.menu-state-primary
+    .menu-item
+    .menu-link:hover:not(.disabled):not(.active)
+    .menu-title,
+.menu-state-primary
+    .menu-item.hover
+    > .menu-link:not(.disabled):not(.active)
+    .menu-title {
+    color: #639a56;
+}
+
+.menu-state-bullet-primary
+    .menu-item
+    .menu-link:hover:not(.disabled):not(.active)
+    .menu-bullet
+    .bullet,
+.menu-state-bullet-primary
+    .menu-item.hover
+    > .menu-link:not(.disabled):not(.active)
+    .menu-bullet
+    .bullet {
+    background-color: #639a56;
+}
+
+.menu-state-primary .menu-item .menu-link.active .menu-title {
+    color: #639a56;
+}
+
+.menu-state-bullet-primary .menu-item .menu-link.active .menu-bullet .bullet {
+    background-color: #639a56;
+}
+
+.btn-check:active + .btn.btn-primary,
+.btn-check:checked + .btn.btn-primary,
+.btn.btn-primary.active,
+.btn.btn-primary.show,
+.btn.btn-primary:active:not(.btn-active),
+.btn.btn-primary:focus:not(.btn-active),
+.btn.btn-primary:hover:not(.btn-active),
+.show > .btn.btn-primary {
+    color: #fff;
+    border-color: rgb(63, 99, 55);
+    background-color: rgb(63, 99, 55) !important;
+}
+
+.page-link:hover {
+    z-index: 2;
+    color: #639a56 !important;
+    text-decoration: none;
+    background-color: #f8f5ff;
+    border-color: transparent;
+}
+
+.page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #639a56 !important;
+    border-color: transparent;
+}
+
+.btn-check:active + .btn.btn-active-light-primary i,
+.btn-check:checked + .btn.btn-active-light-primary i,
+.btn.btn-active-light-primary.active i,
+.btn.btn-active-light-primary.show i,
+.btn.btn-active-light-primary:active:not(.btn-active) i,
+.btn.btn-active-light-primary:focus:not(.btn-active) i,
+.btn.btn-active-light-primary:hover:not(.btn-active) i,
+.show > .btn.btn-active-light-primary i {
+    color: #639a56 !important;
+}
+
+.btn-check:active + .btn.btn-active-light-primary,
+.btn-check:checked + .btn.btn-active-light-primary,
+.btn.btn-active-light-primary.active,
+.btn.btn-active-light-primary.show,
+.btn.btn-active-light-primary:active:not(.btn-active),
+.btn.btn-active-light-primary:focus:not(.btn-active),
+.btn.btn-active-light-primary:hover:not(.btn-active),
+.show > .btn.btn-active-light-primary {
+    color: #639a56 !important;
+    border-color: #f8f5ff;
+    background-color: #f8f5ff !important;
+}
+
+.nav-line-tabs .nav-item .nav-link.active,
+.nav-line-tabs .nav-item .nav-link:hover:not(.disabled),
+.nav-line-tabs .nav-item.show .nav-link {
+    background-color: transparent;
+    border: 0;
+    border-bottom: 1px solid #639a56;
+    transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.text-active-primary.active {
+    transition: color 0.2s ease, background-color 0.2s ease;
+    color: #639a56 !important;
+}
+
+.menu-state-primary .menu-item .menu-link:hover:not(.disabled):not(.active),
+.menu-state-primary .menu-item.hover > .menu-link:not(.disabled):not(.active) {
+    transition: color 0.2s ease, background-color 0.2s ease;
+    color: #639a56;
+}
+
+/* end:: CUSTOM COLORS */
+
+/* begin::Separator */
+.separator {
+    display: flex;
+    align-items: center;
+    text-align: center;
+}
+
+.separator::before,
+.separator::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #a5a8ba;
+}
+
+.separator:not(:empty)::before {
+    margin-right: 0.25em;
+}
+
+.separator:not(:empty)::after {
+    margin-left: 0.25em;
+}
+
+/* end::Separator */
+
+/* begin::disable anchor */
+.disabled-link {
+    pointer-events: none;
+    cursor: default;
+    /* Optional: Change cursor to indicate it's disabled */
+    opacity: 0.6;
+    /* Optional: Make it look disabled */
+}
+
+/* end::disable anchor */
+
+/* begin::custom virtual select */
+.vscomp-wrapper {
+    height: 45px;
+}
+
+/* end::customem virtual select */
+
+/* begin:: timeline */
+.timeline-label .timeline-label {
+    width: 65px;
+    flex-shrink: 0;
+    position: relative;
+    color: #3f4254;
+}
+
+.timeline-label:before {
+    content: "";
+    position: absolute;
+    left: 66px;
+    width: 3px;
+    top: 0;
+    bottom: 0;
+    background-color: #eff2f5;
+}
+/* end:: timeline */

@@ -40,7 +40,7 @@
                             <!--begin::Nav item-->
                             <li class="nav-item">
                                 <a class="nav-link text-active-primary me-6 {{ $page == 1 ? 'active' : '' }}" href="#" wire:click="$set('page', 1)">
-                                    Personal Details
+                                    Overview
                                 </a>
                             </li>
                             <!--end::Nav item-->
@@ -193,6 +193,84 @@
                 </form>
             </div>
             <!--end::personal details View-->
+
+            <div class="row gy-5 gx-xl-10">
+                <!--begin:: activities-->
+                <!--begin::Col-->
+                <div class="col-xl-6" style="display: {{ $page == 1 ? '' : 'none' }};">
+                    <!--begin::List Widget 5-->
+                    <div class="card card-xl-stretch mb-xl-10">
+                        <!--begin::Header-->
+                        <div class="card-header align-items-center border-0 mt-4">
+                            <h3 class="card-title align-items-start flex-column">
+                                <span class="fw-bolder mb-2 text-dark">Activities</span>
+                                <span class="text-muted fw-bold fs-7">{{ $activity->count() }} logs</span>
+                            </h3>
+                            <div class="card-toolbar">
+                                <!--begin::Menu-->
+
+                                <!--begin::Menu 1-->
+
+                                <!--end::Menu 1-->
+                                <!--end::Menu-->
+                            </div>
+                        </div>
+                        <!--end::Header-->
+                        <!--begin::Body-->
+                        <div class="card-body pt-5">
+                            <!--begin::Timeline-->
+                            <div class="timeline-label">
+                                <!--begin::Item-->
+                                @forelse($activity as $item)
+                                <div class="timeline-item">
+                                    <!--begin::Label-->
+                                    <div class="timeline-label fw-bolder text-gray-800 fs-6">{{ $item['time'] }}</div>
+                                    <!--end::Label-->
+                                    <!--begin::Badge-->
+                                    <div class="timeline-badge">
+                                        <i class="fa fa-genderless text-warning fs-1"></i>
+                                    </div>
+                                    <!--end::Badge-->
+                                    <!--begin::Text-->
+                                    <div class="fw-mormal timeline-content text-muted ps-3 text-capitalized">
+                                        <span class="badge 
+                                        @switch($item['event'])
+                                        @case('created')
+                                        badge-success
+                                        @break
+                                        @case('updated')
+                                        badge-info
+                                        @break
+                                        @case('deleted')
+                                        badge-danger
+                                        @break
+                                        @default
+                                        badge-white
+                                        @endswitch
+                                        text-uppercase">
+                                            {{ $item['event'] }}
+                                        </span>
+                                        <div class="vr"></div>
+                                        {{ $item['log_name'] }}, {{ $item['subject_id'] }}
+                                    </div>
+                                    <!--end::Text-->
+                                </div>
+                                @empty
+                                <div class="timeline-item">
+                                    Nothing much going on here.
+                                </div>
+                                @endforelse
+                                <!--end::Item-->
+                            </div>
+                            <!--end::Timeline-->
+                        </div>
+                        <!--end: Card Body-->
+                    </div>
+                    <!--end: List Widget 5-->
+                </div>
+                <!--end::Col-->
+                <!--end:: activities-->
+            </div>
 
             <!--begin::change password View-->
             <div class="card mb-5 mb-xl-10" id="kt_profile_details_view" style="display: {{ $page == 2 ? '' : 'none' }};">

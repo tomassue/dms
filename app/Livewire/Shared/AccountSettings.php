@@ -3,10 +3,12 @@
 namespace App\Livewire\Shared;
 
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Component;
+use Spatie\Activitylog\Models\Activity;
 
 class AccountSettings extends Component
 {
@@ -31,12 +33,12 @@ class AccountSettings extends Component
         $this->loadPersonalDetails();
     }
 
-    // public function refresh()
-    // {
-    //     $this->user = auth()->user();
-    //     $this->loadPersonalDetails();
-    //     $this->render();
-    // }
+    public function refresh()
+    {
+        $this->user = auth()->user();
+        $this->loadPersonalDetails();
+        $this->render();
+    }
 
     public function clear()
     {
@@ -47,7 +49,12 @@ class AccountSettings extends Component
 
     public function render()
     {
-        return view('livewire.shared.account-settings');
+        return view(
+            'livewire.shared.account-settings',
+            [
+                'activity' => $this->loadActivityLogs()
+            ]
+        );
     }
 
     public function loadPersonalDetails()
@@ -128,5 +135,25 @@ class AccountSettings extends Component
             $this->dispatch('error', message: 'Failed to update password. Please try again.');
             report($th); // Log the error for debugging
         }
+    }
+
+    public function loadActivityLogs()
+    {
+        $activity = Activity::where('causer_type', User::class)
+            ->where('causer_id', $this->user->id)
+            ->latest()
+            ->take(10)
+            ->get()
+            ->map(function ($activity) {
+                return [
+                    'event' => $activity->event,
+                    'log_name' => str_replace('_', ' ', $activity->log_name),
+                    'subject_id' => $activity->subject_id,
+                    'time' => Carbon::parse($activity->created_at)->format('g:i A'),
+                    'date' => Carbon::parse($activity->created_at)->format('F d,Y')
+                ];
+            });
+
+        return $activity;
     }
 }
