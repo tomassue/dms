@@ -38,10 +38,14 @@
                     <!--end::Menu wrapper-->
                 </div>
                 <!--end::Navbar-->
+
                 <!--begin::Topbar-->
                 <div class="d-flex align-items-stretch justify-self-end flex-shrink-0">
                     <!--begin::Toolbar wrapper-->
                     <div class="d-flex align-items-stretch flex-shrink-0">
+
+                        <livewire:components.notification-component />
+
                         <!--begin::User-->
                         <div class="d-flex align-items-center ms-1 ms-lg-3" id="kt_header_user_menu_toggle">
                             <!--begin::Menu wrapper-->
@@ -108,7 +112,6 @@
                             <!--end::Menu wrapper-->
                         </div>
                         <!--end::User -->
-
                     </div>
                     <!--end::Toolbar wrapper-->
                 </div>

@@ -54,6 +54,13 @@ class IncomingDocument extends Model
         });
     }
 
+    public function scopeForwarded($query)
+    {
+        return $query->whereHas('status', function ($query) {
+            $query->where('name', 'forwarded');
+        });
+    }
+
     public function scopeDateRangeFilter($query, $start_date, $end_date)
     {
         return $query->whereBetween('date', [$start_date, $end_date]);

@@ -7,9 +7,11 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 use Spatie\Activitylog\Models\Activity;
 
+#[Title('Account Settings')]
 class AccountSettings extends Component
 {
     public $page = 1;
