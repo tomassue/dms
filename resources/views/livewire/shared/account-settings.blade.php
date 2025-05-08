@@ -81,7 +81,7 @@
             @endsession
 
             <!--begin::personal details View-->
-            <div class="card mb-5 mb-xl-10" id="kt_profile_details_view" style="display: {{ $page == 1 ? '' : 'none' }};">
+            <div class="card mb-5 mb-xl-10" style="display: {{ $page == 1 ? '' : 'none' }};">
                 <form wire:submit="savePersonalDetails">
                     <!--begin::Card header-->
                     <div class="card-header cursor-pointer">
@@ -273,7 +273,7 @@
             </div>
 
             <!--begin::change password View-->
-            <div class="card mb-5 mb-xl-10" id="kt_profile_details_view" style="display: {{ $page == 2 ? '' : 'none' }};">
+            <div class="card mt-5 mb-5 mb-xl-10" style="display: {{ $page == 2 ? '' : 'none' }};">
                 <form wire:submit="saveNewPassword">
                     <!--begin::Card header-->
                     <div class="card-header cursor-pointer">
