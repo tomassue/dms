@@ -206,7 +206,7 @@ class UserManagement extends Component
                 $this->dispatch('success', message: 'User updated successfully.');
             });
         } catch (\Exception $e) {
-            throw $e;
+            // throw $e;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

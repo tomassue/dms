@@ -66,6 +66,15 @@ class IncomingDocument extends Model
         return $query->whereBetween('date', [$start_date, $end_date]);
     }
 
+    /**
+     * scopeReceived
+     * For ADMIN ONLY
+     */
+    public function scopeReceived($query)
+    {
+        return $query->whereHas('status', fn($q) => $q->where('name', 'received'));
+    }
+
     //* Mutators
     public function getFormattedDateAttribute()
     {

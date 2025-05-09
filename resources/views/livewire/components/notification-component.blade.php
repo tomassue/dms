@@ -12,8 +12,11 @@
             </svg>
         </span>
         <!--end::Svg Icon-->
-        <span class="bullet bullet-dot bg-success h-6px w-6px position-absolute translate-middle top-0 start-50 animation-blink"></span>
+        <span class="bullet bullet-dot bg-success h-6px w-6px position-absolute translate-middle top-0 start-50 animation-blink"
+            style="display: {{ $notifications->isEmpty() ? 'none' : '' }};">
+        </span>
     </div>
+
     <!--begin::Menu-->
     <div class="menu menu-sub menu-sub-dropdown menu-column w-350px w-lg-375px" data-kt-menu="true" style="">
         <!--begin::Heading-->
@@ -39,7 +42,7 @@
                 <!--begin::Items-->
                 <div class="scroll-y mh-325px my-5 px-8">
                     <!--begin::Item-->
-                    @forelse($forwarded_incoming_requests as $item)
+                    @forelse($notifications as $item)
                     <div class="d-flex flex-stack py-4">
                         <!--begin::Section-->
                         <div class="d-flex align-items-center">
@@ -60,16 +63,18 @@
                             <!--end::Symbol-->
                             <!--begin::Title-->
                             <div class="mb-0 me-2">
-                                <a href="#" class="fs-6 text-gray-800 text-hover-primary fw-bolder">Incoming Request</a>
-                                <div class="text-gray-400 fs-7">{{ $item->no }}</div>
+                                <a href="#" class="fs-6 text-gray-800 text-hover-primary fw-bolder">
+                                    <span class="text-capitalize">{{ $item['type'] }}</span>
+                                </a>
+                                <div class="text-gray-400 fs-7">{{ $item['title'] }}</div>
                             </div>
                             <!--end::Title-->
                         </div>
                         <!--end::Section-->
                         <!--begin::Label-->
                         <!-- With tooltip showing full date -->
-                        <span class="badge bg-light text-dark" title="{{ \Carbon\Carbon::parse($item->created_at)->format('l jS \\of F Y') }}">
-                            {{ \Carbon\Carbon::parse($item->created_at)->diffForHumans() }}
+                        <span class="badge bg-light text-dark" title="Created at: {{ $item['created_at'] }}">
+                            {{ $item['human_time'] }}
                         </span>
                         <!--end::Label-->
                     </div>

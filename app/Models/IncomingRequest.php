@@ -52,7 +52,7 @@ class IncomingRequest extends Model
 
     public function scopeIsCompleted()
     {
-        return $this->status()->where('name', 'completed')->exists();
+        return $this->status()->where('name', 'completed')->exists(); // returns true or false
     }
 
     public function scopeIsCancelled()
@@ -78,6 +78,17 @@ class IncomingRequest extends Model
     {
         return $query->whereHas('status', function ($query) {
             $query->where('name', 'forwarded');
+        });
+    }
+
+    /**
+     * scopeReceived
+     * For ADMIN ONLY
+     */
+    public function scopeReceived($query)
+    {
+        return $query->whereHas('status', function ($query) {
+            $query->where('name', 'received');
         });
     }
 

@@ -6,32 +6,67 @@ use App\Models\IncomingDocument;
 use App\Models\IncomingRequest;
 use Livewire\Component;
 
+/**
+ * TODO:
+ * - Add wire:poll
+ * - Change the hover and active color
+ */
+
 class NotificationComponent extends Component
 {
-    public $notification = [];
+    public $notifications = [];
 
     public function render()
     {
-        return view(
-            'livewire.components.notification-component',
-            [
-                'forwarded_incoming_requests' => $this->loadForwardedIncomingRequests(),
-                'forwarded_incoming_documents' => $this->loadForwardedIncomingDocuments(),
-            ]
-        );
+        $this->prepareNotifications();
+
+        return view('livewire.components.notification-component', [
+            'notifications' => $this->notifications
+        ]);
     }
 
-    public function loadForwardedIncomingRequests()
+    protected function prepareNotifications()
     {
-        return IncomingRequest::forwarded()
+        // Load data
+        $requests = IncomingRequest::when(auth()->user()->user_metadata->division == null && auth()->user()->user_metadata->position == null, function ($query) {
+            return $query->received();
+        }, function ($query) {
+            return $query->forwarded();
+        })
             ->get();
-    }
 
-    public function loadForwardedIncomingDocuments()
-    {
-        return IncomingDocument::forwarded()
+        $documents = IncomingDocument::when(auth()->user()->user_metadata->division == null && auth()->user()->user_metadata->position == null, function ($query) {
+            return $query->received();
+        }, function ($query) {
+            return $query->forwarded();
+        })
             ->get();
-    }
 
-    //TODO: Optimize this component and the blade.
+        // Format notifications with human-readable time
+        $this->notifications = collect()
+            ->merge($requests->map(function ($item) {
+                return [
+                    'type' => 'request',
+                    'id' => $item->id,
+                    'title' => $item->no, // or whatever field you display
+                    'created_at' => $item->created_at->diffForHumans(),
+                    'human_time' => $item->updated_at->diffForHumans(),
+                    'raw_time' => $item->updated_at->format('Y-m-d H:i:s'),
+                    // Add other relevant fields
+                ];
+            }))
+            ->merge($documents->map(function ($item) {
+                return [
+                    'type' => 'document',
+                    'id' => $item->id,
+                    'title' => $item->category->name, // or whatever field you display
+                    'created_at' => $item->created_at->diffForHumans(),
+                    'human_time' => $item->updated_at->diffForHumans(),
+                    'raw_time' => $item->updated_at->format('Y-m-d H:i:s'),
+                    // Add other relevant fields
+                ];
+            }))
+            ->sortByDesc('created_at') // Sort by newest first
+            ->values(); // Reset keys
+    }
 }
