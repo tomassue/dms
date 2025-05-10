@@ -22,17 +22,25 @@ class NotificationComponent extends Component
     protected function prepareNotifications()
     {
         // Load data
-        $requests = IncomingRequest::when(auth()->user()->user_metadata->division == null && auth()->user()->user_metadata->position == null, function ($query) {
-            return $query->received();
+        $requests = IncomingRequest::when(auth()->user()->hasRole('Super Admin'), function ($query) {
+            // Super Admin sees all
         }, function ($query) {
-            return $query->forwarded();
+            $query->when(auth()->user()->user_metadata->division == null && auth()->user()->user_metadata->position == null, function ($query) {
+                return $query->received();
+            }, function ($query) {
+                return $query->forwarded();
+            });
         })
             ->get();
 
-        $documents = IncomingDocument::when(auth()->user()->user_metadata->division == null && auth()->user()->user_metadata->position == null, function ($query) {
-            return $query->received();
+        $documents = IncomingDocument::when(auth()->user()->hasRole('Super Admin'), function ($query) {
+            // Super Admin sees all
         }, function ($query) {
-            return $query->forwarded();
+            $query->when(auth()->user()->user_metadata->division == null && auth()->user()->user_metadata->position == null, function ($query) {
+                return $query->received();
+            }, function ($query) {
+                return $query->forwarded();
+            });
         })
             ->get();
 
