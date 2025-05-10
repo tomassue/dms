@@ -6,12 +6,6 @@ use App\Models\IncomingDocument;
 use App\Models\IncomingRequest;
 use Livewire\Component;
 
-/**
- * TODO:
- * - Add wire:poll
- * - Change the hover and active color
- */
-
 class NotificationComponent extends Component
 {
     public $notifications = [];
@@ -47,6 +41,7 @@ class NotificationComponent extends Component
             ->merge($requests->map(function ($item) {
                 return [
                     'type' => 'request',
+                    'status' => $item->status->name,
                     'id' => $item->id,
                     'title' => $item->no, // or whatever field you display
                     'created_at' => $item->created_at->diffForHumans(),
@@ -58,6 +53,7 @@ class NotificationComponent extends Component
             ->merge($documents->map(function ($item) {
                 return [
                     'type' => 'document',
+                    'status' => $item->status->name,
                     'id' => $item->id,
                     'title' => $item->category->name, // or whatever field you display
                     'created_at' => $item->created_at->diffForHumans(),
