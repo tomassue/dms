@@ -27,10 +27,10 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                <div wire:loading.remove>
+                <div wire:loading.remove wire:target="forward">
                     <button type="submit" class="btn btn-primary">Forward</button>
                 </div>
-                <div wire:loading wire:target="saveIncomingRequest">
+                <div wire:loading wire:target="forward">
                     <button class="btn btn-primary" type="button" disabled>
                         <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                         <span role="status">Loading...</span>
