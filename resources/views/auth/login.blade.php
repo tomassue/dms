@@ -6,7 +6,7 @@
         <div class="col-md-8 col-lg-6">
             <div class="card p-5 shadow">
                 <div class="card-header text-white py-3">
-                    <div class="d-flex justify-content-between align-items-center w-100 header-images">
+                    <div class="d-flex justify-content-center align-items-center w-100 header-images">
                         <!-- Left Image -->
                         <div>
                             <img src="{{ asset('images/cdo-seal.png') }}" alt="City Logo" style="height: 90px;">

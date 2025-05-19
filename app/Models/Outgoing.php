@@ -22,7 +22,9 @@ class Outgoing extends Model
         'details',
         'destination',
         'person_responsible',
-        'ref_status_id'
+        'ref_status_id',
+        'outgoingable_type',
+        'outgoingable_id',
     ];
 
     // Local Scope

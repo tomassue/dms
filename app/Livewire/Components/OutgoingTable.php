@@ -24,7 +24,7 @@ class OutgoingTable extends Component
     public $search,
         $filter_start_date,
         $filter_end_date;
-    public $outgoingId;
+    public $outgoingId, $typeId;
     public $type;
     public $preview_file = [];
     public $activity_log = [];
@@ -141,37 +141,27 @@ class OutgoingTable extends Component
 
         try {
             DB::transaction(function () {
-                // First create/update the main outgoing record
-                $outgoing = Outgoing::updateOrCreate(
-                    ['id' => $this->outgoingId],
-                    [
-                        'date' => $this->date,
-                        'details' => $this->details,
-                        'destination' => $this->destination,
-                        'person_responsible' => $this->person_responsible,
-                        'ref_status_id' => $this->ref_status_id ?? '1', // Pending
-                    ]
-                );
-
-                // Then handle the specific type
+                //
+                // 1) type first: use $this->typeId, not $this->outgoingId
+                //
                 switch ($this->type) {
                     case 'other':
-                        $outgoing->outgoingable()->updateOrCreate(
-                            [],
+                        $type = OutgoingOthers::updateOrCreate(
+                            ['id' => $this->typeId],
                             ['document_name' => $this->document_name]
                         );
                         break;
 
                     case 'payroll':
-                        $outgoing->outgoingable()->updateOrCreate(
-                            [],
+                        $type = OutgoingPayrolls::updateOrCreate(
+                            ['id' => $this->typeId],
                             ['payroll_type' => $this->payroll_type]
                         );
                         break;
 
                     case 'procurement':
-                        $outgoing->outgoingable()->updateOrCreate(
-                            [],
+                        $type = OutgoingProcurement::updateOrCreate(
+                            ['id' => $this->typeId],
                             [
                                 'pr_no' => $this->pr_no,
                                 'po_no' => $this->po_no,
@@ -180,45 +170,94 @@ class OutgoingTable extends Component
                         break;
 
                     case 'ris':
-                        $outgoing->outgoingable()->updateOrCreate(
-                            [],
+                        $type = OutgoingRis::updateOrCreate(
+                            ['id' => $this->typeId],
                             [
                                 'document_name' => $this->document_name,
-                                'ppmp_code' => $this->ppmp_code
+                                'ppmp_code'     => $this->ppmp_code,
                             ]
                         );
                         break;
 
                     case 'voucher':
-                        $outgoing->outgoingable()->updateOrCreate(
-                            [],
+                        $type = OutgoingVoucher::updateOrCreate(
+                            ['id' => $this->typeId],
                             ['voucher_name' => $this->voucher_name]
                         );
                         break;
+
+                    default:
+                        throw new \Exception("Unknown type: {$this->type}");
                 }
 
-                // Handle file uploads if needed
-                if (!empty($this->file_id)) {
-                    $outgoingable = $outgoing->outgoingable;
-                    foreach ((array)$this->file_id as $file) {
-                        $outgoingable->files()->create([
-                            'name' => $file->getClientOriginalName(),
-                            'size' => $file->getSize(),
-                            'type' => $file->getMimeType(),
-                            'file' => file_get_contents($file->getRealPath()),
-                        ]);
-                    }
-                }
+                // remember for next save
+                $this->typeId = $type->id;
 
+                //
+                // 2) Parent second: same as before
+                //
+                $outgoing = $this->saveMainOutgoing($type);
+
+                //
+                // 3) Files stay on the type
+                //
+                $this->saveFiles($type);
+
+                //
+                // 4) cleanup & feedback
+                //
+                $this->clear();
                 $this->dispatch('hide-outgoing-modal');
-                $this->dispatch('success', message: 'Outgoing saved successfully.');
+                $this->dispatch('success', message: 'Outgoing saved.');
             });
         } catch (\Throwable $th) {
-            // You might want to log the error for debugging:
-            // \Log::error('Error saving outgoing: ' . $th->getMessage());
+            // \Log::error($th);
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
+
+    /**
+     * Create the parent via the type's morph relation on create,
+     * or update the existing Outgoing on edit.
+     */
+    protected function saveMainOutgoing($type)
+    {
+        $data = [
+            'date'               => $this->date,
+            'details'            => $this->details,
+            'destination'        => $this->destination,
+            'person_responsible' => $this->person_responsible,
+            'ref_status_id'      => $this->ref_status_id ?? '1',
+        ];
+
+        if ($this->outgoingId) {
+            // EDIT mode
+            $out = Outgoing::findOrFail($this->outgoingId);
+            $out->update($data);
+        } else {
+            // CREATE mode
+            $out = $type->outgoing()->create($data);
+            $this->outgoingId = $out->id;
+        }
+
+        return $out;
+    }
+
+    protected function saveFiles($child)
+    {
+        if (empty($this->file_id)) {
+            return;
+        }
+        foreach ((array)$this->file_id as $file) {
+            $child->files()->create([
+                'name' => $file->getClientOriginalName(),
+                'size' => $file->getSize(),
+                'type' => $file->getMimeType(),
+                'file' => file_get_contents($file->getRealPath()),
+            ]);
+        }
+    }
+
 
     public function editOutgoing(Outgoing $outgoing)
     {
@@ -231,6 +270,10 @@ class OutgoingTable extends Component
             $this->destination = $outgoing->destination;
             $this->person_responsible = $outgoing->person_responsible;
             $this->ref_status_id = $outgoing->ref_status_id;
+
+            // Load type and its ID
+            $type = $outgoing->outgoingable;
+            $this->typeId = $type->id;
 
             switch ($outgoing->outgoingable_type) {
                 case 'App\Models\OutgoingOthers':
