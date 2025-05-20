@@ -67,7 +67,7 @@
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
                                         <th>Accomplishment Category</th>
-                                        <th>Date</th>
+                                        <th class="min-w-200px">Date</th>
                                         <th>Details</th>
                                         @role('APO')
                                         <th>Next Steps</th>

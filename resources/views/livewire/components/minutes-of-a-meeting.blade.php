@@ -22,6 +22,10 @@
                             <div class="text-gray-600">{{ $apo_meeting->formatted_date ?? '-' }}</div>
                             <!--begin::Details item-->
                             <!--begin::Details item-->
+                            <div class="fw-bolder mt-5">Category</div>
+                            <div class="text-gray-600">{{ $apo_meeting->apoMeetingsCategory->name ?? '-' }}</div>
+                            <!--begin::Details item-->
+                            <!--begin::Details item-->
                             <div class="fw-bolder mt-5">Description</div>
                             <div class="text-gray-600">{{ $apo_meeting->description ?? '-' }}</div>
                             <!--begin::Details item-->
@@ -252,7 +256,7 @@
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Accomplishment</h5>
+                    <h5 class="modal-title">PDF</h5>
                     <!--begin::Close-->
                     <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="cancel">
                         <i class="bi bi-x-circle"></i>

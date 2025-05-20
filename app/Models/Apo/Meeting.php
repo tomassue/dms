@@ -2,6 +2,7 @@
 
 namespace App\Models\Apo;
 
+use App\Models\RefApoMeetingsCategory;
 use App\Models\Scopes\RoleAndDivisionBasedScope;
 use App\Models\User;
 use Carbon\Carbon;
@@ -19,6 +20,7 @@ class Meeting extends Model
     protected $table = 'apo_meetings';
     protected $fillable = [
         'date',
+        'ref_apo_meetings_category_id',
         'description',
         'time_start',
         'time_end',
@@ -49,6 +51,16 @@ class Meeting extends Model
         return $this->formatted_time_end ? $this->formatted_time_start . ' - ' . $this->formatted_time_end : $this->formatted_time_start;
     }
 
+    // Scope
+    public function scopeDateRange($query, $start_date, $end_date)
+    {
+        if (!$start_date && !$end_date) {
+            return $query;
+        }
+
+        return $query->whereBetween('date', [$start_date, $end_date]);
+    }
+
     // Relationship
     public function preparedBy()
     {
@@ -63,6 +75,11 @@ class Meeting extends Model
     public function notedBy()
     {
         return $this->belongsTo(User::class, 'noted_by', 'id');
+    }
+
+    public function apoMeetingsCategory()
+    {
+        return $this->belongsTo(RefApoMeetingsCategory::class, 'ref_apo_meetings_category_id', 'id');
     }
 
     // Activity Log

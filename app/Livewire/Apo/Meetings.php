@@ -3,6 +3,7 @@
 namespace App\Livewire\Apo;
 
 use App\Models\Apo\Meeting;
+use App\Models\RefApoMeetingsCategory;
 use App\Models\RefSignatories;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -18,15 +19,25 @@ class Meetings extends Component
     use WithPagination;
 
     public $show = true; //* An indicator to show/hide this component. Related to MinutesOfAMeeting child component.
+    public $filter_start_date, $filter_end_date;
     public $editMode;
     public $meetingId;
     /* ----------------------- begin:: meeting properties ----------------------- */
-    public $date, $description, $time_start, $time_end, $venue, $prepared_by, $approved_by, $noted_by;
+    public $date, $ref_apo_meetings_category_id, $description, $time_start, $time_end, $venue, $prepared_by, $approved_by, $noted_by;
     /* ------------------------ end:: meeting properties ------------------------ */
 
-    public function mount()
+    /**
+     * dehydrate()
+     * he dehydrate() method in Livewire is triggered after every component request cycle, including on the request that occurs during logout. 
+     * At that moment, auth()->user() no longer exists because the session has been cleared or is in the process of being destroyed — which results in null, 
+     * and then trying to access ->name causes the 404 (or sometimes a null property access error, depending on your config).
+     * * Add a guard against this by checking if the user is still authenticated before accessing auth()->user()->name. 
+     */
+    public function dehydrate()
     {
-        $this->prepared_by = Auth::user()->name;
+        if (auth()->check()) {
+            $this->prepared_by = Auth::user()->name;
+        }
     }
 
     public function rules()
@@ -58,7 +69,15 @@ class Meetings extends Component
         $this->show = false;
     }
 
-    #[On('clear')]
+
+    #[On('filter')]
+    public function filter($start_date, $end_date)
+    {
+        $this->filter_start_date = $start_date;
+        $this->filter_end_date = $end_date;
+    }
+
+    #[On(['clear', 'clear-filter-data'])]
     public function clear()
     {
         $this->resetExcept($this->show);
@@ -72,18 +91,26 @@ class Meetings extends Component
             [
                 'meetings' => $this->loadMeetings(),
                 'signatories' => $this->loadSignatories(), // signatories dropdown
+                'categories' => $this->getApoMeetingsCategories() // categories dropdown
             ]
         );
     }
 
     public function loadMeetings()
     {
-        return Meeting::paginate(10);
+        return Meeting::query()
+            ->dateRange($this->filter_start_date, $this->filter_end_date)
+            ->paginate(10);
     }
 
     public function loadSignatories()
     {
         return RefSignatories::all();
+    }
+
+    public function getApoMeetingsCategories()
+    {
+        return RefApoMeetingsCategory::all();
     }
 
     public function saveMeeting()
@@ -96,13 +123,14 @@ class Meetings extends Component
                     ['id' => $this->meetingId],
                     [
                         'date' => $this->date,
+                        'ref_apo_meetings_category_id' => $this->ref_apo_meetings_category_id,
                         'description' => $this->description,
                         'time_start' => $this->time_start,
                         'time_end' => $this->time_end,
                         'venue' => $this->venue,
-                        'prepared_by' => Auth::user()->id,
-                        'approved_by' => $this->approved_by,
-                        'noted_by' => $this->noted_by
+                        'prepared_by' => Auth::user()->id ?? null,
+                        'approved_by' => $this->approved_by ?: null,
+                        'noted_by' => $this->noted_by ?: null,
                     ]
                 );
 
@@ -123,13 +151,14 @@ class Meetings extends Component
             $this->meetingId = $meeting->id;
 
             $this->date = $meeting->date;
+            $this->ref_apo_meetings_category_id = $meeting->ref_apo_meetings_category_id;
             $this->description = $meeting->description;
             $this->time_start = $meeting->time_start;
             $this->time_end = $meeting->time_end;
             $this->venue = $meeting->venue;
-            $this->prepared_by = $meeting->preparedby->name;
-            $this->approved_by = $meeting->approvedby->name ?? '';
-            $this->noted_by = $meeting->notedby->name ?? '';
+            $this->prepared_by = $meeting->prepared_by;
+            $this->approved_by = $meeting->approved_by ?? '';
+            $this->noted_by = $meeting->noted_by ?? '';
 
             $this->dispatch('show-meeting-modal');
         } catch (\Throwable $th) {

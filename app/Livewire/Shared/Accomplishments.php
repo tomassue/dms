@@ -42,10 +42,20 @@ class Accomplishments extends Component
     public $report = "accomplishments";
     //* end:: APO
 
-    public function mount()
+    /**
+     * dehydrate()
+     * he dehydrate() method in Livewire is triggered after every component request cycle, including on the request that occurs during logout. 
+     * At that moment, auth()->user() no longer exists because the session has been cleared or is in the process of being destroyed — which results in null, 
+     * and then trying to access ->name causes the 404 (or sometimes a null property access error, depending on your config).
+     * * Add a guard against this by checking if the user is still authenticated before accessing auth()->user()->name. 
+     */
+    public function dehydrate()
     {
-        $this->prepared_by = auth()->user()->name;
+        if (auth()->check()) {
+            $this->prepared_by = auth()->user()->name;
+        }
     }
+
 
     public function rules()
     {

@@ -39,6 +39,7 @@
                     <thead>
                         <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
                             <th>Date</th>
+                            <th>Category</th>
                             <th>Time</th>
                             <th>Description</th>
                             <th>Prepared by</th>
@@ -53,6 +54,7 @@
                         @forelse($meetings as $item)
                         <tr>
                             <td>{{ $item->formatted_date }}</td>
+                            <td>{{ $item->apoMeetingsCategory->name ?? '' }}</td>
                             <td>{{ $item->time_range }}</td>
                             <td>{{ $item->description }}</td>
                             <td>{{ $item->preparedBy->name }}</td>
@@ -124,6 +126,18 @@
                             <div class="mb-10">
                                 <label class="form-label required">Date</label>
                                 <input type="date" class="form-control" wire:model="date">
+                                @error('date')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Category</label>
+                                <select class="form-select" aria-label="Select category" wire:model="ref_apo_meetings_category_id">
+                                    <option value="">-Select-</option>
+                                    @foreach($categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
                                 @error('date')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror

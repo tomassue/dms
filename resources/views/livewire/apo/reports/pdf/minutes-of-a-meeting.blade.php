@@ -119,12 +119,12 @@
                     Office of the City Agriculturist
                 </span>
             </td>
-            <td style="vertical-align: middle; text-align: left; padding-right: 10px; width: 70px;">
+            <td style="vertical-align: middle; text-align: right; padding-right: 10px;">
                 @if (!empty($bagong_pilipinas))
                 <img src="{{ $bagong_pilipinas }}" class="header-image" alt="Bagong Pilipinas" style="width: 90px;">
                 @endif
             </td>
-            <td style="vertical-align: middle; text-align: left; padding-right: 10px;">
+            <td style="vertical-align: middle; text-align: right; padding-right: 10px;" width="60px">
                 @if(!empty($golden_cdo))
                 <img src="{{ $golden_cdo }}" class="header-image" alt="Golden CDO Logo" style="width: 150px;">
                 @endif
@@ -134,10 +134,11 @@
 
     <table style="margin-top: 20px;">
         <tr>
-            <td colspan="3" style="text-align: center; font-weight: bold;">Office Mancom Meeting: {{ Carbon\Carbon::parse($apo_meeting->date)->format('F Y') }}</td>
+            <td colspan="4" style="text-align: center; font-weight: bold;">Office Mancom Meeting: {{ Carbon\Carbon::parse($apo_meeting->date)->format('F Y') }}</td>
         </tr>
         <tr>
             <td style="font-weight: bold;">Date: {{ $apo_meeting->formatted_date }}</td>
+            <td style="font-weight: bold;">Category: {{ $apo_meeting->apoMeetingsCategory->name }}</td>
             <td style="font-weight: bold;">Time: {{ $apo_meeting->time_range }}</td>
             <td style="font-weight: bold;">Venue: {{ $apo_meeting->venue }}</td>
         </tr>

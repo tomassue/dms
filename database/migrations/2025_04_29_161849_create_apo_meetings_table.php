@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('apo_meetings', function (Blueprint $table) {
             $table->id();
             $table->date('date');
+            $table->foreignId('ref_apo_meetings_category_id');
             $table->string('description');
             $table->time('time_start');
             $table->time('time_end')->nullable();
