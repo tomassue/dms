@@ -50,6 +50,7 @@ class Meetings extends Component
                     return $query->where('description', request('description'));
                 })->ignore($this->meetingId),
             ],
+            'ref_apo_meetings_category_id' => 'required',
             'description' => 'required',
             'time_start' => 'required',
             'venue' => 'required'
