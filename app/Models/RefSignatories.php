@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 
 class RefSignatories extends Model
 {
@@ -18,6 +19,10 @@ class RefSignatories extends Model
     // Scope
     public function scopeCityAgriculturist($query)
     {
+        if (!Auth::check() || Auth::user()->hasRole('Super Admin')) {
+            return;
+        }
+
         return $query->whereHas('user.user_metadata', function ($q) {
             $q->where('ref_position_id', 5); // City Agriculturist
         });
@@ -25,6 +30,10 @@ class RefSignatories extends Model
 
     public function scopeWithinDivision($query)
     {
+        if (!Auth::check() || Auth::user()->hasRole('Super Admin')) {
+            return;
+        }
+
         return $query->whereHas('user.user_metadata', function ($q) {
             $q->where('ref_division_id', auth()->user()->user_metadata->ref_division_id) // Within Division
                 ->whereNot('user_id', auth()->user()->id); // Exclude Current User
