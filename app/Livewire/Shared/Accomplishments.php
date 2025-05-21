@@ -65,8 +65,7 @@ class Accomplishments extends Component
                 'details' => 'required',
                 'sub_category' => 'required',
                 'start_date' => 'required|date|before_or_equal:end_date',
-                'end_date' => 'required|date|after_or_equal:start_date',
-                'next_steps' => 'required'
+                'end_date' => 'required|date|after_or_equal:start_date'
             ];
         } else {
             $rules = [
@@ -125,7 +124,9 @@ class Accomplishments extends Component
             [
                 'accomplishments' => $this->loadAccomplishments(),
                 'accomplishment_categories' => $this->loadAccomplishmentCategories(), // Accomplishment Category dropdown
-                'signatories' => $this->loadSignatories() // Signatories dropdown
+                'signatories' => $this->loadSignatories(), // Signatories dropdown
+                'conformees_signatories' => $this->loadConformeesSignatories(), // Signatories dropdown
+                'approved_by_signatories' => $this->loadApprovedBySignatories() // Signatories dropdown
             ]
         );
     }
@@ -133,6 +134,22 @@ class Accomplishments extends Component
     public function loadSignatories()
     {
         return RefSignatories::get();
+    }
+
+    public function loadConformeesSignatories()
+    {
+        return RefSignatories::withinDivision()->get();
+    }
+
+    /**
+     * loadApprovedBySignatories
+     * * Should be scalable for new offices.
+     * Must load a separate set of options for each office (role).
+     */
+    public function loadApprovedBySignatories()
+    {
+        // Load if Role is APO
+        return RefSignatories::cityAgriculturist()->get();
     }
 
     public function updatedSearch()
@@ -281,17 +298,31 @@ class Accomplishments extends Component
                 'approved' => 'required'
             ]);
 
-            // Get the user data for all three fields
-            $viewData['prepared_by'] = "<span style='text-transform: uppercase;'><u><b>" . auth()->user()->name . '</b></u></span>' . '<br>' . auth()->user()->user_metadata->position->name;
+            // Get prepared_by user data
+            $preparedUser = auth()->user();
+            $viewData['prepared_by'] = $preparedUser
+                ? $preparedUser->name
+                : '';
+            $viewData['prepared_by_position'] = $preparedUser->user_metadata->position->name ?? null;
+            $viewData['prepared_by_division'] = $preparedUser->user_metadata->division->name ?? null;
 
             // Get conforme user data
             $conformeUser = User::with('user_metadata.position')->find($this->conforme);
-            $viewData['conforme'] = "<span style='text-transform: uppercase;'><u><b>" . $conformeUser->name . '</b></u></span>' . '<br>' . ($conformeUser->user_metadata->position->name ?? 'N/A');
+            $viewData['conforme'] = $conformeUser
+                ? $conformeUser->name
+                : '';
+            $viewData['conforme_position'] = $conformeUser->user_metadata->position->name ?? null;
+            $viewData['conforme_division'] = $conformeUser->user_metadata->division->name ?? null;
 
             // Get approved user data
             $approvedUser = User::with('user_metadata.position')->find($this->approved);
-            $viewData['approved'] = "<span style='text-transform: uppercase;'><u><b>" . $approvedUser->name . '</b></u></span>' . '<br>' . ($approvedUser->user_metadata->position->name ?? 'N/A');
+            $viewData['approved'] = $approvedUser
+                ? $approvedUser->name
+                : '';
+            $viewData['approved_position'] = $approvedUser->user_metadata->position->name ?? null;
+            $viewData['approved_division'] = $approvedUser->user_metadata->division->name ?? null;
 
+            // Hide the modal
             $this->dispatch('hide-accomplishment-signatories-modal');
         }
 

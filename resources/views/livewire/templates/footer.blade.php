@@ -13,7 +13,7 @@
             <!--begin::Body-->
             <div class="card-body d-flex flex-column" style="position: relative; padding-top: 0px;">
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-sm-12 col-md-6">
                         <div id="footer-paragraph">
                             <p>
                                 <span id="short-text">The Document Management System is designed to assist the Offices in managing client schedules and requests...</span>
@@ -26,16 +26,17 @@
                             </p>
                         </div>
                     </div>
-                    <div class="col-md-2">
+                    <div class="col-sm-12 col-md-2 col-lg-3">
                         <p>If you have issues encountered and inquiries:</p>
                         <p><a href="https://services.cagayandeoro.gov.ph/helpdesk/" target="_blank" class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">CMISID Helpdesk</a></p>
+                        <p><a href="https://services.cagayandeoro.gov.ph/dds/" target="_blank" class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Document Distribution System</a></p>
                     </div>
-                    <div class="col-md-4 mb-3">
+                    <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
                         <div class="row mb-3">
                             <div class="col">
                                 <div class="d-flex justify-content-between align-items-center w-100 gap-3">
                                     <div class="brand-container">
-                                        <img class="w-70" src="https://services.cagayandeoro.gov.ph:8087/cvocert/imgs/seallogo.png">
+                                        <img class="w-100" src="https://services.cagayandeoro.gov.ph:8087/cvocert/imgs/seallogo.png">
                                     </div>
                                     <span>&nbsp;</span>
                                     <div class="d-flex justify-content-between gap-3">
@@ -52,7 +53,7 @@
                             <div class="col">
                                 <div class="d-flex justify-content-between align-items-center w-100 gap-3">
                                     <div class="brand-container">
-                                        <img class="w-70" src="https://services.cagayandeoro.gov.ph:8087/cvocert/imgs/risebig.png">
+                                        <img class="w-100" src="https://services.cagayandeoro.gov.ph:8087/cvocert/imgs/risebig.png">
                                     </div>
                                     <span>&nbsp;</span>
                                     <div class="d-flex justify-content-between gap-3">
@@ -90,7 +91,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
                 <div class="resize-triggers">
                     <div class="expand-trigger">

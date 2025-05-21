@@ -5,7 +5,7 @@
             <div class="modal-header">
                 <h5 class="modal-title">PDF</h5>
                 <!--begin::Close-->
-                <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
                     <i class="bi bi-x-circle"></i>
                 </div>
                 <!--end::Close-->
@@ -18,7 +18,7 @@
             </div>
 
             <div class="modal-footer">
-                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
             </div>
         </div>
     </div>

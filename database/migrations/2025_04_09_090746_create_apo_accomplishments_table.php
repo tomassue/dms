@@ -18,7 +18,7 @@ return new class extends Migration
             $table->text('sub_category');
             $table->dateTime('start_date');
             $table->dateTime('end_date');
-            $table->text('next_steps');
+            $table->text('next_steps')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

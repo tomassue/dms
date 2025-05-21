@@ -201,13 +201,30 @@
         <table style="margin-top: 25px;">
             <tr style="font-weight: bold;">
                 <td>Prepared by:</td>
+                <td></td>
                 <td>Conforme:</td>
+                <td></td>
                 <td>Approved:</td>
             </tr>
             <tr>
-                <td style="height: 55px; vertical-align: bottom">{!! $prepared_by !!}</td>
-                <td style="height: 55px; vertical-align: bottom">{!! $conforme !!}</td>
-                <td style="height: 55px; vertical-align: bottom">{!! $approved !!}</td>
+                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $prepared_by }}</td>
+                <td></td>
+                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $conforme }}</td>
+                <td></td>
+                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $approved }}</td>
+            </tr>
+            <tr>
+                <td style="vertical-align: top; border-top: 1px solid black;">
+                    {{ trim(($prepared_by_position ?? '') . ($prepared_by_position && $prepared_by_division ? ', ' : '') . ($prepared_by_division ?? '')) }}
+                </td>
+                <td></td>
+                <td style="vertical-align: top; border-top: 1px solid black;">
+                    {{ trim(($conforme_position ?? '') . ($conforme_position && $conforme_division ? ', ' : '') . ($conforme_division ?? '')) }}
+                </td>
+                <td></td>
+                <td style="vertical-align: top; border-top: 1px solid black;">
+                    {{ trim(($approved_position ?? '') . ($approved_position && $approved_division ? ', ' : '') . ($approved_division ?? '')) }}
+                </td>
             </tr>
         </table>
         @endrole

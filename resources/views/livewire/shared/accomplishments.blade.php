@@ -218,12 +218,9 @@
 
                             @role('APO')
                             <div class="mb-10">
-                                <label class="form-label required">Next Steps</label>
+                                <label class="form-label">Next Steps</label>
                                 <!-- <input type="text" class="form-control" wire:model="next_steps"> -->
                                 <textarea class="form-control" wire:model="next_steps"></textarea>
-                                @error('next_steps')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
                             </div>
                             @endrole
                         </div>
@@ -265,17 +262,17 @@
                     <form wire:submit="generatePDF">
                         <div class="p-2">
                             <div class="mb-10">
-                                <label class="form-label required">Prepared by:</label>
+                                <label class="form-label required">Prepared by</label>
                                 <input type="text" class="form-control" wire:model="prepared_by" disabled>
                                 @error('prepared_by')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Conforme:</label>
+                                <label class="form-label required">Conforme</label>
                                 <select class="form-select" wire:model="conforme">
                                     <option value="">-Select-</option>
-                                    @foreach($signatories as $item)
+                                    @foreach($conformees_signatories as $item)
                                     <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
                                     @endforeach
                                 </select>
@@ -284,10 +281,10 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Approved:</label>
+                                <label class="form-label required">Approved</label>
                                 <select class="form-select" wire:model="approved">
                                     <option value="">-Select-</option>
-                                    @foreach($signatories as $item)
+                                    @foreach($approved_by_signatories as $item)
                                     <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
                                     @endforeach
                                 </select>
