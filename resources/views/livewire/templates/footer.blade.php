@@ -27,9 +27,10 @@
                         </div>
                     </div>
                     <div class="col-sm-12 col-md-2 col-lg-3">
+                        <p>Other Related Systems:</p>
+                        <p><a href="https://services.cagayandeoro.gov.ph/dds/" target="_blank" class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover" style="font-size: 1.3rem;">Document Distribution System</a></p>
                         <p>If you have issues encountered and inquiries:</p>
-                        <p><a href="https://services.cagayandeoro.gov.ph/helpdesk/" target="_blank" class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">CMISID Helpdesk</a></p>
-                        <p><a href="https://services.cagayandeoro.gov.ph/dds/" target="_blank" class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover">Document Distribution System</a></p>
+                        <p><a href="https://services.cagayandeoro.gov.ph/helpdesk/" target="_blank" class="link-info link-offset-2 link-underline-opacity-25 link-underline-opacity-100-hover" style="font-size: 1.3rem;">CMISID Helpdesk</a></p>
                     </div>
                     <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
                         <div class="row mb-3">
@@ -40,7 +41,7 @@
                                     </div>
                                     <span>&nbsp;</span>
                                     <div class="d-flex justify-content-between gap-3">
-                                        <a style="font-size: 9pt!important; background-color: #FACD06; box-shadow: 3px 3px #888888; border-radius: 20px;"
+                                        <a style="font-size: 9pt !important; background-color: #FACD06; box-shadow: 3px 3px #888888; border-radius: 20px;"
                                             class="btn btn-primary p-3 flex-grow-1 text-center">
                                             Visit Official Website
                                         </a>
@@ -57,7 +58,7 @@
                                     </div>
                                     <span>&nbsp;</span>
                                     <div class="d-flex justify-content-between gap-3">
-                                        <a style="font-size: 9pt!important; background-color: #5B9EB4; box-shadow: 3px 3px #888888; border-radius: 20px;"
+                                        <a style="font-size: 9pt !important; background-color: #5B9EB4; box-shadow: 3px 3px #888888; border-radius: 20px;"
                                             href="https://cagayandeoro.gov.ph/index.php/news/the-city-mayor/rise1.html"
                                             target="_blank"
                                             class="btn btn-primary link2 p-3 flex-grow-1 text-center">
