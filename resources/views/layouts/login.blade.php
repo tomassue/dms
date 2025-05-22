@@ -35,18 +35,15 @@
 
     <style>
         body {
-            background-image: radial-gradient(#639a56 1px, transparent 1px);
-            background-size: 30px 30px;
-            background-color: #f8f9fa;
-            animation: dotsMove 60s linear infinite;
+            background: linear-gradient(to top, #0E4A84 10%, #FFFFFF 90%);
             min-height: 100vh;
         }
 
         /* Custom btn-primary */
         .btn.btn-primary {
             color: #fff;
-            border-color: #639a56;
-            background-color: #639a56;
+            border-color: #0E4A84;
+            background-color: #0E4A84;
         }
 
         .btn-check:active+.btn.btn-primary,
@@ -58,8 +55,8 @@
         .btn.btn-primary:hover:not(.btn-active),
         .show>.btn.btn-primary {
             color: #fff;
-            border-color: #4d6d46;
-            background-color: #4d6d46 !important;
+            border-color: rgb(20, 54, 85);
+            background-color: rgb(20, 54, 85) !important;
         }
 
         @media (max-width: 795px) {

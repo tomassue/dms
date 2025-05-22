@@ -56,7 +56,7 @@
 
 .bg-primary2 {
     --bs-bg-opacity: 1;
-    background-color: #639a56 !important;
+    background-color: #0e4a84 !important;
 }
 
 .aside
@@ -68,7 +68,7 @@
     svg
     [fill]:not(.permanent):not(g) {
     transition: fill 0.3s ease;
-    fill: #639a56 !important;
+    fill: #0e4a84 !important;
 }
 
 .menu-state-primary
@@ -79,7 +79,7 @@
     .menu-item.hover
     > .menu-link:not(.disabled):not(.active)
     .menu-title {
-    color: #639a56;
+    color: #0e4a84;
 }
 
 .menu-state-bullet-primary
@@ -92,15 +92,15 @@
     > .menu-link:not(.disabled):not(.active)
     .menu-bullet
     .bullet {
-    background-color: #639a56;
+    background-color: #0e4a84;
 }
 
 .menu-state-primary .menu-item .menu-link.active .menu-title {
-    color: #639a56;
+    color: #0e4a84;
 }
 
 .menu-state-bullet-primary .menu-item .menu-link.active .menu-bullet .bullet {
-    background-color: #639a56;
+    background-color: #0e4a84;
 }
 
 .btn-check:active + .btn.btn-primary,
@@ -166,7 +166,7 @@
 .nav-line-tabs .nav-item.show .nav-link {
     background-color: transparent;
     border: 0;
-    border-bottom: 1px solid #639a56;
+    border-bottom: 1px solid #0e4a84;
     transition: color 0.2s ease, background-color 0.2s ease;
 }
 

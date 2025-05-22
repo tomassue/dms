@@ -13,7 +13,7 @@
     <!--begin::Menu-->
     <div class="menu menu-sub menu-sub-dropdown menu-column w-350px w-lg-375px" data-kt-menu="true" wire:ignore.self>
         <!--begin::Heading-->
-        <div class="d-flex flex-column bgi-no-repeat rounded-top" style="background-color: #3e6135;">
+        <div class="d-flex flex-column bgi-no-repeat rounded-top" style="background-color: #0E4A84;">
             <!--begin::Title-->
             <h3 class="text-white fw-bold px-9 mt-10 mb-6">Notifications
                 <span class="fs-8 opacity-75 ps-3">{{ $notifications->count() }} reports</span>

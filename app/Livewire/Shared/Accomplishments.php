@@ -88,7 +88,7 @@ class Accomplishments extends Component
     #[On('clear-filter-data')]
     public function clear()
     {
-        $this->reset();
+        $this->resetExcept('start_date', 'end_date');
         $this->resetValidation();
     }
 
@@ -303,7 +303,7 @@ class Accomplishments extends Component
             $viewData['prepared_by'] = $preparedUser
                 ? $preparedUser->name
                 : '';
-            $viewData['prepared_by_position'] = $preparedUser->user_metadata->position->name ?? null;
+            $viewData['prepared_by_position'] = $preparedUser->user_metadata->position->name ?? 'Admin';
             $viewData['prepared_by_division'] = $preparedUser->user_metadata->division->name ?? null;
 
             // Get conforme user data

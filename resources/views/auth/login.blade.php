@@ -19,7 +19,7 @@
                     </div>
 
                     <div class="d-flex justify-content-between align-items-center w-100">
-                        <h1 class="text-center py-5 flex-grow-1 px-3" style="font-size: 2.8rem; color: #639a56;">
+                        <h1 class="text-center py-5 flex-grow-1 px-3" style="font-size: 2.8rem; color: #0E4A84;">
                             {{ __('DOCUMENT MANAGEMENT SYSTEM') }}
                         </h1>
                     </div>
