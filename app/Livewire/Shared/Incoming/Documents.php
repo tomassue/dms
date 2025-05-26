@@ -54,7 +54,7 @@ class Documents extends Component
             'date' => 'required|date'
         ];
 
-        if (auth()->user()->hasRole('APO')) {
+        if (auth()->user()->hasRole('APOO')) {
             $rules += [
                 'source' => 'required',
             ];
@@ -178,7 +178,7 @@ class Documents extends Component
             //* Hide it so that other divisions won't see it. Remarks inputted can only be seen inside activity log modal.
             //// $this->remarks = $incomingDocument->remarks;
 
-            if (auth()->user()->hasRole('APO')) {
+            if (auth()->user()->hasRole('APOO')) {
                 $this->source = $incomingDocument->apoDocument->source ?? '';
             }
 
@@ -277,7 +277,7 @@ class Documents extends Component
 
     protected function saveApoIncomingDocument($incomingDocument)
     {
-        if (!auth()->user()->hasRole('APO')) return; // Return if not APO
+        if (!auth()->user()->hasRole('APOO')) return; // Return if not APO
 
         return ApoIncomingDocument::updateOrCreate(
             ['incoming_document_id' => $incomingDocument->id], // Update if exists. Otherwise, create
