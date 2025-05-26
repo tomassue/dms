@@ -138,7 +138,7 @@
 
     <!-- Fixed Footer -->
     <div id="footer">
-        @role('APO')
+        @role('APOO')
         <span style="font-weight: bold;">Vision:</span> <span style="font-style: italic;">"A Leading Hub for Resilient Agri-Technology and Innovation for Fishery and Farm Product"</span> <br>
         <span style="font-weight: bold;">Mission:</span> <span style="font-style: italic;">"To enhance Agri-Productivity Towards Better Household Income"</span>
         @endrole
@@ -197,7 +197,7 @@
             @endforeach
         </table>
 
-        @role('APO')
+        @role('APOO')
         <table style="margin-top: 25px;">
             <tr style="font-weight: bold;">
                 <td>Prepared by:</td>

@@ -23,7 +23,7 @@
                                 <form wire:submit="saveAccomplishment">
                                     <div class="p-2">
                                         <div class="mb-10">
-                                            @role('APO')
+                                            @role('APOO')
                                             <div class="row g-5">
                                                 <div class="col-xs-12 col-sm-12 col-md-6 col-lg-12 col-xl-6">
                                                     <label class="form-label required">Start</label>
@@ -64,7 +64,7 @@
                                             @enderror
                                         </div>
 
-                                        @role('APO')
+                                        @role('APOO')
                                         <div class="mb-10">
                                             <label class="form-label required">Sub-category</label>
                                             <input type="text" class="form-control" wire:model="sub_category">
@@ -83,7 +83,7 @@
                                             @enderror
                                         </div>
 
-                                        @role('APO')
+                                        @role('APOO')
                                         <div class="mb-10">
                                             <label class="form-label">Next Steps</label>
                                             <!-- <input type="text" class="form-control" wire:model="next_steps"> -->
@@ -133,7 +133,7 @@
                                 <div class="d-flex align-items-center gap-2">
                                     <!-- begin::Generate PDF -->
                                     <button type="button" class="btn btn-icon btn-color-warning btn-light-warning" data-kt-menu-trigger="click" data-kt-menu-placement="bottom-end"
-                                        @role('APO')
+                                        @role('APOO')
                                         wire:click="$dispatch('show-accomplishment-signatories-modal')"
                                         @else
                                         wire:click="generatePDF"
@@ -185,7 +185,7 @@
                                             <th>Accomplishment Category</th>
                                             <th class="min-w-200px">Date</th>
                                             <th>Details</th>
-                                            @role('APO')
+                                            @role('APOO')
                                             <th>Next Steps</th>
                                             @endrole
                                             @can('accomplishments.update')
@@ -198,12 +198,12 @@
                                         <tr>
                                             <td>
                                                 {{ $item->accomplishment_category->name }}
-                                                @role('APO')
+                                                @role('APOO')
                                                 <span class="text-muted d-block">{{ $item->apo->sub_category }}</span>
                                                 @endrole
                                             </td>
                                             <td>
-                                                @role('APO')
+                                                @role('APOO')
                                                 {{ $item->apo->start_date_formatted . ' - ' . $item->apo->end_date_formatted }}
                                                 @else
                                                 {{ $item->formatted_date }}
@@ -212,7 +212,7 @@
                                             <td>
                                                 {{ $item->details }}
                                             </td>
-                                            @role('APO')
+                                            @role('APOO')
                                             <td>
                                                 {{ $item->apo->next_steps }}
                                             </td>
@@ -276,7 +276,7 @@
                 <div class="modal-body">
                     <form wire:submit="saveAccomplishment">
                         <div class="p-2">
-                            @role('APO')
+                            @role('APOO')
                             <div class="mb-10">
                                 <label class="form-label required">Start Date</label>
                                 <input type="date" class="form-control" wire:model="start_date">
@@ -314,7 +314,7 @@
                                 @enderror
                             </div>
 
-                            @role('APO')
+                            @role('APOO')
                             <div class="mb-10">
                                 <label class="form-label required">Sub-category</label>
                                 <input type="text" class="form-control" wire:model="sub_category">
@@ -333,7 +333,7 @@
                                 @enderror
                             </div>
 
-                            @role('APO')
+                            @role('APOO')
                             <div class="mb-10">
                                 <label class="form-label">Next Steps</label>
                                 <!-- <input type="text" class="form-control" wire:model="next_steps"> -->
@@ -361,7 +361,7 @@
         <!--end::Modal - Accomplishment-->
     </div>
 
-    @role('APO')
+    @role('APOO')
     <!--begin::Modal - Accomplishment Signatory-->
     <div class="modal fade" tabindex="-1" id="accomplishmentSignatoriesModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">

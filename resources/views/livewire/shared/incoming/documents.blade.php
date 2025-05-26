@@ -49,7 +49,7 @@
                                             <th>Info</th>
                                             <th>Date</th>
                                             <th>Status</th>
-                                            @role('APO')
+                                            @role('APOO')
                                             <th>Source</th>
                                             @endrole
                                             @can('incoming.documents.update')
@@ -95,7 +95,7 @@
                                                     {{ $item->status->name }}
                                                 </span>
                                             </td>
-                                            @role('APO')
+                                            @role('APOO')
                                             <td>
                                                 {{ $item->apoDocument->source ?? '' }}
                                             </td>
@@ -198,7 +198,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            @role('APO')
+                            @role('APOO')
                             <div class="mb-10">
                                 <label class="form-label required">Source</label>
                                 <input type="text" class="form-control" wire:model="source">
