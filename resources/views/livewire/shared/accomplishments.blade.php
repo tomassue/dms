@@ -204,7 +204,7 @@
                                             </td>
                                             <td>
                                                 @role('APOO')
-                                                {{ $item->apo->start_date_formatted . ' - ' . $item->apo->end_date_formatted }}
+                                                {{ $item->apo->start_date_formatted ?? '' . ' - ' . $item->apo->end_date_formatted ?? '' }}
                                                 @else
                                                 {{ $item->formatted_date }}
                                                 @endrole
