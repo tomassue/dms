@@ -199,7 +199,7 @@
                                             <td>
                                                 {{ $item->accomplishment_category->name }}
                                                 @role('APOO')
-                                                <span class="text-muted d-block">{{ $item->apo->sub_category }}</span>
+                                                <span class="text-muted d-block">{{ $item->apo->sub_category ?? '' }}</span>
                                                 @endrole
                                             </td>
                                             <td>
