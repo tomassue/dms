@@ -138,7 +138,7 @@
 
     <!-- Fixed Footer -->
     <div id="footer">
-        @role('APO')
+        @role('APOO')
         <span style="font-weight: bold;">Vision:</span> <span style="font-style: italic;">"A Leading Hub for Resilient Agri-Technology and Innovation for Fishery and Farm Product"</span> <br>
         <span style="font-weight: bold;">Mission:</span> <span style="font-style: italic;">"To enhance Agri-Productivity Towards Better Household Income"</span>
         @endrole
@@ -197,7 +197,7 @@
             @endforeach
         </table>
 
-        @role('APO')
+        @role('APOO')
         <table style="margin-top: 25px;">
             <tr style="font-weight: bold;">
                 <td>Prepared by:</td>
@@ -207,11 +207,11 @@
                 <td>Approved:</td>
             </tr>
             <tr>
-                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $prepared_by }}</td>
+                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $prepared_by ?? '' }}</td>
                 <td></td>
-                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $conforme }}</td>
+                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $conforme ?? '' }}</td>
                 <td></td>
-                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $approved }}</td>
+                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $approved ?? '' }}</td>
             </tr>
             <tr>
                 <td style="vertical-align: top; border-top: 1px solid black;">

@@ -59,7 +59,7 @@ class Accomplishments extends Component
 
     public function rules()
     {
-        if (auth()->user()->hasRole('APO')) {
+        if (auth()->user()->hasRole('APOO')) {
             $rules = [
                 'ref_accomplishment_category_id' => 'required|exists:ref_accomplishment_categories,id',
                 'details' => 'required',
@@ -228,7 +228,7 @@ class Accomplishments extends Component
 
     protected function saveApoAccomplishment($accomplishment)
     {
-        if (!auth()->user()->hasRole('APO')) return;
+        if (!auth()->user()->hasRole('APOO')) return;
 
         ApoAccomplishment::updateOrCreate(
             ['accomplishment_id' => $accomplishment->id],
@@ -251,7 +251,7 @@ class Accomplishments extends Component
             $this->date = optional($accomplishment->date)->format('Y-m-d');
             $this->details = $accomplishment->details;
 
-            if (auth()->user()->hasRole('APO') && $accomplishment->apo) {
+            if (auth()->user()->hasRole('APOO') && $accomplishment->apo) {
                 $this->sub_category = $accomplishment->apo->sub_category;
                 $this->start_date = optional($accomplishment->apo->start_date)->format('Y-m-d');
                 $this->end_date = optional($accomplishment->apo->end_date)->format('Y-m-d');
@@ -292,7 +292,7 @@ class Accomplishments extends Component
             'accomplishments' => $this->loadAccomplishments()
         ];
 
-        if (auth()->user()->hasRole('APO')) {
+        if (auth()->user()->hasRole('APOO')) {
             $this->validate([
                 'conforme' => 'required',
                 'approved' => 'required'
