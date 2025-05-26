@@ -207,11 +207,11 @@
                 <td>Approved:</td>
             </tr>
             <tr>
-                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $prepared_by }}</td>
+                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $prepared_by ?? '' }}</td>
                 <td></td>
-                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $conforme }}</td>
+                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $conforme ?? '' }}</td>
                 <td></td>
-                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $approved }}</td>
+                <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $approved ?? '' }}</td>
             </tr>
             <tr>
                 <td style="vertical-align: top; border-top: 1px solid black;">
