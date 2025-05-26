@@ -214,7 +214,7 @@
                                             </td>
                                             @role('APOO')
                                             <td>
-                                                {{ $item->apo->next_steps }}
+                                                {{ $item->apo->next_steps ?? '' }}
                                             </td>
                                             @endrole
                                             @can('accomplishments.update')
