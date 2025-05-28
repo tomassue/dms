@@ -3,17 +3,19 @@
 namespace App\Models;
 
 use App\Models\Scopes\IsForwardedFilterScope;
+use App\Models\Scopes\OfficeScope;
 use App\Models\Scopes\RoleBasedFilterScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-#[ScopedBy([RoleBasedFilterScope::class, IsForwardedFilterScope::class])]
+#[ScopedBy([OfficeScope::class, IsForwardedFilterScope::class])]
 class IncomingRequest extends Model
 {
     use SoftDeletes, LogsActivity;
@@ -30,7 +32,8 @@ class IncomingRequest extends Model
         'contact_person_number',
         'description',
         'ref_status_id',
-        'remarks'
+        'remarks',
+        'office_id'
     ];
 
     // Accessors
@@ -121,6 +124,12 @@ class IncomingRequest extends Model
         return LogOptions::defaults()
             ->useLogName('incoming_request')
             ->logOnly(['*'])
+            ->setDescriptionForEvent(function (string $eventName) {
+                $user = Auth::user();
+                $userName = $user ? $user->name : 'System';
+
+                return "{$userName} has {$eventName} an incoming request with a reference number of {$this->no}";
+            })
             ->logOnlyDirty();
     }
 

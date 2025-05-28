@@ -7,7 +7,7 @@
                 <!--begin::Row-->
                 <div class="row g-5 g-xl-8 col-xxl-8">
                     <!--begin::Mixed Widget 5-->
-                    <div class="card card-xxl-stretch">
+                    <div class="card card-xxl-stretch" wire:loading.class="opacity-50 pe-none" wire:target.except="saveIncomingDocument">
                         <!--begin::Header-->
                         <div class="card-header border-0 py-5">
                             <h3 class="card-title align-items-start flex-column">
@@ -41,7 +41,7 @@
                             </div>
                             <!-- end:search -->
 
-                            <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveIncomingDocument">
+                            <div class="table-responsive">
                                 <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                     <thead>
                                         <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
@@ -61,7 +61,7 @@
                                         @forelse($incoming_documents as $item)
                                         <tr>
                                             <td>
-                                                {{ $item->category->name }}
+                                                {{ $item->category->incoming_document_category_name }}
                                             </td>
                                             <td>
                                                 {{ $item->document_info }}
@@ -120,7 +120,7 @@
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="5" class="text-center">No records found.</td>
+                                            <td colspan="6" class="text-center">No records found.</td>
                                         </tr>
                                         @endforelse
                                     </tbody>
@@ -191,7 +191,7 @@
                                 <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_document_category_id">
                                     <option>-Select-</option>
                                     @foreach ($incoming_documents_categories as $item)
-                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    <option value="{{ $item->id }}">{{ $item->incoming_document_category_name }}</option>
                                     @endforeach
                                 </select>
                                 @error('ref_incoming_document_category_id')
@@ -228,6 +228,26 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <!-- begin::Alert -->
+                            <div class="alert alert-dismissible bg-light-danger border border-danger border-dashed d-flex flex-column flex-sm-row w-100 p-5 mb-10">
+                                <!--begin::Icon-->
+                                <!--begin::Svg Icon | path: icons/duotune/communication/com003.svg-->
+                                <span class="svg-icon svg-icon-2hx svg-icon-danger me-4 mb-5 mb-sm-0">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                        <path opacity="0.3" d="M2 4V16C2 16.6 2.4 17 3 17H13L16.6 20.6C17.1 21.1 18 20.8 18 20V17H21C21.6 17 22 16.6 22 16V4C22 3.4 21.6 3 21 3H3C2.4 3 2 3.4 2 4Z" fill="black"></path>
+                                        <path d="M18 9H6C5.4 9 5 8.6 5 8C5 7.4 5.4 7 6 7H18C18.6 7 19 7.4 19 8C19 8.6 18.6 9 18 9ZM16 12C16 11.4 15.6 11 15 11H6C5.4 11 5 11.4 5 12C5 12.6 5.4 13 6 13H15C15.6 13 16 12.6 16 12Z" fill="black"></path>
+                                    </svg>
+                                </span>
+                                <!--end::Svg Icon-->
+                                <!--end::Icon-->
+                                <!--begin::Content-->
+                                <div class="d-flex flex-column pe-0 pe-sm-10">
+                                    <h5 class="mb-1">Note:</h5>
+                                    <span>Please wait for the file to be <b>uploaded</b> before saving changes. Thank you.</span>
+                                </div>
+                                <!--end::Content-->
+                            </div>
+                            <!-- end::Alert -->
                             <div class="mb-10">
                                 <label class="form-label">File Upload</label>
                                 <div wire:ignore>

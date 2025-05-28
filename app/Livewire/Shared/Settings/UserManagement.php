@@ -36,9 +36,12 @@ class UserManagement extends Component
         $rules = [
             'name' => 'required|string',
             'username' => 'required|string|unique:users,username,' . $this->userId, // Exclude the current user's username
-            'email' => 'required|email|unique:users,email,' . $this->userId, // Exclude the current user's email
             'role_id' => 'required|exists:roles,id', // Ensure the role exists
         ];
+
+        if ($this->editMode) {
+            $rules['email'] = 'required|email|unique:users,email,' . $this->userId; // Exclude the current user's email
+        }
 
         return $rules;
     }
@@ -57,7 +60,6 @@ class UserManagement extends Component
 
         if ($property === 'role_id') {
             $this->reset('ref_division_id');
-            $this->loadDivisions();
         }
     }
 
@@ -83,6 +85,10 @@ class UserManagement extends Component
             ->paginate(10);
     }
 
+    /**
+     * Summary of loadRoles
+     * a.k.a Offices ^_^
+     */
     public function loadRoles()
     {
         return Role::whereNot('name', 'Super Admin')
@@ -91,11 +97,25 @@ class UserManagement extends Component
 
     public function loadDivisions()
     {
-        return RefDivision::query()
-            ->when($this->role_id, function ($query) {
-                $query->where('role_id', $this->role_id);
-            })
-            ->get();
+        //! when() does not work. it doesn't retrieve the selected options only the Ids 1 and 2. ???
+        // return RefDivision::when($this->role_id, function ($query) {
+        //     $query->where('office_id', $this->role_id); //* a.k.a role_id
+        // })
+        //     ->get()
+        //     ->map(function ($query) {
+        //         return [
+        //             'id' => $query->id,
+        //             'name' => $query->name
+        //         ];
+        //     });
+
+        return RefDivision::all()
+            ->map(function ($query) {
+                return [
+                    'id' => $query->id,
+                    'name' => $query->name
+                ];
+            });
     }
 
     public function loadPositions()
@@ -125,7 +145,7 @@ class UserManagement extends Component
                 $user = new User();
                 $user->name = $this->name;
                 $user->username = $this->username;
-                $user->email = $this->email;
+                $user->email = $this->username . '@email.com';
                 $user->password = Hash::make('password'); // Set a default password
                 $user->save();
 
@@ -154,16 +174,14 @@ class UserManagement extends Component
     {
         try {
             $user = User::findOrFail($userId);
-            $this->userId = $user->id;
             $this->name = $user->name;
             $this->username = $user->username;
             $this->email = $user->email;
-            $this->role_id = $user->roles->first()->id ?? ''; // Assuming the user has only one role
+            $this->role_id = $user->roles->first()->id; // Assuming the user has only one role
             $this->permissions = $user->getPermissionNames()->toArray(); // Get all permissions for the user
 
-            $user_metadata = UserMetadata::where('user_id', $userId)->first();
-            $this->ref_division_id = $user_metadata->ref_division_id ?? '';
-            $this->ref_position_id = $user_metadata->ref_position_id ?? '';
+            $this->ref_division_id = UserMetadata::where('user_id', $userId)->value('ref_division_id');
+            $this->ref_position_id = UserMetadata::where('user_id', $userId)->value('ref_position_id');
 
             $this->editMode = true;
             $this->userId = $userId;

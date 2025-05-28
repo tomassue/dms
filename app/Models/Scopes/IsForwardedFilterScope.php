@@ -24,13 +24,25 @@ class IsForwardedFilterScope implements Scope
             $userMetadata = $user->user_metadata;
 
             // If user has metadata with non-null division and position
-            if ($userMetadata && ($userMetadata->ref_division_id !== null || $userMetadata->ref_position_id !== null)) {
+            // if ($userMetadata && ($userMetadata->ref_division_id !== null || $userMetadata->ref_position_id !== null)) {
+            //     // Only show requests that have been forwarded
+            //     $builder->whereHas('forwards', function ($query) use ($user) {
+            //         $query->where('ref_division_id', $user->user_metadata->ref_division_id);
+            //     });
+            // }
+            // Else (NULL metadata): show everything (no additional constraints)
+
+            /**
+             * We changed the logic because of past revisions in database structure.
+             * The logic about forwarded documents is still here but we will be determining office admins based on user metadata.
+             * If the user is not an office admin, then only show requests that have been forwarded.
+             */
+            if ($userMetadata && $userMetadata->is_office_admin !== '1') {
                 // Only show requests that have been forwarded
                 $builder->whereHas('forwards', function ($query) use ($user) {
                     $query->where('ref_division_id', $user->user_metadata->ref_division_id);
                 });
             }
-            // Else (NULL metadata): show everything (no additional constraints)
         }
     }
 }

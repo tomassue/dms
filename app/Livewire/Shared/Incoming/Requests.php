@@ -149,12 +149,13 @@ class Requests extends Component
 
     public function loadStatus()
     {
-        return RefStatus::all();
+        return RefStatus::incoming()
+            ->get();
     }
 
     public function loadDivisions()
     {
-        return RefDivision::where('role_id', auth()->user()->roles()->first()->id)
+        return RefDivision::where('office_id', auth()->user()->roles()->first()->id)
             ->get()
             ->map(function ($division) {
                 return [
@@ -182,7 +183,8 @@ class Requests extends Component
                         'contact_person_number' => $this->contact_person_number,
                         'description' => $this->description,
                         'ref_status_id' => $this->ref_status_id ?? '1', //! Default value set in the database is not working. - Set to pending.
-                        'remarks' => $this->remarks
+                        'remarks' => $this->remarks,
+                        'office_id' => auth()->user()->roles()->first()->id
                     ]
                 );
 
@@ -313,27 +315,43 @@ class Requests extends Component
     public function activityLog($id)
     {
         try {
-            // Shows activity log
-            $this->activity_log = Activity::where('subject_type', IncomingRequest::class)
+            // Step 1: Get all file IDs related to this IncomingRequest
+            $fileIds = File::where('fileable_type', IncomingRequest::class)
+                ->where('fileable_id', $id)
+                ->pluck('id');
+
+            // Step 2: Fetch IncomingRequest activity
+            $incomingRequestLogs = Activity::where('subject_type', IncomingRequest::class)
                 ->where('log_name', 'incoming_request')
                 ->whereNot('event', 'created')
                 ->where('subject_id', $id)
-                ->with(['causer.user_metadata.division']) // ✅ Eager-load nested relations
-                ->latest()
-                ->get()
+                ->with(['causer.user_metadata.division'])
+                ->get();
+
+            // Step 3: Fetch File activity logs
+            $fileLogs = Activity::where('subject_type', File::class)
+                ->whereIn('subject_id', $fileIds)
+                ->with(['causer.user_metadata.division'])
+                ->get();
+
+            // Step 4: Combine and sort by created_at DESC
+            $this->activity_log = $incomingRequestLogs->merge($fileLogs)
+                ->sortByDesc('created_at')
+                ->values()
                 ->map(function ($activity) {
                     return [
                         'id' => $activity->id,
-                        'description' => $activity->description,
+                        'file_log_description' => $activity->description, // File activity log
                         'causer' => $activity->causer?->name ?? 'System',
-                        'division' => $activity->causer?->user_metadata?->division?->name ? '[' . $activity->causer?->user_metadata?->division?->name . ']' : '', // ✅ Access nested data
+                        'division' => $activity->causer?->user_metadata?->division?->name
+                            ? '[' . $activity->causer->user_metadata->division->name . ']'
+                            : '',
                         'created_at' => Carbon::parse($activity->created_at)->format('M d, Y h:i A'),
                         'changes' => collect($activity->properties['attributes'] ?? [])
-                            ->except(['id', 'created_at', 'updated_at', 'deleted_at']) // Exclude
+                            ->except(['id', 'created_at', 'updated_at', 'deleted_at'])
                             ->map(function ($newValue, $key) use ($activity) {
                                 $oldValue = $activity->properties['old'][$key] ?? 'N/A';
 
-                                // Custom field name mapping
                                 $fieldName = match ($key) {
                                     'file_id' => 'Files',
                                     'ref_status_id' => 'Status',
@@ -341,12 +359,9 @@ class Requests extends Component
                                     'office_barangay_organization' => 'Office/Brgy/Org',
                                     'ref_division_id' => 'Division',
                                     'is_opened' => 'Opened',
-                                    // Add other field mappings here as needed
-                                    // 'another_field' => 'Friendly Name',
                                     default => ucfirst(str_replace('_', ' ', $key))
                                 };
 
-                                // Format date fields
                                 if (in_array($key, ['date_requested', 'deleted_at'])) {
                                     $oldValue = $oldValue !== 'N/A' ? Carbon::parse($oldValue)->format('M d, Y') : 'N/A';
                                     $newValue = $newValue !== 'N/A' ? Carbon::parse($newValue)->format('M d, Y') : 'N/A';
@@ -357,10 +372,9 @@ class Requests extends Component
                                     $newValue = $newValue !== 'N/A' ? Carbon::parse($newValue)->format('M d, Y h:i A') : 'N/A';
                                 }
 
-                                // Replace foreign keys with related names
                                 if ($key === 'ref_incoming_request_category_id') {
-                                    $oldValue = $oldValue !== 'N/A' ? RefIncomingRequestCategory::find($oldValue)?->name : 'N/A';
-                                    $newValue = $newValue !== 'N/A' ? RefIncomingRequestCategory::find($newValue)?->name : 'N/A';
+                                    $oldValue = $oldValue !== 'N/A' ? RefIncomingRequestCategory::find($oldValue)?->incoming_request_category_name : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? RefIncomingRequestCategory::find($newValue)?->incoming_request_category_name : 'N/A';
                                 }
 
                                 if ($key === "ref_status_id") {
@@ -373,15 +387,12 @@ class Requests extends Component
                                     $newValue = $newValue !== 'N/A' ? RefDivision::find($newValue)?->name : 'N/A';
                                 }
 
-                                // Replace boolean values with "Yes" or "No"
                                 if ($key === "is_opened") {
-                                    $oldValue = $oldValue !== 'N/A' ? $oldValue ? 'Yes' : 'No' : 'N/A';
-                                    $newValue = $newValue !== 'N/A' ? $newValue ? 'Yes' : 'No' : 'N/A';
+                                    $oldValue = $oldValue !== 'N/A' ? ($oldValue ? 'Yes' : 'No') : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? ($newValue ? 'Yes' : 'No') : 'N/A';
                                 }
 
-                                // Convert array values to a string (e.g., file IDs to filenames)
                                 if ($key === 'file_id') {
-                                    // Ensure values are decoded from JSON if stored as a string
                                     $oldValue = is_string($oldValue) ? json_decode($oldValue, true) : $oldValue;
                                     $newValue = is_string($newValue) ? json_decode($newValue, true) : $newValue;
 
@@ -397,7 +408,7 @@ class Requests extends Component
                                 }
 
                                 return [
-                                    'field' => $fieldName, // Format key
+                                    'field' => $fieldName,
                                     'old' => $oldValue,
                                     'new' => $newValue,
                                 ];
@@ -407,17 +418,15 @@ class Requests extends Component
                     ];
                 });
 
-            // 2. Get Forward records (only ref_division_id)
+            // Forwarded division logs (no change)
             $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingRequest::class)
                 ->where('forwardable_id', $id)
-                ->with(['division']) // Assuming 'division' is a relationship
+                ->with(['division'])
                 ->latest()
                 ->get()
-                ->map(function ($forward) {
-                    return [
-                        'division_name' => $forward->division?->name ?? 'N/A',
-                    ];
-                });
+                ->map(fn($forward) => [
+                    'division_name' => $forward->division?->name ?? 'N/A',
+                ]);
 
             $this->dispatch('show-activity-log-modal');
         } catch (\Throwable $th) {

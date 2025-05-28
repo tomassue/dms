@@ -6,7 +6,7 @@
             <!--begin::Row-->
             <div class="row g-5 g-xl-12">
                 <!--begin::Mixed Widget 5-->
-                <div class="card card-xxl-stretch">
+                <div class="card card-xxl-stretch" wire:loading.class="opacity-25 pe-none" wire:target.except="createUser, updateUser">
                     <!--begin::Beader-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
@@ -67,11 +67,25 @@
                                             <div class="btn-group" role="group" aria-label="Actions">
                                                 @can('reference.userManagement.update')
                                                 <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
-                                                    <i class="bi bi-pencil"></i>
+                                                    <div wire:loading.remove wire:target="editUser({{ $item->id }})">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </div>
+                                                    <div wire:loading wire:target="editUser({{ $item->id }})">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
                                                 </a>
 
                                                 <a href="#" class="btn btn-icon btn-sm btn-warning" title="Reset Password" wire:click="resetPasswordUser({{ $item->id }})">
-                                                    <i class="bi bi-key"></i>
+                                                    <div wire:loading.remove wire:target="resetPasswordUser({{ $item->id }})">
+                                                        <i class="bi bi-key"></i>
+                                                    </div>
+                                                    <div wire:loading wire:target="resetPasswordUser({{ $item->id }})">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
                                                 </a>
 
                                                 <a
@@ -79,7 +93,14 @@
                                                     class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
                                                     title="Delete"
                                                     wire:click="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
-                                                    <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                                    <div wire:loading.remove wire:target="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
+                                                        <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                                    </div>
+                                                    <div wire:loading wire:target="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
                                                 </a>
                                                 @endcan
                                             </div>
@@ -139,7 +160,7 @@
                 <div class="modal-body">
                     <form wire:submit="{{ $editMode ? 'updateUser' : 'createUser' }}">
                         <div class="p-2">
-                            <div class="mb-10">
+                            <div class="mb-10" style="display: {{ $editMode ? '' : 'none' }};">
                                 <label class="form-label required">Email</label>
                                 <input type="email" class="form-control" wire:model="email">
                                 @error('email')
@@ -200,27 +221,16 @@
                             <div class="mb-10">
                                 <label class="form-label">Division / Title</label>
                                 <select class="form-select" aria-label="Select example" wire:model="ref_division_id">
-                                    <option value="">-Select a division-</option>
+                                    <option>-Select a division-</option>
                                     @foreach ($divisions as $item)
-                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    <option value="{{ $item['id'] }}">{{ $item['name'] }}</option>
                                     @endforeach
                                 </select>
                                 @error('ref_division_id')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            <div class="mb-10">
-                                <label class="form-label">Position</label>
-                                <select class="form-select" aria-label="Select example" wire:model="ref_position_id">
-                                    <option value="">-Select a position-</option>
-                                    @foreach ($positions as $item)
-                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('ref_position_id')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
+
                             <div class="mb-10">
                                 <label class="form-label required">Permissions</label>
                                 <br>
@@ -347,75 +357,6 @@
                                         <div class="form-check form-check-custom form-check-solid">
                                             <input class="form-check-input" type="checkbox" value="calendar.read" id="calendarRead" wire:model="permissions" />
                                             <label class="form-check-label" for="calendarRead"> Read </label>
-                                        </div>
-                                    </div>
-
-                                    <!-- Accomplishments -->
-                                    <li class="d-flex align-items-center py-2">
-                                        <span class="bullet me-5"></span> Accomplishments
-                                    </li>
-                                    <div class="row py-2 ms-8">
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="accomplishments.create" id="accomplishmentsCreate" wire:model="permissions" />
-                                            <label class="form-check-label" for="accomplishmentsCreate"> Create </label>
-                                        </div>
-                                    </div>
-                                    <div class="row py-2 ms-8">
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="accomplishments.read" id="accomplishmentsRead" wire:model="permissions" />
-                                            <label class="form-check-label" for="accomplishmentsRead"> Read </label>
-                                        </div>
-                                    </div>
-                                    <div class="row py-2 ms-8">
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="accomplishments.update" id="accomplishmentsUpdate" wire:model="permissions" />
-                                            <label class="form-check-label" for="accomplishmentsUpdate"> Update </label>
-                                        </div>
-                                    </div>
-
-                                    <!-- Meeting -->
-                                    <li class="d-flex align-items-center py-2">
-                                        <span class="bullet me-5"></span> Meetings
-                                    </li>
-                                    <div class="row py-2 ms-8">
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="meeting.create" id="meetingCreate" wire:model="permissions" />
-                                            <label class="form-check-label" for="meetingCreate"> Create </label>
-                                        </div>
-                                    </div>
-                                    <div class="row py-2 ms-8">
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="meeting.read" id="meetingRead" wire:model="permissions" />
-                                            <label class="form-check-label" for="meetingRead"> Read </label>
-                                        </div>
-                                    </div>
-                                    <div class="row py-2 ms-8">
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="meeting.update" id="meetingUpdate" wire:model="permissions" />
-                                            <label class="form-check-label" for="meetingUpdate"> Update </label>
-                                        </div>
-                                    </div>
-
-                                    <!-- Minutes of Meeting -->
-                                    <li class="d-flex align-items-center py-2 ms-8">
-                                        <span class="bullet me-5"></span> Min. of Meeting
-                                    </li>
-                                    <div class="row py-2 ms-16">
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="minutesOfMeeting.create" id="minutesOfMeetingCreate" wire:model="permissions" />
-                                            <label class="form-check-label" for="minutesOfMeetingCreate"> Create </label>
-                                        </div>
-                                    </div>
-                                    <div class="row py-2 ms-16">
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="minutesOfMeeting.read" id="minutesOfMeetingRead" wire:model="permissions" />
-                                            <label class="form-check-label" for="minutesOfMeetingRead"> Read </label>
-                                        </div>
-                                    </div>
-                                    <div class="row py-2 ms-16">
-                                        <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="minutesOfMeeting.update" id="minutesOfMeetingUpdate" wire:model="permissions" />
-                                            <label class="form-check-label" for="minutesOfMeetingUpdate"> Update </label>
                                         </div>
                                     </div>
 
@@ -585,6 +526,90 @@
                                         </div>
                                     </div>
 
+                                    @php
+                                    $roleName = null; // Ensure it's defined
+
+                                    if ($editMode && $userId) {
+                                    $user = App\Models\User::find($userId); // Avoid findOrFail to prevent crashing
+                                    $roleName = $user?->roles->pluck('name')->first(); // Use null-safe operator
+                                    }
+                                    @endphp
+                                    <div style="display: {{ $roleName == 'APOO' ? '' : 'none' }};">
+                                        <div class="separator my-10">APOO</div>
+
+                                        <!-- Accomplishments -->
+                                        <li class="d-flex align-items-center py-2">
+                                            <span class="bullet me-5"></span> Accomplishments
+                                        </li>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="accomplishments.create" id="accomplishmentsCreate" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentsCreate"> Create </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="accomplishments.read" id="accomplishmentsRead" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentsRead"> Read </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="accomplishments.update" id="accomplishmentsUpdate" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentsUpdate"> Update </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Meeting -->
+                                        <li class="d-flex align-items-center py-2">
+                                            <span class="bullet me-5"></span> Meetings
+                                        </li>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="meeting.create" id="meetingCreate" wire:model="permissions" />
+                                                <label class="form-check-label" for="meetingCreate"> Create </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="meeting.read" id="meetingRead" wire:model="permissions" />
+                                                <label class="form-check-label" for="meetingRead"> Read </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="meeting.update" id="meetingUpdate" wire:model="permissions" />
+                                                <label class="form-check-label" for="meetingUpdate"> Update </label>
+                                            </div>
+                                        </div>
+
+                                        <!-- Minutes of Meeting -->
+                                        <li class="d-flex align-items-center py-2 ms-8">
+                                            <span class="bullet me-5"></span> Min. of Meeting
+                                        </li>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="minutesOfMeeting.create" id="minutesOfMeetingCreate" wire:model="permissions" />
+                                                <label class="form-check-label" for="minutesOfMeetingCreate"> Create </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="minutesOfMeeting.read" id="minutesOfMeetingRead" wire:model="permissions" />
+                                                <label class="form-check-label" for="minutesOfMeetingRead"> Read </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="minutesOfMeeting.update" id="minutesOfMeetingUpdate" wire:model="permissions" />
+                                                <label class="form-check-label" for="minutesOfMeetingUpdate"> Update </label>
+                                            </div>
+                                        </div>
+
+                                        <div class="separator my-10">APOO</div>
+
+                                    </div>
+
                                     <!-- Continue with other sections using the same pattern -->
                                 </div>
                             </div>
@@ -592,8 +617,19 @@
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                    <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">
+                        Close
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <div wire:loading.remove wire:target="{{ $editMode ? 'updateUser' : 'createUser' }}">
+                            {{ $editMode ? 'Update' : 'Create' }}
+                        </div>
+                        <div wire:loading wire:target="{{ $editMode ? 'updateUser' : 'createUser' }}">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </button>
                     </form>
                 </div>
             </div>

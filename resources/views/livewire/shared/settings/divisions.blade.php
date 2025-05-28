@@ -117,13 +117,13 @@
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label required">Role</label>
-                                <select class="form-select" aria-label="Select example" wire:model="role_id">
+                                <select class="form-select" aria-label="Select example" wire:model="office_id">
                                     <option>-Select an office-</option>
                                     @foreach ($roles as $item)
                                     <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
-                                @error('team_id')
+                                @error('office_id')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>

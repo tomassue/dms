@@ -23,17 +23,23 @@
                                 <td>{{ $history['causer'] . ' ' . $history['division'] }}</td>
                                 <td>
                                     <ul class="list-unstyled mb-0">
+                                        @if ($history['changes'])
                                         @foreach ($history['changes'] as $change)
                                         <li>
                                             <strong>{{ $change['field'] }}:</strong>
                                             <!-- Removed the $change['old'] ➡ -->
-                                            <span class="text-success">{{ $change['new'] }}</span>
+                                            <span class="text-info">{{ $change['new'] }}</span>
                                             @if($change['new'] == 'forwarded')
                                             ➡
-                                            {{ implode(', ', array_column($forwarded_divisions->toArray(), 'division_name')) }}
+                                            <span class="text-warning">
+                                                {{ implode(', ', array_column($forwarded_divisions->toArray(), 'division_name')) }}
+                                            </span>
                                             @endif
                                         </li>
                                         @endforeach
+                                        @elseif($history['file_log_description'])
+                                        {{ $history['file_log_description'] }}
+                                        @endif
                                     </ul>
                                 </td>
                             </tr>
