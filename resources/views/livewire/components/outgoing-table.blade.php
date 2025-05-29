@@ -119,9 +119,28 @@
                             </td>
                             @can('outgoing.update')
                             <td class="text-center" wire:loading.class="pe-none">
-                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})" {{ $item->completed() ? 'disabled' : '' }}>
-                                    <i class="bi bi-pencil"></i>
-                                </button>
+                                <div class="btn-group" role="group" aria-label="Actions">
+                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})" {{ $item->completed() ? 'disabled' : '' }}>
+                                        <div wire:loading.remove wire:target="editOutgoing({{ $item->id }})">
+                                            <i class="bi bi-pencil"></i>
+                                        </div>
+                                        <div wire:loading wire:target="editOutgoing({{ $item->id }})">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})">
+                                        <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
+                                            <i class="bi bi-clock-history"></i>
+                                        </div>
+                                        <div wire:loading wire:target="activityLog({{ $item->id }})">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
                             </td>
                             @endcan
                         </tr>
@@ -150,6 +169,8 @@
         <!--end::Body-->
     </div>
     <!--end::Mixed Widget 5-->
+
+    @include('livewire.shared.modals.activity-log-modal')
 
     <!--begin::Modal - Outgoing-->
     <div class="modal fade" tabindex="-1" id="outgoingModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>

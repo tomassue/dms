@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\DivisionScope;
+use App\Models\Scopes\OfficeScope;
 use App\Models\Scopes\RoleAndDivisionBasedScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
@@ -10,8 +12,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Models\Activity;
 use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Permission\Models\Role;
 
-#[ScopedBy([RoleAndDivisionBasedScope::class])]
+#[ScopedBy([OfficeScope::class, DivisionScope::class])]
 class Outgoing extends Model
 {
     use SoftDeletes, LogsActivity;
@@ -25,6 +28,8 @@ class Outgoing extends Model
         'ref_status_id',
         'outgoingable_type',
         'outgoingable_id',
+        'office_id',
+        'ref_division_id'
     ];
 
     // Local Scope

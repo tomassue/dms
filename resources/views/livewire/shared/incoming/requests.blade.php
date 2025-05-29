@@ -102,7 +102,14 @@
                                                     <div class="btn-group" role="group" aria-label="Actions">
                                                         @can('incoming.requests.update')
                                                         <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})" {{ ($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '' }}>
-                                                            <i class="bi bi-pencil"></i>
+                                                            <div wire:loading.remove wire:target="editIncomingRequest({{ $item->id }})">
+                                                                <i class="bi bi-pencil"></i>
+                                                            </div>
+                                                            <div wire:loading wire:target="editIncomingRequest({{ $item->id }})">
+                                                                <div class="spinner-border spinner-border-sm" role="status">
+                                                                    <span class="visually-hidden">Loading...</span>
+                                                                </div>
+                                                            </div>
                                                         </button>
                                                         @endcan
                                                         @can('incoming.requests.forward')
@@ -111,7 +118,14 @@
                                                         </button>
                                                         @endcan
                                                         <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})">
-                                                            <i class="bi bi-clock-history"></i>
+                                                            <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
+                                                                <i class="bi bi-clock-history"></i>
+                                                            </div>
+                                                            <div wire:loading wire:target="activityLog({{ $item->id }})">
+                                                                <div class="spinner-border spinner-border-sm" role="status">
+                                                                    <span class="visually-hidden">Loading...</span>
+                                                                </div>
+                                                            </div>
                                                         </button>
                                                     </div>
                                                 </td>
@@ -194,21 +208,21 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Office/Brgy/Org</label>
-                                <input type="text" class="form-control" wire:model="office_barangay_organization">
+                                <input type="text" class="form-control" wire:model="office_barangay_organization" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('office_barangay_organization')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Date Requested</label>
-                                <input type="date" class="form-control" wire:model="date_requested">
+                                <input type="date" class="form-control" wire:model="date_requested" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('date_requested')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Category</label>
-                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_request_category_id">
+                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_request_category_id" {{ $is_office_admin ? '' : 'disabled' }}>
                                     <option>-Select-</option>
                                     @foreach ($incoming_request_categories as $item)
                                     <option value="{{ $item->id }}">{{ $item->incoming_request_category_name }}</option>
@@ -220,14 +234,14 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Date and Time</label>
-                                <input type="datetime-local" class="form-control" wire:model="date_time">
+                                <input type="datetime-local" class="form-control" wire:model="date_time" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('date_time')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Contact Person (Name)</label>
-                                <input type="text" class="form-control" wire:model="contact_person_name">
+                                <input type="text" class="form-control" wire:model="contact_person_name" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('contact_person_name')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -237,14 +251,15 @@
                                 <input type="text" class="form-control" wire:model="contact_person_number"
                                     maxlength="11"
                                     oninput="this.value = '09' + this.value.slice(2).replace(/\D/g, '');"
-                                    placeholder="09XXXXXXXXX">
+                                    placeholder="09XXXXXXXXX"
+                                    {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('contact_person_number')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Description</label>
-                                <textarea class="form-control" wire:model="description"></textarea>
+                                <textarea class="form-control" wire:model="description" {{ $is_office_admin ? '' : 'disabled' }}></textarea>
                                 @error('description')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror

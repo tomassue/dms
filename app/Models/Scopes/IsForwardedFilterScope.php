@@ -33,7 +33,7 @@ class IsForwardedFilterScope implements Scope
             // Else (NULL metadata): show everything (no additional constraints)
 
             /**
-             * We changed the logic because of past revisions in database structure.
+             * * We changed the logic because of past revisions in database structure.
              * The logic about forwarded documents is still here but we will be determining office admins based on user metadata.
              * If the user is not an office admin, then only show requests that have been forwarded.
              */

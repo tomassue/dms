@@ -491,8 +491,8 @@ class Documents extends Component
 
                                 // Replace foreign keys with related names
                                 if ($key === 'ref_incoming_document_category_id') {
-                                    $oldValue = $oldValue !== 'N/A' ? RefIncomingDocumentCategory::find($oldValue)?->name : 'N/A';
-                                    $newValue = $newValue !== 'N/A' ? RefIncomingDocumentCategory::find($newValue)?->name : 'N/A';
+                                    $oldValue = $oldValue !== 'N/A' ? RefIncomingDocumentCategory::find($oldValue)?->incoming_document_category_name : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? RefIncomingDocumentCategory::find($newValue)?->incoming_document_category_name : 'N/A';
                                 }
 
                                 if ($key === "ref_status_id") {

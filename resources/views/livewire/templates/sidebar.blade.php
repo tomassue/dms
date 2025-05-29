@@ -59,7 +59,7 @@
 
                         @can('incoming.documents.read')
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'incoming.documents' ? 'active' : '' }}" href="{{ route('incoming-documents') }}">
+                            <a class="menu-link {{ Route::currentRouteName() == 'incoming-documents' ? 'active' : '' }}" href="{{ route('incoming-documents') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>

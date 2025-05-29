@@ -104,7 +104,14 @@
                                                 <div class="btn-group" role="group" aria-label="Actions">
                                                     @can('incoming.documents.update')
                                                     <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})" {{ ($item->isCompleted() || $item->isCancelled()) ? 'disabled' : '' }}>
-                                                        <i class="bi bi-pencil"></i>
+                                                        <div wire:loading.remove wire:target="editIncomingDocument({{ $item->id }})">
+                                                            <i class="bi bi-pencil"></i>
+                                                        </div>
+                                                        <div wire:loading wire:target="editIncomingDocument({{ $item->id }})">
+                                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                                <span class="visually-hidden">Loading...</span>
+                                                            </div>
+                                                        </div>
                                                     </button>
                                                     @endcan
                                                     @can('incoming.documents.forward')
@@ -113,7 +120,14 @@
                                                     </button>
                                                     @endcan
                                                     <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})">
-                                                        <i class="bi bi-clock-history"></i>
+                                                        <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
+                                                            <i class="bi bi-clock-history"></i>
+                                                        </div>
+                                                        <div wire:loading wire:target="activityLog({{ $item->id }})">
+                                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                                <span class="visually-hidden">Loading...</span>
+                                                            </div>
+                                                        </div>
                                                     </button>
                                                 </div>
                                             </td>
@@ -188,7 +202,7 @@
                             @endcan
                             <div class="mb-10">
                                 <label class="form-label required">Document Category</label>
-                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_document_category_id">
+                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_document_category_id" {{ $is_office_admin ? '' : 'disabled' }}>
                                     <option>-Select-</option>
                                     @foreach ($incoming_documents_categories as $item)
                                     <option value="{{ $item->id }}">{{ $item->incoming_document_category_name }}</option>
@@ -201,7 +215,7 @@
                             @role('APOO')
                             <div class="mb-10">
                                 <label class="form-label required">Source</label>
-                                <input type="text" class="form-control" wire:model="source">
+                                <input type="text" class="form-control" wire:model="source" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('source')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -209,14 +223,14 @@
                             @endrole
                             <div class="mb-10">
                                 <label class="form-label required">Document Info</label>
-                                <textarea class="form-control" wire:model="document_info"></textarea>
+                                <textarea class="form-control" wire:model="document_info" {{ $is_office_admin ? '' : 'disabled' }}></textarea>
                                 @error('document_info')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Date</label>
-                                <input type="date" class="form-control" wire:model="date">
+                                <input type="date" class="form-control" wire:model="date" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('date')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
