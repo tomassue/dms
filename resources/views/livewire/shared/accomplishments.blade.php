@@ -300,13 +300,12 @@
                                 @enderror
                             </div>
                             @endrole
-
                             <div class="mb-10">
                                 <label class="form-label required">Accomplishment Category</label>
                                 <select class="form-select" aria-label="Select example" wire:model="ref_accomplishment_category_id">
                                     <option>Open this select menu</option>
                                     @foreach ($accomplishment_categories as $item)
-                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    <option value="{{ $item->id }}">{{ $item->accomplishment_category_name }}</option>
                                     @endforeach
                                 </select>
                                 @error('ref_accomplishment_category_id')

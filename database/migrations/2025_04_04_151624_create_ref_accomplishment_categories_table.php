@@ -14,8 +14,8 @@ return new class extends Migration
     {
         Schema::create('ref_accomplishment_categories', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(Role::class); //* Creator of accomplishment category. If the superadmin, it can be selected which role it will be associated with.
-            $table->string('name');
+            $table->string('accomplishment_category_name');
+            $table->foreignId('office_id')->comment('a.k.a role_id from roles or offices');
             $table->softDeletes();
             $table->timestamps();
         });

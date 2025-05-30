@@ -58,7 +58,7 @@
                                         </thead>
                                         <tbody>
                                             @forelse($incoming_requests as $item)
-                                            <tr>
+                                            <tr wire:click="viewIncomingRequest({{ $item->id }})" class="cursor-pointer">
                                                 <td>
                                                     {{ $item->no }}
                                                 </td>
@@ -101,7 +101,7 @@
                                                 <td class="text-center" wire:loading.class="pe-none">
                                                     <div class="btn-group" role="group" aria-label="Actions">
                                                         @can('incoming.requests.update')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})" {{ ($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '' }}>
+                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})" @click.stop {{ ($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '' }}>
                                                             <div wire:loading.remove wire:target="editIncomingRequest({{ $item->id }})">
                                                                 <i class="bi bi-pencil"></i>
                                                             </div>
@@ -113,11 +113,11 @@
                                                         </button>
                                                         @endcan
                                                         @can('incoming.requests.forward')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" {{ ($item->IsForwarded() || $item->IsCancelled() || $item->IsCompleted()) ? 'disabled' : '' }}>
+                                                        <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" @click.stop {{ ($item->IsForwarded() || $item->IsCancelled() || $item->IsCompleted()) ? 'disabled' : '' }}>
                                                             <i class="bi bi-arrow-up-square"></i>
                                                         </button>
                                                         @endcan
-                                                        <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})">
+                                                        <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
                                                             <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
                                                                 <i class="bi bi-clock-history"></i>
                                                             </div>
@@ -347,6 +347,118 @@
         </div>
     </div>
     <!--end::Modal - Incoming Requests-->
+
+    <!-- detailsModal -->
+    <div class="modal fade" id="detailsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="detailsModalLabel">Details</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" wire:click="clear"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-5 fw-bold">Status:</div>
+                            <div class="col-7">
+                                <span class="badge 
+                                @switch(strtolower($ref_status_id ?? '-'))
+                                    @case('pending')
+                                        badge-light-danger
+                                        @break
+                                    @case('processed')
+                                        badge-light-primary
+                                        @break
+                                    @case('forwarded')
+                                        badge-light-warning
+                                        @break
+                                    @case('completed')
+                                        badge-light-success
+                                        @break
+                                    @case('cancelled')
+                                        badge-light-dark
+                                        @break
+                                    @default
+                                        badge-light-dark
+                                @endswitch
+                                text-capitalize">
+                                    {{ $ref_status_id ?? '-' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Forwarded to:</div>
+                            <div class="col-7">
+                                @foreach($forwarded_divisions as $item)
+                                {{ $item['division_name'] }}@if(!$loop->last), @endif
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">No.:</div>
+                            <div class="col-7">{{ $no ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Office/Brgy/Org:</div>
+                            <div class="col-7">{{ $office_barangay_organization ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Date requested:</div>
+                            <div class="col-7">{{ $date_requested ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Category:</div>
+                            <div class="col-7">{{ $ref_incoming_request_category_id ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Date and Time:</div>
+                            <div class="col-7">{{ $date_time ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Contact person name:</div>
+                            <div class="col-7">{{ $contact_person_name ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Contact person number:</div>
+                            <div class="col-7">{{ $contact_person_number ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Description:</div>
+                            <div class="col-7">{{ $description ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Remarks:</div>
+                            <div class="col-7">{{ $remarks ?? '-' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h5>Files</h5>
+                        <div class="row">
+                            @forelse ($preview_file as $file)
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-file-earmark-text me-2"></i> {{ $file->name }}
+                                        </h6>
+                                        <p class="card-text text-muted">{{ $file->type }}</p>
+                                        <a href="#" wire:click="viewFile({{ $file->id }})" class="btn btn-primary btn-sm">Preview</a>
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <p class="text-muted">No files available.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @script
@@ -357,6 +469,10 @@
 
     $wire.on('show-incoming-request-modal', () => {
         $('#incomingRequestModal').modal('show');
+    });
+
+    $wire.on('show-details-modal', () => {
+        $('#detailsModal').modal('show');
     });
 
     /* -------------------------------------------------------------------------- */

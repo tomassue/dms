@@ -16,7 +16,7 @@ class DivisionScope implements Scope
     {
         if (Auth::check()) {
             $user = Auth::user();
-            $user_division = Auth::user()->user_metadata->ref_division_id;
+            $user_division = Auth::user()->user_metadata?->ref_division_id;
 
             if ($user->hasRole('Super Admin')) {
                 return;

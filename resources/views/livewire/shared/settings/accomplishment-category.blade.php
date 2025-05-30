@@ -6,7 +6,7 @@
             <!--begin::Row-->
             <div class="row g-5 g-xl-12">
                 <!--begin::Mixed Widget 5-->
-                <div class="card card-xxl-stretch">
+                <div class="card card-xxl-stretch" wire:loading.class="opacity-50 pe-none">
                     <!--begin::Beader-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
@@ -37,6 +37,9 @@
                             <table class="table align-middle table-hover table-rounded table-striped border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                        @role('Super Admin')
+                                        <th>Office</th>
+                                        @endrole
                                         <th>Name</th>
                                         <th>Status</th>
                                         @can('reference.accomplishmentCategory.update')
@@ -47,7 +50,10 @@
                                 <tbody>
                                     @forelse($accomplishment_categories as $item)
                                     <tr>
-                                        <td>{{ $item->name }}</td>
+                                        @role('Super Admin')
+                                        <td>{{ $item->office->name ?? 'System' }}</td>
+                                        @endrole
+                                        <td>{{ $item->accomplishment_category_name }}</td>
                                         <td>
                                             @if(!$item->deleted_at)
                                             <span class="badge badge-light-success">Active</span>
@@ -56,24 +62,39 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @can('reference.accomplishmentCategory.update')
-                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishmentCategory({{ $item->id }})">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
+                                            <div class="btn-group" role="group" aria-label="Actions">
+                                                @can('reference.accomplishmentCategory.update')
+                                                <button class=" btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishmentCategory({{ $item->id }})">
+                                                    <div wire:loading.remove wire:target="editAccomplishmentCategory({{ $item->id }})">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </div>
+                                                    <div wire:loading wire:target="editAccomplishmentCategory({{ $item->id }})">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                </button>
 
-                                            <a
-                                                href="#"
-                                                class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
-                                                title="Delete"
-                                                wire:click="{{ $item->deleted_at ? 'restoreAccomplishmentCategory' : 'deleteAccomplishmentCategory' }}({{ $item->id }})">
-                                                <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
-                                            </a>
-                                            @endcan
+                                                <button
+                                                    class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
+                                                    title="Delete"
+                                                    wire:click="{{ $item->deleted_at ? 'restoreAccomplishmentCategory' : 'deleteAccomplishmentCategory' }}({{ $item->id }})">
+                                                    <div wire:loading.remove wire:target="deleteAccomplishmentCategory({{ $item->id }})">
+                                                        <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                                    </div>
+                                                    <div wire:loading wire:target="deleteAccomplishmentCategory({{ $item->id }})">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                                @endcan
+                                            </div>
                                         </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="3" class="text-center">No records found.</td>
+                                        <td colspan="4" class="text-center">No records found.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -121,29 +142,39 @@
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label required">Name</label>
-                                <input type="text" class="form-control" wire:model="name">
-                                @error('name')
+                                <input type="text" class="form-control" wire:model="accomplishment_category_name">
+                                @error('accomplishment_category_name')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             @role('Super Admin')
                             <div class="mb-10">
                                 <label class="form-label required">Office</label>
-                                <select class="form-select" aria-label="Select example" wire:model="role_id">
+                                <select class="form-select" aria-label="Select example" wire:model="office_id">
                                     <option>Open this select menu</option>
                                     @foreach($offices as $item)
                                     <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
-                                @error('role_id')
+                                @error('office_id')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             @endrole
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                            <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                    <button type="submit" class="btn btn-primary">
+                        <div wire:loading.remove wire:target="{{ $editMode ? 'updateAccomplishmentCategory' : 'createAccomplishmentCategory' }}">
+                            {{ $editMode ? 'Update' : 'Create' }}
+                        </div>
+                        <div wire:loading wire:target="{{ $editMode ? 'updateAccomplishmentCategory' : 'createAccomplishmentCategory' }}">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </button>
                     </form>
                 </div>
             </div>

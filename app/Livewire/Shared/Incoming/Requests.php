@@ -9,6 +9,7 @@ use App\Models\RefDivision;
 use App\Models\RefIncomingRequestCategory;
 use App\Models\RefStatus;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\On;
@@ -223,16 +224,17 @@ class Requests extends Component
     public function editIncomingRequest(IncomingRequest $incomingRequest)
     {
         try {
-            // Mark all forwarded requests to this division as opened
-            $incomingRequest->forwards()
-                ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
-                ->update([
-                    'is_opened' => true
-                ]);
+            if (!Auth::user()->hasRole('Super Admin')) {
+                // Mark all forwarded requests to this division as opened
+                $incomingRequest->forwards()
+                    ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
+                    ->update([
+                        'is_opened' => true
+                    ]);
 
-            // Check if all divisions have opened their copies
-            $this->checkAllDivisionsOpened($incomingRequest);
-
+                // Check if all divisions have opened their copies
+                $this->checkAllDivisionsOpened($incomingRequest);
+            }
             $this->editMode = true;
             $this->incomingRequestId = $incomingRequest->id;
 
@@ -462,6 +464,41 @@ class Requests extends Component
             $this->dispatch('success', message: 'Request forwarded successfully.');
         } catch (\Throwable $th) {
             // throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    public function viewIncomingRequest(IncomingRequest $incomingRequest)
+    {
+        try {
+            $this->no = $incomingRequest->no;
+
+            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingRequest::class)
+                ->where('forwardable_id', $incomingRequest->id)
+                ->with(['division']) // Assuming 'division' is a relationship
+                ->latest()
+                ->get()
+                ->map(function ($forward) {
+                    return [
+                        'division_name' => $forward->division?->name ?? 'N/A',
+                    ];
+                });
+
+            $this->office_barangay_organization = $incomingRequest->office_barangay_organization;
+            $this->date_requested = $incomingRequest->formatted_date_requested;
+            $this->ref_incoming_request_category_id = $incomingRequest->category->incoming_request_category_name;
+            $this->date_time = $incomingRequest->formatted_date_time;
+            $this->contact_person_name = $incomingRequest->contact_person_name;
+            $this->contact_person_number = $incomingRequest->contact_person_number;
+            $this->description = $incomingRequest->description;
+            $this->ref_status_id = $incomingRequest->status->name;
+            $this->remarks = $incomingRequest->remarks;
+
+            $this->preview_file = $incomingRequest->files;
+
+            $this->dispatch('show-details-modal');
+        } catch (\Throwable $th) {
+            //throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

@@ -10,6 +10,7 @@ use App\Models\RefDivision;
 use App\Models\RefIncomingDocumentCategory;
 use App\Models\RefStatus;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\On;
@@ -160,15 +161,17 @@ class Documents extends Component
     public function editIncomingDocument(IncomingDocument $incomingDocument)
     {
         try {
-            // Mark all forwarded documents to this division (division level) as opened
-            $incomingDocument->forwards()
-                ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
-                ->update([
-                    'is_opened' => true
-                ]);
+            if (!Auth::user()->hasRole('Super Admin')) {
+                // Mark all forwarded documents to this division (division level) as opened
+                $incomingDocument->forwards()
+                    ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
+                    ->update([
+                        'is_opened' => true
+                    ]);
 
-            // Check if all divisions have opened their copies
-            $this->checkAllDivisionsOpened($incomingDocument);
+                // Check if all divisions have opened their copies
+                $this->checkAllDivisionsOpened($incomingDocument);
+            }
 
             $this->ref_incoming_document_category_id = $incomingDocument->ref_incoming_document_category_id;
             $this->document_info = $incomingDocument->document_info;
@@ -187,6 +190,7 @@ class Documents extends Component
             $this->editMode = true;
             $this->dispatch('show-incoming-document-modal');
         } catch (\Throwable $th) {
+            throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -585,6 +589,36 @@ class Documents extends Component
             $this->dispatch('success', message: 'Request forwarded successfully.');
         } catch (\Throwable $th) {
             // throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    public function viewIncomingDocument(IncomingDocument $incomingDocument)
+    {
+        try {
+            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingDocument::class)
+                ->where('forwardable_id', $incomingDocument->id)
+                ->with(['division']) // Assuming 'division' is a relationship
+                ->latest()
+                ->get()
+                ->map(function ($forward) {
+                    return [
+                        'division_name' => $forward->division?->name ?? 'N/A',
+                    ];
+                });
+
+            $this->ref_incoming_document_category_id = $incomingDocument->ref_incoming_document_category_id;
+            $this->document_info = $incomingDocument->document_info;
+            $this->date = Carbon::parse($incomingDocument->date)->format('M d, Y');
+            $this->ref_status_id = $incomingDocument->status->name;
+            $this->source = $incomingDocument->apoDocument->source;
+            $this->remarks = $incomingDocument->remarks;
+
+            $this->preview_file = $incomingDocument->files;
+
+            $this->dispatch('show-details-modal');
+        } catch (\Throwable $th) {
+            //throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

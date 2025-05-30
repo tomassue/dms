@@ -18,6 +18,8 @@ return new class extends Migration
             $table->foreignIdFor(RefAccomplishmentCategory::class);
             $table->dateTime('date')->nullable();
             $table->text('details')->nullable();
+            $table->foreignId('office_id')->comment('a.k.a role_id from roles or offices');
+            $table->foreignId('ref_division_id')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

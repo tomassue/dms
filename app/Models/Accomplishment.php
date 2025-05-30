@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Apo\Accomplishment as ApoAccomplishment;
+use App\Models\Scopes\DivisionScope;
+use App\Models\Scopes\OfficeScope;
 use App\Models\Scopes\RoleAndDivisionBasedScope;
 use App\Models\Scopes\RoleBasedFilterScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
@@ -19,7 +21,7 @@ use Spatie\Activitylog\Traits\LogsActivity;
  * them visible only to users with the same role.
  * @see https://laravel.com/docs/11.x/eloquent#global-scopes
  */
-#[ScopedBy([RoleBasedFilterScope::class, RoleAndDivisionBasedScope::class])]
+#[ScopedBy([OfficeScope::class, DivisionScope::class])]
 class Accomplishment extends Model
 {
     use SoftDeletes, LogsActivity;
@@ -29,6 +31,8 @@ class Accomplishment extends Model
         'ref_accomplishment_category_id',
         'date',
         'details',
+        'office_id',
+        'ref_division_id'
     ];
     protected $casts = [
         'date' => 'datetime',

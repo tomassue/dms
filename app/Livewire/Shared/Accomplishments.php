@@ -183,14 +183,9 @@ class Accomplishments extends Component
 
     public function loadAccomplishmentCategories()
     {
-        return RefAccomplishmentCategory::query()
-            ->when(auth()->user()->hasRole('Super Admin'), function ($query) {
-                // Super Admin sees all
-            }, function ($query) {
-                $roleId = auth()->user()->roles()->first()->id; // Explicitly fails if no role
-                $query->where('role_id', $roleId);
-            })
-            ->get();
+        $accomplishment_categories = RefAccomplishmentCategory::all();
+
+        return $accomplishment_categories;
     }
 
     public function saveAccomplishment()
@@ -200,7 +195,7 @@ class Accomplishments extends Component
         try {
             DB::transaction(function () {
                 $accomplishment = $this->saveMainAccomplishment();
-                $this->saveApoAccomplishment($accomplishment);
+                $this->saveApoAccomplishment($accomplishment); // Save APO Accomplishment
 
                 $this->clear();
                 $this->dispatch('hide-accomplishment-modal');
@@ -217,7 +212,9 @@ class Accomplishments extends Component
         $data = [
             'ref_accomplishment_category_id' => $this->ref_accomplishment_category_id,
             'date' => $this->date,
-            'details' => $this->details
+            'details' => $this->details,
+            'office_id' => auth()->user()->roles()->first()->id,
+            'ref_division_id' => auth()->user()->user_metadata?->ref_division_id
         ];
 
         return Accomplishment::updateOrCreate(
