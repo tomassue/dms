@@ -37,8 +37,11 @@
                             <table class="table align-middle table-hover table-rounded table-striped border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                        @role('Super Admin')
                                         <th>Office</th>
+                                        @endrole
                                         <th>Name</th>
+                                        <th>Title</th>
                                         <th>Status</th>
                                         @can('reference.signatories.update')
                                         <th>Actions</th>
@@ -48,8 +51,11 @@
                                 <tbody>
                                     @forelse($signatories as $item)
                                     <tr>
-                                        <td>{{ $item->user->roles()->first()->name ?? '-' }}</td>
-                                        <td>{{ $item->user->name }}</td>
+                                        @role('Super Admin')
+                                        <td>{{ $item->office->name }}</td>
+                                        @endrole
+                                        <td>{{ $item->name }}</td>
+                                        <td>{{ $item->title }}</td>
                                         <td>
                                             <span class="badge {{ $item->deleted_at ? 'badge-light-danger' : 'badge-light-success' }}">
                                                 {{ $item->deleted_at ? 'Inactive' : 'Active' }}
@@ -57,19 +63,41 @@
                                         </td>
                                         <td>
                                             @can('reference.signatories.update')
-                                            <a
-                                                href="#"
-                                                class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
-                                                title="Delete"
-                                                wire:click="{{ $item->deleted_at ? 'restoreSignatory' : 'deleteSignatory' }}({{ $item->id }})">
-                                                <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
-                                            </a>
+                                            <div class="btn-group" role="group" aria-label="Basic example">
+                                                <button
+                                                    class="btn btn-icon btn-sm btn-secondary"
+                                                    title="Edit"
+                                                    wire:click="editSignatory({{ $item->id }})">
+                                                    <div wire:loading.remove wire:target="editSignatory({{ $item->id }})">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </div>
+                                                    <div wire:loading wire:target="editSignatory({{ $item->id }})">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                                <button
+                                                    class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
+                                                    title="Delete"
+                                                    wire:click="{{ $item->deleted_at ? 'restoreSignatory' : 'deleteSignatory' }}({{ $item->id }})">
+                                                    <div wire:loading.remove wire:target="{{ $item->deleted_at ? 'restoreSignatory' : 'deleteSignatory' }}({{ $item->id }})">
+                                                        <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                                    </div>
+                                                    <div wire:loading wire:target="{{ $item->deleted_at ? 'restoreSignatory' : 'deleteSignatory' }}({{ $item->id }})">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                            </div>
+
                                             @endcan
                                         </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="4" class="text-center">No records found.</td>
+                                        <td colspan="5" class="text-center">No records found.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -113,17 +141,37 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="{{ $editMode ? 'updateSignatory' : 'createSignatory' }}">
+                    <form wire:submit="saveSignatory">
                         <div class="p-2">
                             <div class="mb-10">
-                                <label class="form-label required">User</label>
-                                <div wire:ignore>
-                                    <div id="user-select"></div>
-                                </div>
-                                @error('user_id')
+                                <label class="form-label required">Name</label>
+                                <input type="text" class="form-control" wire:model="name">
+                                @error('name')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Title</label>
+                                <input type="text" class="form-control" wire:model="title">
+                                @error('title')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @role('Super Admin')
+                            <div class="mb-10">
+                                <label class="form-label required">Office</label>
+                                <select class="form-select" wire:model="office_id">
+                                    <option>-Select an office-</option>
+                                    @foreach ($offices as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                    <option value="0">Not applicable</option>
+                                </select>
+                                @error('title')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @endrole
                         </div>
                 </div>
 

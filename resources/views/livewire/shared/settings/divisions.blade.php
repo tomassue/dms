@@ -6,7 +6,7 @@
             <!--begin::Row-->
             <div class="row g-5 g-xl-12">
                 <!--begin::Mixed Widget 5-->
-                <div class="card card-xxl-stretch">
+                <div class="card card-xxl-stretch" wire:loading.class="opacity-50 pe-none">
                     <!--begin::Beader-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
@@ -14,7 +14,7 @@
                             <span class="text-muted fw-bold fs-7">Reference</span>
                         </h3>
                         <div class="card-toolbar">
-                            @can('reference.division.create')
+                            @can('reference.divisions.create')
                             <!--begin::Menu-->
                             <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#divisionModal"><i class="bi bi-plus-circle"></i></a>
                             <!--end::Menu-->
@@ -40,7 +40,7 @@
                                         <th>Role (Office)</th>
                                         <th>Name</th>
                                         <th>Status</th>
-                                        @can('reference.division.update')
+                                        @can('reference.divisions.update')
                                         <th>Actions</th>
                                         @endcan
                                     </tr>
@@ -52,18 +52,19 @@
                                         <td>{{ $item->name }}</td>
                                         <td><span class="badge {{ $item->deleted_at ? 'badge-light-danger' : 'badge-light-success' }}">{{ $item->deleted_at ? 'Inactive' : 'Active' }}</span></td>
                                         <td>
-                                            @can('reference.division.update')
-                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editDivision({{ $item->id }})">
-                                                <i class="bi bi-pencil"></i>
-                                            </a>
+                                            @can('reference.divisions.update')
+                                            <div class="btn-group" role="group" aria-label="Actions">
+                                                <button class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editDivision({{ $item->id }})">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
 
-                                            <a
-                                                href="#"
-                                                class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
-                                                title="Delete"
-                                                wire:click="{{ $item->deleted_at ? 'restoreDivision' : 'deleteDivision' }}({{ $item->id }})">
-                                                <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
-                                            </a>
+                                                <button
+                                                    class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
+                                                    title="Delete"
+                                                    wire:click="{{ $item->deleted_at ? 'restoreDivision' : 'deleteDivision' }}({{ $item->id }})">
+                                                    <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                                </button>
+                                            </div>
                                             @endcan
                                         </td>
                                     </tr>
@@ -115,8 +116,9 @@
                 <div class="modal-body">
                     <form wire:submit="{{ $editMode ? 'updateDivision' : 'createDivision' }}">
                         <div class="p-2">
+                            @role('Super Admin')
                             <div class="mb-10">
-                                <label class="form-label required">Role</label>
+                                <label class="form-label required">Role/Office</label>
                                 <select class="form-select" aria-label="Select example" wire:model="office_id">
                                     <option>-Select an office-</option>
                                     @foreach ($roles as $item)
@@ -127,6 +129,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            @endrole
                             <div class="mb-10">
                                 <label class="form-label required">Name</label>
                                 <input type="text" class="form-control" wire:model="name">

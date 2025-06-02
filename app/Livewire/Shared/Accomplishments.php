@@ -183,7 +183,13 @@ class Accomplishments extends Component
 
     public function loadAccomplishmentCategories()
     {
-        $accomplishment_categories = RefAccomplishmentCategory::all();
+        $accomplishment_categories = RefAccomplishmentCategory::get()
+            ->map(function ($query) {
+                return [
+                    'id' => $query->id,
+                    'name' => $query->accomplishment_category_name
+                ];
+            });
 
         return $accomplishment_categories;
     }
@@ -304,20 +310,20 @@ class Accomplishments extends Component
             $viewData['prepared_by_division'] = $preparedUser->user_metadata->division->name ?? null;
 
             // Get conforme user data
-            $conformeUser = User::with('user_metadata.position')->find($this->conforme);
-            $viewData['conforme'] = $conformeUser
-                ? $conformeUser->name
+            $conforme = RefSignatories::find($this->conforme);
+            $viewData['conforme'] = $conforme
+                ? $conforme->name
                 : '';
-            $viewData['conforme_position'] = $conformeUser->user_metadata->position->name ?? null;
-            $viewData['conforme_division'] = $conformeUser->user_metadata->division->name ?? null;
+            $viewData['conforme_position'] = null;
+            $viewData['conforme_division'] = $conforme->title ?? null;
 
             // Get approved user data
-            $approvedUser = User::with('user_metadata.position')->find($this->approved);
-            $viewData['approved'] = $approvedUser
-                ? $approvedUser->name
+            $approved = RefSignatories::find($this->approved);
+            $viewData['approved'] = $approved
+                ? $approved->name
                 : '';
-            $viewData['approved_position'] = $approvedUser->user_metadata->position->name ?? null;
-            $viewData['approved_division'] = $approvedUser->user_metadata->division->name ?? null;
+            $viewData['approved_position'] = null;
+            $viewData['approved_division'] = $approved->title ?? null;
 
             // Hide the modal
             $this->dispatch('hide-accomplishment-signatories-modal');

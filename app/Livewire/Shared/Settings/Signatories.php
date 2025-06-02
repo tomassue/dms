@@ -6,11 +6,13 @@ use App\Models\RefDivision;
 use App\Models\RefPosition;
 use App\Models\RefSignatories;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Permission\Models\Role;
 
 #[Title('Signatories')]
 class Signatories extends Component
@@ -20,20 +22,20 @@ class Signatories extends Component
     public $search;
     public $editMode;
     public $signatoryId;
-    public $user_id;
+    public $title, $name, $office_id;
 
     public function rules()
     {
-        return [
-            'user_id' => 'required|exists:users,id|unique:ref_signatories,user_id,' . $this->signatoryId,
+        $rules = [
+            'name' => 'required|unique:ref_signatories,name,' . $this->signatoryId,
+            'title' => 'required',
         ];
-    }
 
-    public function attributes()
-    {
-        return [
-            'user_id' => 'user'
-        ];
+        if (Auth::user()->hasRole('Super Admin')) {
+            $rules['office_id'] = 'required';
+        }
+
+        return $rules;
     }
 
     public function clear()
@@ -50,6 +52,7 @@ class Signatories extends Component
             [
                 'signatories' => $this->loadSignatories(),
                 'users' => $this->loadUsers(), # Load users for dropdown
+                'offices' => $this->loadOffices(), // Load offices for dropdown
             ]
         );
     }
@@ -93,15 +96,35 @@ class Signatories extends Component
             });
     }
 
-    public function createSignatory()
+    public function loadOffices()
     {
-        $this->validate($this->rules(), [], $this->attributes());
+        $offices = Role::whereNot('name', 'Super Admin')
+            ->get();
+
+        return $offices;
+    }
+
+    public function saveSignatory()
+    {
+        $this->validate();
 
         try {
             DB::transaction(function () {
-                $signatory = new RefSignatories();
-                $signatory->user_id = $this->user_id;
-                $signatory->save();
+                $data = [
+                    'name' => $this->name,
+                    'title' => $this->title
+                ];
+
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $data['office_id'] = $this->office_id;
+                } else {
+                    $data['office_id'] = auth()->user()->roles()->first()->id;
+                }
+
+                RefSignatories::updateOrCreate(
+                    ['id' => $this->signatoryId],
+                    $data
+                );
 
                 $this->clear();
                 $this->dispatch('hide-signatory-modal');
@@ -113,17 +136,22 @@ class Signatories extends Component
         }
     }
 
-    // public function editSignatory($signatoryId)
-    // {
-    //     try {
-    //         $signatory = RefSignatories::find($signatoryId);
-    //         $this->dispatch('set-user-select', value: $signatory->user_id);
-    //         $this->dispatch('show-signatory-modal');
-    //     } catch (\Throwable $th) {
-    //         //throw $th;
-    //         $this->dispatch('success', message: 'Signatory updated successfully!');
-    //     }
-    // }
+    public function editSignatory(RefSignatories $signatory)
+    {
+        try {
+            $this->name = $signatory->name;
+            $this->title = $signatory->title;
+            $this->office_id = $signatory->office_id;
+
+            $this->signatoryId = $signatory->id;
+            $this->editMode = true;
+
+            $this->dispatch('show-signatory-modal');
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->dispatch('success', message: 'Signatory updated successfully!');
+        }
+    }
 
     public function deleteSignatory($signatoryId)
     {

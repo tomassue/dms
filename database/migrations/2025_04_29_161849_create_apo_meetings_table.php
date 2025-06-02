@@ -22,6 +22,7 @@ return new class extends Migration
             $table->foreignId('prepared_by')->nullable();
             $table->foreignId('approved_by')->nullable();
             $table->foreignId('noted_by')->nullable();
+            $table->binary('file')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

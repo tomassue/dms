@@ -56,7 +56,7 @@
                                             <select class="form-select" aria-label="Select example" wire:model="ref_accomplishment_category_id">
                                                 <option>Open this select menu</option>
                                                 @foreach ($accomplishment_categories as $item)
-                                                <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                                <option value="{{ $item['id'] }}">{{ $item['name'] }}</option>
                                                 @endforeach
                                             </select>
                                             @error('ref_accomplishment_category_id')
@@ -197,7 +197,7 @@
                                         @forelse($accomplishments as $item)
                                         <tr>
                                             <td>
-                                                {{ $item->accomplishment_category->name }}
+                                                {{ $item->accomplishment_category->accomplishment_category_name }}
                                                 @role('APOO')
                                                 <span class="text-muted d-block">{{ $item->apo->sub_category ?? '' }}</span>
                                                 @endrole
@@ -305,7 +305,7 @@
                                 <select class="form-select" aria-label="Select example" wire:model="ref_accomplishment_category_id">
                                     <option>Open this select menu</option>
                                     @foreach ($accomplishment_categories as $item)
-                                    <option value="{{ $item->id }}">{{ $item->accomplishment_category_name }}</option>
+                                    <option value="{{ $item['id'] }}">{{ $item['name'] }}</option>
                                     @endforeach
                                 </select>
                                 @error('ref_accomplishment_category_id')
@@ -389,7 +389,7 @@
                                 <select class="form-select" wire:model="conforme">
                                     <option value="">-Select-</option>
                                     @foreach($conformees_signatories as $item)
-                                    <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
                                 @error('conforme')
@@ -401,7 +401,7 @@
                                 <select class="form-select" wire:model="approved">
                                     <option value="">-Select-</option>
                                     @foreach($approved_by_signatories as $item)
-                                    <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
                                 @error('approved')

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\OfficeScope;
+use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
@@ -9,6 +12,7 @@ use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Models\Role;
 
+#[ScopedBy([OfficeScope::class])]
 class RefDivision extends Model
 {
     use SoftDeletes, LogsActivity;

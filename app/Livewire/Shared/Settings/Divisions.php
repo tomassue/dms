@@ -3,6 +3,7 @@
 namespace App\Livewire\Shared\Settings;
 
 use App\Models\RefDivision;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
@@ -23,7 +24,7 @@ class Divisions extends Component
 
     public function rules()
     {
-        return [
+        $rules = [
             'name' => [
                 'required',
                 'string',
@@ -32,8 +33,13 @@ class Divisions extends Component
                     return $query->where('office_id', $this->office_id);
                 })->ignore($this->divisionId),
             ],
-            'office_id' => 'required|exists:roles,id',
         ];
+
+        if (auth()->user()->hasRole('Super Admin')) {
+            $rules['office_id'] = 'required';
+        }
+
+        return $rules;
     }
 
     public function clear()
@@ -78,7 +84,10 @@ class Divisions extends Component
         try {
             DB::transaction(function () {
                 $division = new RefDivision();
-                $division->office_id = $this->office_id;
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $division->office_id = $this->office_id;
+                }
+                $division->office_id = auth()->user()->roles()->first()->id;
                 $division->name = $this->name;
                 $division->save();
 
@@ -116,7 +125,10 @@ class Divisions extends Component
         try {
             DB::transaction(function () {
                 $division = RefDivision::find($this->divisionId);
-                $division->office_id = $this->office_id;
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $division->office_id = $this->office_id;
+                }
+                $division->office_id = auth()->user()->roles()->first()->id;
                 $division->name = $this->name;
                 $division->save();
 
