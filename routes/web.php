@@ -13,6 +13,7 @@ use App\Livewire\Shared\Settings\AccomplishmentCategory;
 use App\Livewire\Shared\Settings\Divisions;
 use App\Livewire\Shared\Settings\IncomingDocumentCategory;
 use App\Livewire\Shared\Settings\IncomingRequestCategory;
+use App\Livewire\Shared\Settings\Positions;
 use App\Livewire\Shared\Settings\Signatories;
 use App\Livewire\Shared\Settings\UserManagement;
 use App\Livewire\SuperAdmin\RolesAndPermissions;
@@ -63,6 +64,8 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE']],
         Route::get('/settings/signatories', Signatories::class)->name('settings.signatories')->middleware('permission:reference.signatories.read');
         # Settings.Divisions
         Route::get('/settings/divisions', Divisions::class)->name('settings.divisions')->middleware('permission:reference.divisions.read');
+        # Settings.Positions
+        Route::get('/settings/positions', Positions::class)->name('settings.positions')->middleware('permission:reference.position.read');
         # Settings.User Management
         Route::get('/settings/user-management', UserManagement::class)->name('settings.user-management')->middleware('permission:reference.userManagement.read');
 

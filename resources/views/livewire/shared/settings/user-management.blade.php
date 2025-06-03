@@ -194,30 +194,6 @@
                                 @enderror
                             </div>
 
-                            <!--begin::Alert-->
-                            <div class="alert alert-dismissible bg-light-info border border-info border-3 border-dashed d-flex flex-column flex-sm-row w-100 p-5 mb-10">
-                                <!--begin::Icon-->
-                                <span class="svg-icon svg-icon-2hx svg-icon-info me-4 mb-5 mb-sm-0">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
-                                        <path opacity="0.3" d="M12 22C13.6569 22 15 20.6569 15 19C15 17.3431 13.6569 16 12 16C10.3431 16 9 17.3431 9 19C9 20.6569 10.3431 22 12 22Z" fill="black"></path>
-                                        <path d="M19 15V18C19 18.6 18.6 19 18 19H6C5.4 19 5 18.6 5 18V15C6.1 15 7 14.1 7 13V10C7 7.6 8.7 5.6 11 5.1V3C11 2.4 11.4 2 12 2C12.6 2 13 2.4 13 3V5.1C15.3 5.6 17 7.6 17 10V13C17 14.1 17.9 15 19 15ZM11 10C11 9.4 11.4 9 12 9C12.6 9 13 8.6 13 8C13 7.4 12.6 7 12 7C10.3 7 9 8.3 9 10C9 10.6 9.4 11 10 11C10.6 11 11 10.6 11 10Z" fill="black"></path>
-                                    </svg>
-                                </span>
-                                <!--end::Icon-->
-
-                                <!--begin::Wrapper-->
-                                <div class="d-flex flex-column pe-0 pe-sm-10">
-                                    <!--begin::Title-->
-                                    <h5 class="mb-1">Note</h5>
-                                    <!--end::Title-->
-                                    <!--begin::Content-->
-                                    <span>If the user you are about to add is the <b> office admin </b>, don't select any division and position.</span>
-                                    <!--end::Content-->
-                                </div>
-                                <!--end::Wrapper-->
-                            </div>
-                            <!--end::Alert-->
-
                             <div class="mb-10">
                                 <label class="form-label">Division / Title</label>
                                 <select class="form-select" aria-label="Select example" wire:model="ref_division_id">
@@ -227,6 +203,19 @@
                                     @endforeach
                                 </select>
                                 @error('ref_division_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="mb-10">
+                                <label class="form-label">Position</label>
+                                <select class="form-select" aria-label="Select example" wire:model="ref_position_id">
+                                    <option>-Select a position-</option>
+                                    @foreach ($positions as $item)
+                                    <option value="{{ $item->id }}">{{ $item->position_name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_position_id')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -457,6 +446,29 @@
                                         </div>
                                     </div>
 
+                                    <!-- References.Accomplishment Category -->
+                                    <li class="d-flex align-items-center py-2 ms-8">
+                                        <span class="bullet me-5"></span> Accomplishment Category
+                                    </li>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.create" id="accomplishmentCategoryCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="accomplishmentCategoryCreate"> Create </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.read" id="accomplishmentCategoryRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="accomplishmentCategoryRead"> Read </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-16">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.update" id="accomplishmentCategoryUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="accomplishmentCategoryUpdate"> Update </label>
+                                        </div>
+                                    </div>
+
                                     <!-- References.Divisions -->
                                     <li class="d-flex align-items-center py-2 ms-8">
                                         <span class="bullet me-5"></span> Divisions
@@ -480,26 +492,26 @@
                                         </div>
                                     </div>
 
-                                    <!-- References.Accomplishment Category -->
+                                    <!-- References.Position -->
                                     <li class="d-flex align-items-center py-2 ms-8">
-                                        <span class="bullet me-5"></span> Accomplishment Category
+                                        <span class="bullet me-5"></span> Position
                                     </li>
                                     <div class="row py-2 ms-16">
                                         <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.create" id="accomplishmentCategoryCreate" wire:model="permissions" />
-                                            <label class="form-check-label" for="accomplishmentCategoryCreate"> Create </label>
+                                            <input class="form-check-input" type="checkbox" value="reference.position.create" id="divisionsCreate" wire:model="permissions" />
+                                            <label class="form-check-label" for="divisionsCreate"> Create </label>
                                         </div>
                                     </div>
                                     <div class="row py-2 ms-16">
                                         <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.read" id="accomplishmentCategoryRead" wire:model="permissions" />
-                                            <label class="form-check-label" for="accomplishmentCategoryRead"> Read </label>
+                                            <input class="form-check-input" type="checkbox" value="reference.position.read" id="divisionsRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="divisionsRead"> Read </label>
                                         </div>
                                     </div>
                                     <div class="row py-2 ms-16">
                                         <div class="form-check form-check-custom form-check-solid">
-                                            <input class="form-check-input" type="checkbox" value="reference.accomplishmentCategory.update" id="accomplishmentCategoryUpdate" wire:model="permissions" />
-                                            <label class="form-check-label" for="accomplishmentCategoryUpdate"> Update </label>
+                                            <input class="form-check-input" type="checkbox" value="reference.position.update" id="divisionsUpdate" wire:model="permissions" />
+                                            <label class="form-check-label" for="divisionsUpdate"> Update </label>
                                         </div>
                                     </div>
 

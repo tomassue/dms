@@ -174,9 +174,9 @@
                 <th style="vertical-align: top; width: 25%;">Noted by:</th>
             </tr>
             <tr>
-                <td style="height: 60px; vertical-align: bottom;">{{ $apo_meeting->preparedBy->name ?? '' }} <br> {{ $apo_meeting->preparedBy->user_metadata?->position->name ?? '' }}</td>
-                <td style="height: 60px; vertical-align: bottom;">{{ $apo_meeting->approvedBy->name ?? '' }} <br> {{ $apo_meeting->approvedBy->user_metadata?->position->name ?? '' }}</td>
-                <td style="height: 60px; vertical-align: bottom;">{{ $apo_meeting->notedBy->name ?? '' }} <br> {{ $apo_meeting->notedBy->user_metadata?->position->name ?? '' }}</td>
+                <td style="height: 60px; vertical-align: bottom;">{{ $apo_meeting->preparedBy->name ?? '' }} <br> {{ $apo_meeting->preparedBy->user_metadata?->position->position_name ?? '' }}</td>
+                <td style="height: 60px; vertical-align: bottom;">{{ $apo_meeting->approvedBy->name ?? '' }} <br> {{ $apo_meeting->approvedBy->title ?? '' }}</td>
+                <td style="height: 60px; vertical-align: bottom;">{{ $apo_meeting->notedBy->name ?? '' }} <br> {{ $apo_meeting->notedBy->title ?? '' }}</td>
             </tr>
         </table>
     </div>

@@ -3,12 +3,14 @@
 namespace App\Models\Apo;
 
 use App\Models\RefApoMeetingsCategory;
+use App\Models\RefSignatories;
 use App\Models\Scopes\RoleAndDivisionBasedScope;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -69,12 +71,12 @@ class Meeting extends Model
 
     public function approvedBy()
     {
-        return $this->belongsTo(User::class, 'approved_by', 'id');
+        return $this->belongsTo(RefSignatories::class, 'approved_by', 'id');
     }
 
     public function notedBy()
     {
-        return $this->belongsTo(User::class, 'noted_by', 'id');
+        return $this->belongsTo(RefSignatories::class, 'noted_by', 'id');
     }
 
     public function apoMeetingsCategory()
@@ -88,6 +90,12 @@ class Meeting extends Model
         return LogOptions::defaults()
             ->useLogName('meeting')
             ->logOnly(['*'])
+            ->setDescriptionForEvent(function (string $eventName) {
+                $user = Auth::user();
+                $userName = $user ? $user->name : 'System';
+
+                return "{$userName} has {$eventName} a meeting held on {$this->date}.";
+            })
             ->logOnlyDirty();
     }
 }

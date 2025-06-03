@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Models\Scopes\NameSortAsc;
+use App\Models\Scopes\OfficeScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-#[ScopedBy([NameSortAsc::class])]
 class RefPosition extends Model
 {
     use SoftDeletes, LogsActivity;
@@ -18,8 +17,15 @@ class RefPosition extends Model
     protected $table = 'ref_positions';
 
     protected $fillable = [
-        'name'
+        'position_name',
+        'office_id'
     ];
+
+    // Scope
+    public function officeScope($query)
+    {
+        return $query->where('office_id', Auth::user()->roles()->first()->id);
+    }
 
     // Activity Log
     public function getActivitylogOptions(): LogOptions

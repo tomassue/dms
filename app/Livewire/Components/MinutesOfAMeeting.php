@@ -211,4 +211,31 @@ class MinutesOfAMeeting extends Component
         // Default to JPEG if unknown
         return 'image/jpeg';
     }
+
+    public function exportAndUploadPDF()
+    {
+        try {
+            $apo_meeting = Meeting::find($this->apoMeetingId);
+
+            // Check if approved by and noted by is not null
+            if ($apo_meeting->time_end && $apo_meeting->approvedBy && $apo_meeting->notedBy) {
+                $apo_meeting->file = $this->pdf;
+                $apo_meeting->save();
+
+                $this->dispatch('hide-pdf-modal');
+                $this->dispatch('success', message: 'Minutes successfully uploaded.');
+            } else {
+                $this->dispatch('error', message: "The minutes should include sections for 'Time End', 'Approved by', and 'Noted by'.");
+            }
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    public function viewExportedMinutesOfMeeting(Meeting $apoMeeting)
+    {
+        $this->pdf = $apoMeeting->file;
+        $this->dispatch('show-pdf-modal');
+    }
 }

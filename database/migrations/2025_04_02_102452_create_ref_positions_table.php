@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('ref_positions', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('position_name');
+            $table->foreignId('office_id')->nullable()->comment('a.k.a role_id from roles or offices');
             $table->softDeletes();
             $table->timestamps();
         });
