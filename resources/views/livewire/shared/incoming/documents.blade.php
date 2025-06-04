@@ -17,7 +17,7 @@
                             <div class="card-toolbar">
                                 <div class="d-flex align-items-center gap-2">
                                     <!--begin::Menu Filter-->
-                                    <livewire:components.menu-filter-component />
+                                    <livewire:components.menu-filter-component page="incoming" />
                                     <!--end::Menu Filter-->
 
                                     <!--begin::Menu 2-->
@@ -356,6 +356,10 @@
                                     {{ $ref_status_id ?? '-' }}
                                 </span>
                             </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Document Category:</div>
+                            <div class="col-7">{{ $ref_incoming_document_category_id ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-5 fw-bold">Forwarded to:</div>

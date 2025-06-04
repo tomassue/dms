@@ -54,7 +54,7 @@
                                         <td>{{ $item->name }}</td>
                                         <td>{{ $item->roles()->first()->name ?? '-' }}</td>
                                         <td>{{ $item->user_metadata->division->name ?? '-' }}</td>
-                                        <td>{{ $item->user_metadata->position->name ?? '-' }}</td>
+                                        <td>{{ $item->user_metadata->position->position_name ?? '-' }}</td>
                                         <td>{{ $item->username }}</td>
                                         <td>
                                             @if(!$item->deleted_at)
@@ -167,6 +167,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+
                             <div class="mb-10">
                                 <label class="form-label required">Name</label>
                                 <input type="text" class="form-control" wire:model="name">
@@ -174,6 +175,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+
                             <div class="mb-10">
                                 <label class="form-label required">Username</label>
                                 <input type="text" class="form-control" wire:model="username">
@@ -181,6 +183,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+
                             <div class="mb-10">
                                 <label class="form-label required">Office</label>
                                 <select class="form-select" aria-label="Select example" wire:model.live="role_id">
@@ -219,6 +222,20 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+
+                            @role('Super Admin')
+                            <div class="mb-10">
+                                <label class="form-label required">Is Office Admin</label>
+                                <select class="form-select" aria-label="Select example" wire:model="is_office_admin">
+                                    <option>-Select-</option>
+                                    <option value="1">Yes</option>
+                                    <option value="0">No</option>
+                                </select>
+                                @error('is_office_admin')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @endrole
 
                             <div class="mb-10">
                                 <label class="form-label required">Permissions</label>
@@ -539,14 +556,14 @@
                                     </div>
 
                                     @php
-                                    $roleName = null; // Ensure it's defined
+                                    //$roleName = null; // Ensure it's defined
 
-                                    if ($editMode && $userId) {
-                                    $user = App\Models\User::find($userId); // Avoid findOrFail to prevent crashing
-                                    $roleName = $user?->roles->pluck('name')->first(); // Use null-safe operator
-                                    }
+                                    //if ($editMode && $userId) {
+                                    //$user = App\Models\User::find($userId); // Avoid findOrFail to prevent crashing
+                                    //$roleName = $user?->roles->pluck('name')->first(); // Use null-safe operator
+                                    //}
                                     @endphp
-                                    <div style="display: {{ $roleName == 'APOO' ? '' : 'none' }};">
+                                    <div style="display: {{ $role_id == '1' ? '' : 'none' }};">
                                         <div class="separator my-10">APOO</div>
 
                                         <!-- Accomplishments -->
@@ -619,7 +636,12 @@
                                         </div>
 
                                         <div class="separator my-10">APOO</div>
+                                    </div>
 
+                                    <div style="display: {{ $role_id == '2' ? '' : 'none' }};">
+                                        <div class="separator my-10">City Veterinary</div>
+                                        -- Nothing --
+                                        <div class="separator my-10">City Veterinary</div>
                                     </div>
 
                                     <!-- Continue with other sections using the same pattern -->

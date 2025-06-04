@@ -8,7 +8,7 @@
         </span>
         <!--end::Svg Icon-->
     </button>
-    <div class="menu menu-sub menu-sub-dropdown w-250px w-md-300px" data-kt-menu="true" id="kt_menu_6148527cbe7c2" style="" wire:ignore.self>
+    <div class="menu menu-sub menu-sub-dropdown w-250px w-md-300px" data-kt-menu="true" id="kt_menu_6148527cbe7c2" wire:ignore.self>
         <!--begin::Header-->
         <div class="px-7 py-5">
             <div class="fs-5 text-dark fw-bolder">Filter Options</div>
@@ -28,6 +28,21 @@
                 <div wire:ignore>
                     <input type="text" class="form-control" id="filter_date" />
                 </div>
+                <!--end::Input-->
+            </div>
+            <!--end::Input group-->
+            <!--begin::Input group-->
+            <div class="mb-10">
+                <!--begin::Label-->
+                <label class="form-label fw-bold">Status:</label>
+                <!--end::Label-->
+                <!--begin::Input-->
+                <select class="form-select text-uppercase" wire:model="status">
+                    <option>-Select-</option>
+                    @foreach ($status_dropdown as $item)
+                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                    @endforeach
+                </select>
                 <!--end::Input-->
             </div>
             <!--end::Input group-->

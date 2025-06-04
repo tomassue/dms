@@ -35,7 +35,8 @@ class Outgoing extends Model
     // Local Scope
     public function scopeSearch($query, $search)
     {
-        return $query->where('details', $search)
+        return $query->orWhere('id', $search)
+            ->where('details', $search)
             ->orWhere('destination', $search)
             ->orWhere('person_responsible', $search);
     }

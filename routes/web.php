@@ -72,9 +72,6 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE']],
         # File Handler
         Route::get('/file/view/{id}', [FileHandler::class, 'viewFile'])->name('file.view')->middleware('signed');
 
-
-
-
         /* ------------------------------- APO ROUTES ------------------------------- */
         Route::get('/meetings', Meetings::class)->name('meetings')->middleware('permission:meeting.read');
 

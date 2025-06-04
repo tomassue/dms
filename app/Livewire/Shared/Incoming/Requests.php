@@ -28,7 +28,8 @@ class Requests extends Component
     public $editMode;
     public $search,
         $filter_start_date,
-        $filter_end_date;
+        $filter_end_date,
+        $filter_status;
     public $incomingRequestId;
     public $selected_divisions = [], // for forwarded
         $forwarded_divisions = [];
@@ -78,10 +79,11 @@ class Requests extends Component
     }
 
     #[On('filter')]
-    public function filter($start_date, $end_date)
+    public function filter($start_date, $end_date, $status)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
+        $this->filter_status = $status;
     }
 
     #[On('clear-filter-data')]
@@ -117,13 +119,19 @@ class Requests extends Component
         return IncomingRequest::query()
             ->when($this->search, function ($query) {
                 $query->where('no', 'like', '%' . $this->search . '%')
-                    ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%');
+                    ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%')
+                    ->orWhereHas('category', function ($q) {
+                        $q->where('incoming_request_category_name', 'like', '%' . $this->search . '%');
+                    });
             })
             ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
                 $query->whereBetween('date_time', [
                     Carbon::parse($this->filter_start_date)->startOfDay(),
                     Carbon::parse($this->filter_end_date)->endOfDay()
                 ]);
+            })
+            ->when($this->filter_status, function ($query) {
+                $query->where('ref_status_id', $this->filter_status);
             })
             ->latest()
             ->paginate(10);

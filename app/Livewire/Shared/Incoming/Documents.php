@@ -29,7 +29,8 @@ class Documents extends Component
     public $editMode;
     public $search,
         $filter_start_date,
-        $filter_end_date;
+        $filter_end_date,
+        $filter_status;
     public $incomingDocumentId;
     public $selected_divisions = [],
         $forwarded_divisions = [];
@@ -73,10 +74,11 @@ class Documents extends Component
     }
 
     #[On('filter')]
-    public function filter($start_date, $end_date)
+    public function filter($start_date, $end_date, $status)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
+        $this->filter_status = $status;
     }
 
     #[On('clear-filter-data')]
@@ -102,6 +104,9 @@ class Documents extends Component
             })
             ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
                 $query->DateRangeFilter($this->filter_start_date, $this->filter_end_date);
+            })
+            ->when($this->filter_status, function ($query) {
+                $query->where('ref_status_id', $this->filter_status);
             })
             ->latest()
             ->paginate(10);
@@ -190,7 +195,7 @@ class Documents extends Component
             $this->editMode = true;
             $this->dispatch('show-incoming-document-modal');
         } catch (\Throwable $th) {
-            throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -607,7 +612,7 @@ class Documents extends Component
                     ];
                 });
 
-            $this->ref_incoming_document_category_id = $incomingDocument->ref_incoming_document_category_id;
+            $this->ref_incoming_document_category_id = $incomingDocument->category->incoming_document_category_name;
             $this->document_info = $incomingDocument->document_info;
             $this->date = Carbon::parse($incomingDocument->date)->format('M d, Y');
             $this->ref_status_id = $incomingDocument->status->name;

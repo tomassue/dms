@@ -306,3 +306,21 @@
         max-width: 2000px !important;
     }
 }
+
+.scrolltop {
+    display: none;
+    justify-content: center;
+    align-items: center;
+    width: 36px;
+    height: 36px;
+    position: fixed;
+    bottom: 40px;
+    right: 20px;
+    cursor: pointer;
+    z-index: 100;
+    background-color: #0e4a84 !important;
+    box-shadow: 0 0.5rem 1.5rem 0.5rem rgba(0, 0, 0, 0.075);
+    opacity: 0;
+    transition: color 0.2s ease, background-color 0.2s ease;
+    border-radius: 0.475rem;
+}

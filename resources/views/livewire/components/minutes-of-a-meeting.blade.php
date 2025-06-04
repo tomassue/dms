@@ -31,7 +31,13 @@
                             <!--begin::Details item-->
                             <!--begin::Details item-->
                             <div class="fw-bolder mt-5">Time</div>
-                            <div class="text-gray-600">{{ $apo_meeting->time_range ?? '-' }}</div>
+                            <div class="text-gray-600">
+                                @if($apo_meeting->formatted_time_start && $apo_meeting->formatted_time_end)
+                                {{ $apo_meeting->time_range }}
+                                @else
+                                {{ $apo_meeting->time_range }} - <span class="badge badge-danger">Not assigned</span>
+                                @endif
+                            </div>
                             <!--begin::Details item-->
                             <!--begin::Details item-->
                             <div class="fw-bolder mt-5">Venue</div>
@@ -39,15 +45,29 @@
                             <!--begin::Details item-->
                             <!--begin::Details item-->
                             <div class="fw-bolder mt-5">Prepared by</div>
-                            <div class="text-gray-600">{{ $apo_meeting->preparedBy->name ?? '-' }}</div>
+                            <div class="text-gray-600">
+                                {{ $apo_meeting->preparedBy->name }}
+                            </div>
                             <!--begin::Details item-->
                             <!--begin::Details item-->
                             <div class="fw-bolder mt-5">Approved by</div>
-                            <div class="text-gray-600">{{ $apo_meeting->approvedBy->name ?? '-' }}</div>
+                            <div class="text-gray-600">
+                                @if($apo_meeting->approvedBy?->name)
+                                {{ $apo_meeting->approvedBy->name }}
+                                @else
+                                <span class="badge badge-danger">Not assigned</span>
+                                @endif
+                            </div>
                             <!--begin::Details item-->
                             <!--begin::Details item-->
                             <div class="fw-bolder mt-5">Noted by</div>
-                            <div class="text-gray-600">{{ $apo_meeting->notedBy->name ?? '-'  }}</div>
+                            <div class="text-gray-600">
+                                @if($apo_meeting->notedBy?->name)
+                                {{ $apo_meeting->notedBy->name }}
+                                @else
+                                <span class="badge badge-danger">Not assigned</span>
+                                @endif
+                            </div>
                             <!--begin::Details item-->
                         </div>
                     </div>
@@ -168,10 +188,7 @@
                         <div class="d-flex align-items-center gap-2">
                             <!-- begin::Menu -->
                             <div class="btn-group" role="group" aria-label="Actions">
-                                @php
-                                //TODO: Disable the export button once a file has been exported. And alert the user that there is a file already exported and uploaded.
-                                @endphp
-                                <button type="button" class="btn btn-icon btn-sm btn-warning" title="Print" wire:click="printMinutesOfMeeting({{ $apoMeetingId }})">
+                                <button type="button" class="btn btn-icon btn-warning" title="Print" wire:click="printMinutesOfMeeting({{ $apoMeetingId }})">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-arrow-up" viewBox="0 0 16 16" wire:loading.remove wire:target="printMinutesOfMeeting({{ $apoMeetingId }})">
                                         <path d="M8 11a.5.5 0 0 0 .5-.5V6.707l1.146 1.147a.5.5 0 0 0 .708-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L7.5 6.707V10.5a.5.5 0 0 0 .5.5" />
                                         <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1" />
@@ -180,7 +197,8 @@
                                         <span class="sr-only">Loading...</span>
                                     </div>
                                 </button>
-                                <button type="button" class="btn btn-icon btn-sm btn-info" title="View PDF" wire:click="viewExportedMinutesOfMeeting({{ $apoMeetingId }})">
+                                @if ($apo_meeting->file)
+                                <button type="button" class="btn btn-icon btn-info" title="View PDF" wire:click="viewExportedMinutesOfMeeting({{ $apoMeetingId }})">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filetype-pdf" viewBox="0 0 16 16" wire:loading.remove wire:target="viewExportedMinutesOfMeeting({{ $apoMeetingId }})">
                                         <path fill-rule="evenodd" d="M14 4.5V14a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V4.5h-2A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v9H2V2a2 2 0 0 1 2-2h5.5zM1.6 11.85H0v3.999h.791v-1.342h.803q.43 0 .732-.173.305-.175.463-.474a1.4 1.4 0 0 0 .161-.677q0-.375-.158-.677a1.2 1.2 0 0 0-.46-.477q-.3-.18-.732-.179m.545 1.333a.8.8 0 0 1-.085.38.57.57 0 0 1-.238.241.8.8 0 0 1-.375.082H.788V12.48h.66q.327 0 .512.181.185.183.185.522m1.217-1.333v3.999h1.46q.602 0 .998-.237a1.45 1.45 0 0 0 .595-.689q.196-.45.196-1.084 0-.63-.196-1.075a1.43 1.43 0 0 0-.589-.68q-.396-.234-1.005-.234zm.791.645h.563q.371 0 .609.152a.9.9 0 0 1 .354.454q.118.302.118.753a2.3 2.3 0 0 1-.068.592 1.1 1.1 0 0 1-.196.422.8.8 0 0 1-.334.252 1.3 1.3 0 0 1-.483.082h-.563zm3.743 1.763v1.591h-.79V11.85h2.548v.653H7.896v1.117h1.606v.638z" />
                                     </svg>
@@ -188,6 +206,7 @@
                                         <span class="sr-only">Loading...</span>
                                     </div>
                                 </button>
+                                @endif
                             </div>
                             <!-- end::Menu -->
                         </div>
@@ -298,8 +317,34 @@
             </div>
         </div>
     </div>
-</div>
-<!--end::Modal - PDF-->
+    <!--end::Modal - PDF-->
+
+    <!-- begin::Modal - View PDF -->
+    <div class="modal fade" tabindex="-1" id="viewPdfModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-xl">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">PDF</h5>
+                    <!--begin::Close-->
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="cancel">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <!--end::Close-->
+                </div>
+
+                <div class="modal-body">
+                    @if ($pdf)
+                    <iframe src="{{ $pdf }}" class="w-100" height="650px" frameborder="0"></iframe>
+                    @endif
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="cancel">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- end::Modal - View PDF -->
 </div>
 
 @script
@@ -319,9 +364,13 @@
         $('#pdfModal').modal('hide');
     });
 
+    $wire.on('show-view-pdf-modal', () => {
+        $('#viewPdfModal').modal('show');
+    });
+
     $wire.on('confirm-export-minutes-of-meeting', () => {
         Swal.fire({
-            title: "Are you sure you want to export?",
+            title: "You're about to export the document. Continue?",
             text: "You won't be able to revert this!",
             icon: "warning",
             showCancelButton: true,

@@ -7,6 +7,7 @@ use App\Models\Apo\MinutesOfMeeting;
 use App\Models\PdfAsset;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use GuzzleHttp\Psr7\Message;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Validation\Rule;
@@ -136,8 +137,25 @@ class MinutesOfAMeeting extends Component
         }
     }
 
+    protected function checkFileExists(Meeting $meeting): bool
+    {
+        if ($meeting->file) {
+            $this->dispatch('error', message: 'Minutes already exported.');
+            return true; // File exists
+        }
+
+        return false; // File does not exist
+    }
+
     public function printMinutesOfMeeting($apoMeetingId)
     {
+        $meeting = Meeting::find($apoMeetingId);
+
+        // ✅ Check and exit if file already exists
+        if ($this->checkFileExists($meeting)) {
+            return;
+        }
+
         // Prepare image data with proper base64 format
         $data = [];
 
@@ -214,9 +232,14 @@ class MinutesOfAMeeting extends Component
 
     public function exportAndUploadPDF()
     {
-        try {
-            $apo_meeting = Meeting::find($this->apoMeetingId);
+        $apo_meeting = Meeting::find($this->apoMeetingId);
 
+        // ✅ Check and exit if file already exists
+        if ($this->checkFileExists($apo_meeting)) {
+            return;
+        }
+
+        try {
             // Check if approved by and noted by is not null
             if ($apo_meeting->time_end && $apo_meeting->approvedBy && $apo_meeting->notedBy) {
                 $apo_meeting->file = $this->pdf;
@@ -228,7 +251,7 @@ class MinutesOfAMeeting extends Component
                 $this->dispatch('error', message: "The minutes should include sections for 'Time End', 'Approved by', and 'Noted by'.");
             }
         } catch (\Throwable $th) {
-            //throw $th;
+            throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -236,6 +259,6 @@ class MinutesOfAMeeting extends Component
     public function viewExportedMinutesOfMeeting(Meeting $apoMeeting)
     {
         $this->pdf = $apoMeeting->file;
-        $this->dispatch('show-pdf-modal');
+        $this->dispatch('show-view-pdf-modal');
     }
 }

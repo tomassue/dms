@@ -20,6 +20,6 @@ class RefStatus extends Model
 
     public function scopeIncoming($query)
     {
-        return $query->whereNotIn('name', ['forwarded', 'received', 'pending']);
+        return $query->whereNotIn('name', ['forwarded', 'received', 'pending', 'processed', 'completed']);
     }
 }

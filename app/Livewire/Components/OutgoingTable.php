@@ -26,7 +26,8 @@ class OutgoingTable extends Component
     public $editMode;
     public $search,
         $filter_start_date,
-        $filter_end_date;
+        $filter_end_date,
+        $filter_status;
     public $outgoingId, $typeId;
     public $type;
     public $preview_file = [];
@@ -94,10 +95,11 @@ class OutgoingTable extends Component
         return $rules;
     }
     #[On('filter')]
-    public function filter($start_date, $end_date)
+    public function filter($start_date, $end_date, $status)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
+        $this->filter_status = $status;
     }
 
     #[On('clear-filter-data')]
@@ -128,6 +130,9 @@ class OutgoingTable extends Component
             })
             ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
                 $query->dateRange($this->filter_start_date, $this->filter_end_date);
+            })
+            ->when($this->filter_status, function ($query) {
+                $query->where('ref_status_id', $this->filter_status);
             })
             ->paginate(10);
     }

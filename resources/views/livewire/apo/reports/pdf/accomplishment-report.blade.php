@@ -171,8 +171,8 @@
             @php
             $accomplishments = is_array($accomplishments) ? collect($accomplishments) : $accomplishments;
             $accomplishment_category = $accomplishments->groupBy(function($item) {
-            return $item['accomplishment_category']['name'] ??
-            ($item->accomplishment_category->name ?? 'Uncategorized');
+            return $item['accomplishment_category']['accomplishment_category_name'] ??
+            ($item->accomplishment_category->accomplishment_category_name ?? 'Uncategorized');
             });
             @endphp
 

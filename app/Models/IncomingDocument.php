@@ -53,6 +53,9 @@ class IncomingDocument extends Model
             $query->where('document_info', 'like', '%' . $search . '%')
                 ->orWhereHas('apoDocument', function ($q) use ($search) {
                     $q->where('source', 'like', '%' . $search . '%');
+                })
+                ->orWhereHas('category', function ($q) use ($search) {
+                    $q->where('incoming_document_category_name', 'like', '%' . $search . '%');
                 });
         });
     }
