@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Scopes\OfficeScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
@@ -12,19 +13,20 @@ use Spatie\Activitylog\Traits\LogsActivity;
 
 class RefPosition extends Model
 {
-    use SoftDeletes, LogsActivity;
+    use LogsActivity;
 
-    protected $table = 'ref_positions';
+    protected $table = 'tbl_payroll_ref_employee_position';
+    protected $primaryKey = 'position_id';
+    public $incrementing = false;
+    protected $keyType = 'string';
 
-    protected $fillable = [
-        'position_name',
-        'office_id'
-    ];
-
-    // Scope
-    public function officeScope($query)
+    // Global Scope
+    protected static function booted()
     {
-        return $query->where('office_id', Auth::user()->roles()->first()->id);
+        static::addGlobalScope('is_plantilla', function (Builder $builder) {
+            $builder->where('is_plantilla', 'Y')
+                ->orderBy('position_name', 'asc');
+        });
     }
 
     // Activity Log

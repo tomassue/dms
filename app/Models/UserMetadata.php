@@ -23,6 +23,6 @@ class UserMetadata extends Model
 
     public function position()
     {
-        return $this->belongsTo(RefPosition::class, 'ref_position_id', 'id');
+        return $this->belongsTo(RefPosition::class, 'ref_position_id', 'position_id');
     }
 }

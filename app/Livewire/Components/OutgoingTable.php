@@ -27,7 +27,8 @@ class OutgoingTable extends Component
     public $search,
         $filter_start_date,
         $filter_end_date,
-        $filter_status;
+        $filter_status,
+        $filter_outgoing_category;
     public $outgoingId, $typeId;
     public $type;
     public $preview_file = [];
@@ -95,11 +96,12 @@ class OutgoingTable extends Component
         return $rules;
     }
     #[On('filter')]
-    public function filter($start_date, $end_date, $status)
+    public function filter($start_date, $end_date, $status, $outgoing_category)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
         $this->filter_status = $status;
+        $this->filter_outgoing_category = $outgoing_category;
     }
 
     #[On('clear-filter-data')]
@@ -133,6 +135,19 @@ class OutgoingTable extends Component
             })
             ->when($this->filter_status, function ($query) {
                 $query->where('ref_status_id', $this->filter_status);
+            })
+            ->when($this->filter_outgoing_category, function ($query) {
+                if ($this->filter_outgoing_category == 'others') {
+                    $query->where('outgoingable_type', OutgoingOthers::class);
+                } elseif ($this->filter_outgoing_category == 'payroll') {
+                    $query->where('outgoingable_type', OutgoingPayrolls::class);
+                } elseif ($this->filter_outgoing_category == 'procurement') {
+                    $query->where('outgoingable_type', OutgoingProcurement::class);
+                } elseif ($this->filter_outgoing_category == 'ris') {
+                    $query->where('outgoingable_type', OutgoingRis::class);
+                } elseif ($this->filter_outgoing_category == 'voucher') {
+                    $query->where('outgoingable_type', OutgoingVoucher::class);
+                }
             })
             ->paginate(10);
     }

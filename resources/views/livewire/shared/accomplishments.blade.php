@@ -154,7 +154,7 @@
                                     <!-- end::Generate PDF -->
 
                                     <!--begin::Menu Filter-->
-                                    <livewire:components.menu-filter-component />
+                                    <livewire:components.menu-filter-component page="accomplishments" />
                                     <!--end::Menu Filter-->
 
                                     <!--begin::Menu 2-->

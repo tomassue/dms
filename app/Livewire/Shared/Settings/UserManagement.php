@@ -39,8 +39,7 @@ class UserManagement extends Component
             'name' => 'required|string',
             'username' => 'required|string|unique:users,username,' . $this->userId, // Exclude the current user's username
             'role_id' => 'required|exists:roles,id', // Ensure the role exists,
-            'ref_division_id' => 'nullable|exists:ref_divisions,id',
-            'ref_position_id' => 'nullable|exists:ref_positions,id'
+            'ref_division_id' => 'nullable|exists:ref_divisions,id'
         ];
 
         if ($this->editMode) {

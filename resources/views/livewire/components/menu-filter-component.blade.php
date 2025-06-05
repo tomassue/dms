@@ -46,6 +46,25 @@
                 <!--end::Input-->
             </div>
             <!--end::Input group-->
+            @if ($page == 'outgoing')
+            <!--begin::Input group-->
+            <div class="mb-10">
+                <!--begin::Label-->
+                <label class="form-label fw-bold">Category:</label>
+                <!--end::Label-->
+                <!--begin::Input-->
+                <select class="form-select text-uppercase" wire:model="outgoing_category">
+                    <option>-Select-</option>
+                    <option value="voucher">Voucher</option>
+                    <option value="ris">RIS</option>
+                    <option value="procurement">Procurement</option>
+                    <option value="payroll">Payroll</option>
+                    <option value="others">Others</option>
+                </select>
+                <!--end::Input-->
+            </div>
+            <!--end::Input group-->
+            @endif
             <!--begin::Actions-->
             <div class="d-flex justify-content-end">
                 <button type="reset" class="btn btn-sm btn-light btn-active-light-primary me-2" data-kt-menu-dismiss="true" wire:click="clear">Reset</button>

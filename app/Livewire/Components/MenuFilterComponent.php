@@ -12,7 +12,8 @@ class MenuFilterComponent extends Component
     //* APO
     public $start_date,
         $end_date,
-        $status;
+        $status,
+        $outgoing_category;
 
     public function mount($page)
     {
@@ -25,13 +26,14 @@ class MenuFilterComponent extends Component
             'filter',
             start_date: $this->start_date,
             end_date: $this->end_date,
-            status: $this->status
+            status: $this->status,
+            outgoing_category: $this->outgoing_category
         );
     }
 
     public function clear()
     {
-        $this->reset();
+        $this->resetExcept('page');
 
         $this->dispatch('clear-filter-date'); // date range picker
 

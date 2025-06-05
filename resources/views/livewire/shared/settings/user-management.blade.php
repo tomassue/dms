@@ -215,7 +215,7 @@
                                 <select class="form-select" aria-label="Select example" wire:model="ref_position_id">
                                     <option>-Select a position-</option>
                                     @foreach ($positions as $item)
-                                    <option value="{{ $item->id }}">{{ $item->position_name }}</option>
+                                    <option value="{{ $item->position_id }}">{{ $item->position_name }}</option>
                                     @endforeach
                                 </select>
                                 @error('ref_position_id')
