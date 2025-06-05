@@ -10,12 +10,16 @@ use Dompdf\Options;
 use GuzzleHttp\Psr7\Message;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 
 class MinutesOfAMeeting extends Component
 {
+    use WithFileUploads;
+
     #[Reactive]
     public $show; //* Opposite from parent component
     public $editMode;
@@ -25,6 +29,7 @@ class MinutesOfAMeeting extends Component
     public $apoMeetingId;
     public $activity, $point_person, $expected_output, $agreements;
     public $pdf;
+    public $exportedMinutesFile;
 
     public function rules()
     {
@@ -230,35 +235,93 @@ class MinutesOfAMeeting extends Component
         return 'image/jpeg';
     }
 
-    public function exportAndUploadPDF()
+    // public function exportAndUploadPDF()
+    // {
+    //     $apo_meeting = Meeting::find($this->apoMeetingId);
+
+    //     // Check if file exists
+    //     if ($apo_meeting->file) {
+    //         $this->dispatch('error', message: 'Minutes already exported.');
+    //         return;
+    //     }
+
+    //     // ✅ Check and exit if file already exists
+    //     if ($this->checkFileExists($apo_meeting)) {
+    //         return;
+    //     }
+
+    //     try {
+    //         // Check if approved by and noted by is not null
+    //         if ($apo_meeting->time_end && $apo_meeting->approvedBy && $apo_meeting->notedBy) {
+    //             $apo_meeting->file = $this->pdf;
+    //             $apo_meeting->save();
+
+    //             $this->dispatch('hide-pdf-modal');
+    //             $this->dispatch('success', message: 'Minutes successfully uploaded.');
+    //         } else {
+    //             $this->dispatch('error', message: "The minutes should include sections for 'Time End', 'Approved by', and 'Noted by'.");
+    //         }
+    //     } catch (\Throwable $th) {
+    //         // throw $th;
+    //         $this->dispatch('error', message: 'Something went wrong.');
+    //     }
+    // }
+
+    public function viewExportedMinutesOfMeeting(Meeting $apoMeeting)
     {
-        $apo_meeting = Meeting::find($this->apoMeetingId);
-
-        // ✅ Check and exit if file already exists
-        if ($this->checkFileExists($apo_meeting)) {
-            return;
-        }
-
         try {
-            // Check if approved by and noted by is not null
-            if ($apo_meeting->time_end && $apo_meeting->approvedBy && $apo_meeting->notedBy) {
-                $apo_meeting->file = $this->pdf;
-                $apo_meeting->save();
-
-                $this->dispatch('hide-pdf-modal');
-                $this->dispatch('success', message: 'Minutes successfully uploaded.');
+            if ($apoMeeting->files) {
+                $this->viewFile($apoMeeting->files->id);
             } else {
-                $this->dispatch('error', message: "The minutes should include sections for 'Time End', 'Approved by', and 'Noted by'.");
+                $this->dispatch('show-upload-pdf-modal');
             }
         } catch (\Throwable $th) {
-            throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
 
-    public function viewExportedMinutesOfMeeting(Meeting $apoMeeting)
+    public function uploadExportedPDF()
     {
-        $this->pdf = $apoMeeting->file;
-        $this->dispatch('show-view-pdf-modal');
+        $this->validate(
+            [
+                'exportedMinutesFile' => 'required|mimetypes:application/pdf'
+            ]
+        );
+
+        // Check if file has already uploaded
+        $apo_meeting = Meeting::find($this->apoMeetingId);
+
+        if ($apo_meeting->files) {
+            $this->dispatch('error', message: 'Minutes already uploaded.');
+            return;
+        }
+
+        try {
+            $apo_meeting->files()->create([
+                'name' => $this->exportedMinutesFile->getClientOriginalName(),
+                'size' => $this->exportedMinutesFile->getSize(),
+                'type' => $this->exportedMinutesFile->getMimeType(),
+                'file' => file_get_contents($this->exportedMinutesFile->getRealPath()),
+            ]);
+
+            $this->reset('exportedMinutesFile');
+            $this->dispatch('hide-view-pdf-modal');
+            $this->dispatch('success', message: 'Minutes successfully uploaded.');
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    public function viewFile($id)
+    {
+        $signedURL = URL::temporarySignedRoute(
+            'file.view',
+            now()->addMinutes(10),
+            ['id' => $id]
+        );
+
+        // Dispatch an event to the browser to open the URL in a new tab
+        $this->dispatch('open-file', url: $signedURL);
     }
 }

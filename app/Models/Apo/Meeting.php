@@ -2,6 +2,7 @@
 
 namespace App\Models\Apo;
 
+use App\Models\File;
 use App\Models\RefApoMeetingsCategory;
 use App\Models\RefSignatories;
 use App\Models\Scopes\DivisionScope;
@@ -87,6 +88,11 @@ class Meeting extends Model
     public function apoMeetingsCategory()
     {
         return $this->belongsTo(RefApoMeetingsCategory::class, 'ref_apo_meetings_category_id', 'id');
+    }
+
+    public function files()
+    {
+        return $this->morphOne(File::class, 'fileable');
     }
 
     // Activity Log
