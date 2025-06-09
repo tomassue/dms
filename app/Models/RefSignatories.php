@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\DivisionScope;
 use App\Models\Scopes\OfficeScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
@@ -20,7 +21,9 @@ class RefSignatories extends Model
 
     protected $fillable = [
         'name',
-        'title'
+        'title',
+        'office_id',
+        'ref_division_id'
     ];
 
     // Scope
@@ -64,7 +67,7 @@ class RefSignatories extends Model
 
     public function division()
     {
-        return $this->belongsTo(RefDivision::class, 'division_id', 'id');
+        return $this->belongsTo(RefDivision::class, 'ref_division_id', 'id');
     }
 
     // Activity Log

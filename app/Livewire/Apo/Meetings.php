@@ -106,7 +106,10 @@ class Meetings extends Component
 
     public function loadSignatories()
     {
-        return RefSignatories::all();
+        // return RefSignatories::all();
+        return RefSignatories::withinOffice()
+            ->where('ref_division_id', Auth::user()->user_metadata->ref_division_id)
+            ->get();
     }
 
     public function getApoMeetingsCategories()

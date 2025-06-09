@@ -40,6 +40,7 @@
                                         @role('Super Admin')
                                         <th>Office</th>
                                         @endrole
+                                        <th>Division</th>
                                         <th>Name</th>
                                         <th>Title</th>
                                         <th>Status</th>
@@ -54,6 +55,7 @@
                                         @role('Super Admin')
                                         <td>{{ $item->office->name }}</td>
                                         @endrole
+                                        <td>{{ $item->division->name }}</td>
                                         <td>{{ $item->name }}</td>
                                         <td>{{ $item->title }}</td>
                                         <td>
@@ -167,11 +169,23 @@
                                     @endforeach
                                     <option value="0">Not applicable</option>
                                 </select>
-                                @error('title')
+                                @error('office_id')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             @endrole
+                            <div class="mb-10">
+                                <label class="form-label required">Divsion</label>
+                                <select class="form-select" wire:model="ref_division_id">
+                                    <option>-Select a division-</option>
+                                    @foreach ($divisions as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_division_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
                         </div>
                 </div>
 

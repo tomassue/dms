@@ -22,13 +22,14 @@ class Signatories extends Component
     public $search;
     public $editMode;
     public $signatoryId;
-    public $title, $name, $office_id;
+    public $title, $name, $office_id, $ref_division_id;
 
     public function rules()
     {
         $rules = [
             'name' => 'required|unique:ref_signatories,name,' . $this->signatoryId,
             'title' => 'required',
+            'ref_division_id' => 'required'
         ];
 
         if (Auth::user()->hasRole('Super Admin')) {
@@ -53,6 +54,7 @@ class Signatories extends Component
                 'signatories' => $this->loadSignatories(),
                 'users' => $this->loadUsers(), # Load users for dropdown
                 'offices' => $this->loadOffices(), // Load offices for dropdown
+                'divisions' => $this->loadDivisions() // Load divisions for dropdown
             ]
         );
     }
@@ -104,6 +106,13 @@ class Signatories extends Component
         return $offices;
     }
 
+    public function loadDivisions()
+    {
+        $divisions = RefDivision::all();
+
+        return $divisions;
+    }
+
     public function saveSignatory()
     {
         $this->validate();
@@ -112,7 +121,8 @@ class Signatories extends Component
             DB::transaction(function () {
                 $data = [
                     'name' => $this->name,
-                    'title' => $this->title
+                    'title' => $this->title,
+                    'ref_division_id' => $this->ref_division_id
                 ];
 
                 if (Auth::user()->hasRole('Super Admin')) {
@@ -131,7 +141,7 @@ class Signatories extends Component
                 $this->dispatch('success', message: 'Signatory created successfully!');
             });
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -142,6 +152,7 @@ class Signatories extends Component
             $this->name = $signatory->name;
             $this->title = $signatory->title;
             $this->office_id = $signatory->office_id;
+            $this->ref_division_id = $signatory->ref_division_id;
 
             $this->signatoryId = $signatory->id;
             $this->editMode = true;

@@ -10,6 +10,7 @@ use App\Models\RefSignatories;
 use App\Models\User;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -138,7 +139,9 @@ class Accomplishments extends Component
 
     public function loadConformeesSignatories()
     {
-        return RefSignatories::withinOffice()->get();
+        return RefSignatories::withinOffice()
+            ->where('ref_division_id', Auth::user()->user_metadata->ref_division_id)
+            ->get();
     }
 
     /**
