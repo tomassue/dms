@@ -140,7 +140,7 @@ class Accomplishments extends Component
     public function loadConformeesSignatories()
     {
         return RefSignatories::withinOffice()
-            ->where('ref_division_id', Auth::user()->user_metadata->ref_division_id)
+            // ->where('ref_division_id', Auth::user()->user_metadata->ref_division_id) //! removed
             ->get();
     }
 

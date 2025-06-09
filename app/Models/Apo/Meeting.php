@@ -35,7 +35,7 @@ class Meeting extends Model
         'noted_by',
         //* file is not fillable.
         'office_id',
-        'division_id',
+        'ref_division_id',
     ];
 
     // Accessors
