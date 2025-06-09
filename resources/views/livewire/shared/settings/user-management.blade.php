@@ -158,6 +158,15 @@
                 */
                 @endphp
                 <div class="modal-body">
+                    @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
                     <form wire:submit="{{ $editMode ? 'updateUser' : 'createUser' }}">
                         <div class="p-2">
                             <div class="mb-10" style="display: {{ $editMode ? '' : 'none' }};">
@@ -184,6 +193,7 @@
                                 @enderror
                             </div>
 
+                            @role('Super Admin')
                             <div class="mb-10">
                                 <label class="form-label required">Office</label>
                                 <select class="form-select" aria-label="Select example" wire:model.live="role_id">
@@ -196,6 +206,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            @endrole
 
                             <div class="mb-10">
                                 <label class="form-label">Division / Title</label>

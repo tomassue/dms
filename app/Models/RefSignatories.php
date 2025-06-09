@@ -42,6 +42,15 @@ class RefSignatories extends Model
         return $query->where('division_id', Auth::user()->user_metadata->division->id);
     }
 
+    public function scopeWithinOffice($query)
+    {
+        if (!Auth::check() || Auth::user()->hasRole('Super Admin')) {
+            return;
+        }
+
+        return $query->where('office_id', auth()->user()->roles()->first()->id);
+    }
+
     // Relatonship
     public function user()
     {

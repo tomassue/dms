@@ -38,7 +38,6 @@ class UserManagement extends Component
         $rules = [
             'name' => 'required|string',
             'username' => 'required|string|unique:users,username,' . $this->userId, // Exclude the current user's username
-            'role_id' => 'required|exists:roles,id', // Ensure the role exists,
             'ref_division_id' => 'nullable|exists:ref_divisions,id'
         ];
 
@@ -48,6 +47,7 @@ class UserManagement extends Component
 
         if (Auth::user()->hasRole('Super Admin')) {
             $rules['is_office_admin'] = 'required';
+            $rules['role_id'] = 'required|exists:roles,id'; // Ensure the role exists,
         }
 
         return $rules;
@@ -164,38 +164,36 @@ class UserManagement extends Component
                 $user->username = $this->username;
                 $user->email = $this->username . '@email.com';
                 $user->password = Hash::make('password'); // Set a default password
-
-                if (Auth::user()->hasRole('Super Admin')) {
-                    $user->user_metadata->is_office_admin = $this->is_office_admin;
-                }
-
                 $user->save();
 
+                // Create user metadata
                 $user_metadata = new UserMetadata();
                 $user_metadata->ref_division_id = $this->ref_division_id;
                 $user_metadata->ref_position_id = $this->ref_position_id;
                 $user_metadata->user_id = $user->id;
-                $user_metadata->save();
 
-                // Save office the user will be under.
                 if (Auth::user()->hasRole('Super Admin')) {
-                    $role = Role::findOrFail($this->role_id);
-                    $user->syncRoles($role);
-                } else {
-                    $role = Role::findOrFail(Auth::user()->roles()->first()->id);
-                    if ($role) {
-                        $user->syncRoles($role);
-                    }
+                    $user_metadata->is_office_admin = $this->is_office_admin;
                 }
 
-                $user->syncPermissions($this->permissions); // Sync permissions if needed
+                $user_metadata->save();
+
+                // Role assignment
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $role = Role::findOrFail($this->role_id);
+                } else {
+                    $role = Role::findOrFail(Auth::user()->roles()->first()->id);
+                }
+
+                $user->syncRoles($role);
+                $user->syncPermissions($this->permissions);
 
                 $this->clear();
                 $this->dispatch('hide-users-modal');
                 $this->dispatch('success', message: 'User created successfully.');
             });
         } catch (\Throwable $th) {
-            //throw $th;
+            throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -233,30 +231,31 @@ class UserManagement extends Component
 
         try {
             DB::transaction(function () {
-                $user = User::find($this->userId);
+                $user = User::findOrFail($this->userId);
                 $user->name = $this->name;
                 $user->username = $this->username;
                 $user->email = $this->email;
-
-                if (Auth::user()->hasRole('Super Admin')) {
-                    $user->user_metadata->is_office_admin = $this->is_office_admin;
-                }
-
                 $user->save();
 
                 // Use updateOrCreate for metadata
+                $userMetadataData = [
+                    'ref_division_id' => $this->ref_division_id === '' ? null : $this->ref_division_id,
+                    'ref_position_id' => $this->ref_position_id === '' ? null : $this->ref_position_id,
+                ];
+
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $userMetadataData['is_office_admin'] = $this->is_office_admin;
+                }
+
                 UserMetadata::updateOrCreate(
                     ['user_id' => $user->id],
-                    [
-                        'ref_division_id' => $this->ref_division_id === '' ? null : $this->ref_division_id,
-                        'ref_position_id' => $this->ref_position_id === '' ? null : $this->ref_position_id
-                    ]
+                    $userMetadataData
                 );
 
+                // Sync roles and permissions
                 $role = Role::findOrFail($this->role_id);
                 $user->syncRoles($role);
-
-                $user->syncPermissions($this->permissions); // Sync permissions if needed
+                $user->syncPermissions($this->permissions);
 
                 $this->clear();
                 $this->dispatch('hide-users-modal');

@@ -138,7 +138,7 @@ class Accomplishments extends Component
 
     public function loadConformeesSignatories()
     {
-        return RefSignatories::withinDivision()->get();
+        return RefSignatories::withinOffice()->get();
     }
 
     /**

@@ -86,8 +86,9 @@ class Divisions extends Component
                 $division = new RefDivision();
                 if (Auth::user()->hasRole('Super Admin')) {
                     $division->office_id = $this->office_id;
+                } else {
+                    $division->office_id = auth()->user()->roles()->first()->id;
                 }
-                $division->office_id = auth()->user()->roles()->first()->id;
                 $division->name = $this->name;
                 $division->save();
 
@@ -127,8 +128,9 @@ class Divisions extends Component
                 $division = RefDivision::find($this->divisionId);
                 if (Auth::user()->hasRole('Super Admin')) {
                     $division->office_id = $this->office_id;
+                } else {
+                    $division->office_id = auth()->user()->roles()->first()->id;
                 }
-                $division->office_id = auth()->user()->roles()->first()->id;
                 $division->name = $this->name;
                 $division->save();
 
