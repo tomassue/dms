@@ -115,24 +115,24 @@ class UserManagement extends Component
     public function loadDivisions()
     {
         //! when() does not work. it doesn't retrieve the selected options only the Ids 1 and 2. ???
-        // return RefDivision::when($this->role_id, function ($query) {
-        //     $query->where('office_id', $this->role_id); //* a.k.a role_id
-        // })
-        //     ->get()
-        //     ->map(function ($query) {
-        //         return [
-        //             'id' => $query->id,
-        //             'name' => $query->name
-        //         ];
-        //     });
-
-        return RefDivision::all()
+        return RefDivision::when($this->role_id, function ($query) {
+            $query->where('office_id', $this->role_id); //* a.k.a role_id
+        })
+            ->get()
             ->map(function ($query) {
                 return [
                     'id' => $query->id,
                     'name' => $query->name
                 ];
             });
+
+        // return RefDivision::all()
+        //     ->map(function ($query) {
+        //         return [
+        //             'id' => $query->id,
+        //             'name' => $query->name
+        //         ];
+        //     });
     }
 
     public function loadPositions()
