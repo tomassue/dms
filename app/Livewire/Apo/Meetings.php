@@ -119,8 +119,6 @@ class Meetings extends Component
 
     public function saveMeeting()
     {
-        dd(Auth::user()?->user_metadata?->ref_division_id);
-
         $this->validate();
 
         try {
