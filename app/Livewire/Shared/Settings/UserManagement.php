@@ -237,20 +237,32 @@ class UserManagement extends Component
                 $user->email = $this->email;
                 $user->save();
 
-                // Use updateOrCreate for metadata
-                $userMetadataData = [
-                    'ref_division_id' => $this->ref_division_id === '' ? null : $this->ref_division_id,
-                    'ref_position_id' => $this->ref_position_id === '' ? null : $this->ref_position_id,
-                ];
+                // Update user metadata
+                $user_metadata = UserMetadata::findOrFail($this->userId);
+                $user_metadata->ref_division_id = $this->ref_division_id;
+                $user_metadata->ref_position_id = $this->ref_position_id;
+                $user_metadata->user_id = $user->id;
 
                 if (Auth::user()->hasRole('Super Admin')) {
-                    $userMetadataData['is_office_admin'] = $this->is_office_admin;
+                    $user_metadata->is_office_admin = $this->is_office_admin;
                 }
 
-                UserMetadata::updateOrCreate(
-                    ['user_id' => $user->id],
-                    $userMetadataData
-                );
+                $user_metadata->save();
+
+                // // Use updateOrCreate for metadata
+                // $userMetadataData = [
+                //     'ref_division_id' => $this->ref_division_id === '' ? null : $this->ref_division_id,
+                //     'ref_position_id' => $this->ref_position_id === '' ? null : $this->ref_position_id,
+                // ];
+
+                // if (Auth::user()->hasRole('Super Admin')) {
+                //     $userMetadataData['is_office_admin'] = $this->is_office_admin;
+                // }
+
+                // UserMetadata::updateOrCreate(
+                //     ['user_id' => $this->userId],
+                //     $userMetadataData
+                // );
 
                 // Sync roles and permissions
                 $role = Role::findOrFail($this->role_id);
