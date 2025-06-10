@@ -305,7 +305,7 @@ class MinutesOfAMeeting extends Component
             ]);
 
             $this->reset('exportedMinutesFile');
-            $this->dispatch('hide-view-pdf-modal');
+            $this->dispatch('hide-upload-pdf-modal');
             $this->dispatch('success', message: 'Minutes successfully uploaded.');
         } catch (\Throwable $th) {
             //throw $th;
