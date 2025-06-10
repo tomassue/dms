@@ -351,7 +351,12 @@
                 <div class="modal-body">
                     <div class="mb-10">
                         <label for="exportedMinutes" class="form-label required">Upload here</label>
-                        <input type="file" class="form-control" wire:model="exportedMinutesFile">
+                        <input type="file" class="form-control" wire:loading.remove wire:target="exportedMinutesFile" wire:model="exportedMinutesFile" accept="application/pdf">
+                        <div wire:loading wire:target="exportedMinutesFile">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
                         @error('exportedMinutesFile')
                         <span class="text-danger">{{ $message }}</span>
                         @enderror
@@ -360,7 +365,7 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="cancel">Close</button>
-                    <button type="button" class="btn btn-primary" style="{{ $pdf ? '' : 'display: none;' }}" wire:click="uploadExportedPDF">Upload</button>
+                    <button type="button" class="btn btn-primary" style="{{ $pdf ? 'display: none;' : '' }}" wire:click="uploadExportedPDF">Upload</button>
                 </div>
             </div>
         </div>
