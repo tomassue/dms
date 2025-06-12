@@ -31,7 +31,8 @@ class UserManagement extends Component
         $is_office_admin,
         $permissions = [];
     public $ref_division_id,
-        $ref_position_id;
+        $ref_position_id,
+        $phone_number;
 
     public function rules()
     {
@@ -171,6 +172,7 @@ class UserManagement extends Component
                 $user_metadata->ref_division_id = $this->ref_division_id;
                 $user_metadata->ref_position_id = $this->ref_position_id;
                 $user_metadata->user_id = $user->id;
+                $user_metadata->phone_number = $this->phone_number;
 
                 if (Auth::user()->hasRole('Super Admin')) {
                     $user_metadata->is_office_admin = $this->is_office_admin;
@@ -193,7 +195,7 @@ class UserManagement extends Component
                 $this->dispatch('success', message: 'User created successfully.');
             });
         } catch (\Throwable $th) {
-            throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -214,6 +216,7 @@ class UserManagement extends Component
 
             $this->ref_division_id = UserMetadata::where('user_id', $userId)->value('ref_division_id');
             $this->ref_position_id = UserMetadata::where('user_id', $userId)->value('ref_position_id');
+            $this->phone_number = UserMetadata::where('user_id', $userId)->value('phone_number');
 
             $this->editMode = true;
             $this->userId = $userId;
@@ -242,27 +245,13 @@ class UserManagement extends Component
                 $user_metadata->ref_division_id = $this->ref_division_id;
                 $user_metadata->ref_position_id = $this->ref_position_id;
                 $user_metadata->user_id = $user->id;
+                $user_metadata->phone_number = $this->phone_number;
 
                 if (Auth::user()->hasRole('Super Admin')) {
                     $user_metadata->is_office_admin = $this->is_office_admin;
                 }
 
                 $user_metadata->save();
-
-                // // Use updateOrCreate for metadata
-                // $userMetadataData = [
-                //     'ref_division_id' => $this->ref_division_id === '' ? null : $this->ref_division_id,
-                //     'ref_position_id' => $this->ref_position_id === '' ? null : $this->ref_position_id,
-                // ];
-
-                // if (Auth::user()->hasRole('Super Admin')) {
-                //     $userMetadataData['is_office_admin'] = $this->is_office_admin;
-                // }
-
-                // UserMetadata::updateOrCreate(
-                //     ['user_id' => $this->userId],
-                //     $userMetadataData
-                // );
 
                 // Sync roles and permissions
                 $role = Role::findOrFail($this->role_id);

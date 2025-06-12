@@ -6,12 +6,16 @@ use App\Models\Apo\IncomingDocument as ApoIncomingDocument;
 use App\Models\File;
 use App\Models\Forwarded;
 use App\Models\IncomingDocument;
+use App\Models\NumberMessage;
 use App\Models\RefDivision;
 use App\Models\RefIncomingDocumentCategory;
 use App\Models\RefStatus;
+use App\Models\SmsSender;
+use App\Models\UserMetadata;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -579,6 +583,59 @@ class Documents extends Component
         try {
             $incomingDocument = IncomingDocument::find($this->incomingDocumentId);
 
+            /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
+
+            //TODO:
+            //! SMS server status is always FAIL
+            if (Auth::user()->hasRole('CITY VETERINARY OFFICE')) {
+                /**
+                 * In CVO, we have a customed function to send an SMS to the selected divisions.
+                 * We updated user_metadata and added phone_number column.
+                 * Now we can use the phone_number column to send an SMS to the selected divisions.
+                 */
+                $phoneNumbers = UserMetadata::whereIn('ref_division_id', (array) $this->selected_divisions)
+                    ->pluck('phone_number')
+                    ->filter() // optional: remove null values
+                    ->unique() // optional: remove duplicates
+                    ->values(); // reindex if needed;
+
+                foreach ($phoneNumbers as $phoneNumber) {
+                    /**
+                     * We enclosed the SMS sending code in a try-catch block to handle any exceptions that might occur during the SMS sending process.
+                     * If an exception occurs, we will log the error message and continue to the next iteration of the loop.
+                     * This allows us to send the SMS to the next phone number without stopping the entire process.
+                     */
+                    try {
+                        $message = "TEST incoming document";
+
+                        SmsSender::create([
+                            'trans_id' => time() . '-' . mt_rand(),
+                            'received_id' => 'CVO-DMS-NOTIFICATION',
+                            'recipient' => $phoneNumber,
+                            'reciepient_name' => 'CVO',
+                            'recipient_message' => $message
+                        ]);
+
+                        $userIds = UserMetadata::where('phone_number', $phoneNumber)->pluck('user_id');
+
+                        NumberMessage::create([
+                            'user_id' => $userIds[0],
+                            'phone_number' => $phoneNumber,
+                            'sms_trans_id' => time() . '-' . mt_rand(),
+                            'otp_type' => 'CVO-DMS-NOTIFICATION',
+                            'sms_status' => 'STATUS',
+                        ]);
+                    } catch (\Throwable $th) {
+                        // log or ignore to keep processing
+                        Log::error('SMS failed for phone: ' . $phoneNumber . ', Error: ' . $e->getMessage());
+                        continue;
+                    }
+                }
+                //* After it being sent, we will them save them to forwarded table.
+            }
+
+            /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
+
             foreach ($this->selected_divisions as $division) {
                 $incomingDocument->forwards()->create([
                     'ref_division_id' => $division,
@@ -616,14 +673,18 @@ class Documents extends Component
             $this->document_info = $incomingDocument->document_info;
             $this->date = Carbon::parse($incomingDocument->date)->format('M d, Y');
             $this->ref_status_id = $incomingDocument->status->name;
-            $this->source = $incomingDocument->apoDocument->source;
             $this->remarks = $incomingDocument->remarks;
-
             $this->preview_file = $incomingDocument->files;
+
+            /* ----------------------------------- APO ---------------------------------- */
+            if (Auth::user()->hasRole('APOO')) {
+                $this->source = $incomingDocument->apoDocument->source;
+            }
+            /* ----------------------------------- APO ---------------------------------- */
 
             $this->dispatch('show-details-modal');
         } catch (\Throwable $th) {
-            //throw $th;
+            throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

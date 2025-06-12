@@ -377,10 +377,14 @@
                             <div class="col-5 fw-bold">Date:</div>
                             <div class="col-7">{{ $date ?? '-' }}</div>
                         </div>
+
+                        @role('APOO')
                         <div class="row">
                             <div class="col-5 fw-bold">Source:</div>
                             <div class="col-7">{{ $source ?? '-' }}</div>
                         </div>
+                        @endrole
+
                     </div>
 
                     <div class="mb-3">

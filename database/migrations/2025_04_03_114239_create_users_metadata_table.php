@@ -19,6 +19,7 @@ return new class extends Migration
             $table->enum('is_office_admin', [0, 1])->nullable();
             $table->foreignIdFor(RefDivision::class);
             $table->foreignIdFor(RefPosition::class);
+            $table->string('phone_number')->nullable();
             $table->timestamps();
         });
     }

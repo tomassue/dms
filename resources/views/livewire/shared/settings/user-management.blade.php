@@ -42,6 +42,7 @@
                                         <th>Division / Title</th>
                                         <th>Position</th>
                                         <th>Username</th>
+                                        <th>Phone Number</th>
                                         <th>Status</th>
                                         @can('reference.userManagement.update')
                                         <th>Actions</th>
@@ -56,6 +57,7 @@
                                         <td>{{ $item->user_metadata->division->name ?? '-' }}</td>
                                         <td>{{ $item->user_metadata->position->position_name ?? '-' }}</td>
                                         <td>{{ $item->username }}</td>
+                                        <td>{{ $item->user_metadata->phone_number ?? '-' }}</td>
                                         <td>
                                             @if(!$item->deleted_at)
                                             <span class="badge badge-light-success">Active</span>
@@ -108,7 +110,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="7" class="text-center">No records found.</td>
+                                        <td colspan="8" class="text-center">No records found.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -158,15 +160,6 @@
                 */
                 @endphp
                 <div class="modal-body">
-                    @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    @endif
                     <form wire:submit="{{ $editMode ? 'updateUser' : 'createUser' }}">
                         <div class="p-2">
                             <div class="mb-10" style="display: {{ $editMode ? '' : 'none' }};">
@@ -230,6 +223,18 @@
                                     @endforeach
                                 </select>
                                 @error('ref_position_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="mb-10">
+                                <label class="form-label">Phone Number</label>
+                                <input type="text" class="form-control"
+                                    maxlength="11"
+                                    oninput="this.value = '09' + this.value.slice(2).replace(/\D/g, '');"
+                                    placeholder="09XXXXXXXXX"
+                                    wire:model="phone_number">
+                                @error('phone_number')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
