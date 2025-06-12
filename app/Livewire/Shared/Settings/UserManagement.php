@@ -6,6 +6,7 @@ use App\Models\RefDivision;
 use App\Models\RefPosition;
 use App\Models\User;
 use App\Models\UserMetadata;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Title;
@@ -27,6 +28,7 @@ class UserManagement extends Component
         $username,
         $email,
         $role_id,
+        $is_office_admin,
         $permissions = [];
     public $ref_division_id,
         $ref_position_id;
@@ -36,9 +38,17 @@ class UserManagement extends Component
         $rules = [
             'name' => 'required|string',
             'username' => 'required|string|unique:users,username,' . $this->userId, // Exclude the current user's username
-            'email' => 'required|email|unique:users,email,' . $this->userId, // Exclude the current user's email
-            'role_id' => 'required|exists:roles,id', // Ensure the role exists
+            'ref_division_id' => 'nullable|exists:ref_divisions,id'
         ];
+
+        if ($this->editMode) {
+            $rules['email'] = 'required|email|unique:users,email,' . $this->userId; // Exclude the current user's email
+        }
+
+        if (Auth::user()->hasRole('Super Admin')) {
+            $rules['is_office_admin'] = 'required';
+            $rules['role_id'] = 'required|exists:roles,id'; // Ensure the role exists,
+        }
 
         return $rules;
     }
@@ -57,7 +67,6 @@ class UserManagement extends Component
 
         if ($property === 'role_id') {
             $this->reset('ref_division_id');
-            $this->loadDivisions();
         }
     }
 
@@ -69,10 +78,18 @@ class UserManagement extends Component
 
     public function loadUsers()
     {
-        return User::query()
+        $user = User::query()
             ->with(['roles', 'user_metadata'])
             ->withoutRole('Super Admin') // Exclude Super Admin role
             ->where('id', '!=', auth()->id()) // Always exclude current user first
+            ->when(!Auth::user()->hasRole('Super Admin'), function ($query) {
+                $query->whereHas('roles', function ($q) {
+                    $q->where('role_id', Auth::user()->roles()->first()->id);
+                });
+            }, function ($query) {
+                //return all users if Super Admin
+                return $query;
+            })
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
@@ -81,8 +98,14 @@ class UserManagement extends Component
             })
             ->withTrashed()
             ->paginate(10);
+
+        return $user;
     }
 
+    /**
+     * Summary of loadRoles
+     * a.k.a Offices ^_^
+     */
     public function loadRoles()
     {
         return Role::whereNot('name', 'Super Admin')
@@ -91,11 +114,25 @@ class UserManagement extends Component
 
     public function loadDivisions()
     {
-        return RefDivision::query()
-            ->when($this->role_id, function ($query) {
-                $query->where('role_id', $this->role_id);
-            })
-            ->get();
+        //! when() does not work. it doesn't retrieve the selected options only the Ids 1 and 2. ???
+        return RefDivision::when($this->role_id, function ($query) {
+            $query->where('office_id', $this->role_id); //* a.k.a role_id
+        })
+            ->get()
+            ->map(function ($query) {
+                return [
+                    'id' => $query->id,
+                    'name' => $query->name
+                ];
+            });
+
+        // return RefDivision::all()
+        //     ->map(function ($query) {
+        //         return [
+        //             'id' => $query->id,
+        //             'name' => $query->name
+        //         ];
+        //     });
     }
 
     public function loadPositions()
@@ -125,27 +162,38 @@ class UserManagement extends Component
                 $user = new User();
                 $user->name = $this->name;
                 $user->username = $this->username;
-                $user->email = $this->email;
+                $user->email = $this->username . '@email.com';
                 $user->password = Hash::make('password'); // Set a default password
                 $user->save();
 
+                // Create user metadata
                 $user_metadata = new UserMetadata();
                 $user_metadata->ref_division_id = $this->ref_division_id;
                 $user_metadata->ref_position_id = $this->ref_position_id;
                 $user_metadata->user_id = $user->id;
+
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $user_metadata->is_office_admin = $this->is_office_admin;
+                }
+
                 $user_metadata->save();
 
-                $role = Role::findOrFail($this->role_id);
-                $user->syncRoles($role);
+                // Role assignment
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $role = Role::findOrFail($this->role_id);
+                } else {
+                    $role = Role::findOrFail(Auth::user()->roles()->first()->id);
+                }
 
-                $user->syncPermissions($this->permissions); // Sync permissions if needed
+                $user->syncRoles($role);
+                $user->syncPermissions($this->permissions);
 
                 $this->clear();
                 $this->dispatch('hide-users-modal');
                 $this->dispatch('success', message: 'User created successfully.');
             });
         } catch (\Throwable $th) {
-            //throw $th;
+            throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -154,16 +202,18 @@ class UserManagement extends Component
     {
         try {
             $user = User::findOrFail($userId);
-            $this->userId = $user->id;
             $this->name = $user->name;
             $this->username = $user->username;
             $this->email = $user->email;
-            $this->role_id = $user->roles->first()->id ?? ''; // Assuming the user has only one role
+            $this->role_id = $user->roles->first()->id; // Assuming the user has only one role
             $this->permissions = $user->getPermissionNames()->toArray(); // Get all permissions for the user
 
-            $user_metadata = UserMetadata::where('user_id', $userId)->first();
-            $this->ref_division_id = $user_metadata->ref_division_id ?? '';
-            $this->ref_position_id = $user_metadata->ref_position_id ?? '';
+            if (Auth::user()->hasRole('Super Admin')) {
+                $this->is_office_admin = $user->user_metadata->is_office_admin;
+            }
+
+            $this->ref_division_id = UserMetadata::where('user_id', $userId)->value('ref_division_id');
+            $this->ref_position_id = UserMetadata::where('user_id', $userId)->value('ref_position_id');
 
             $this->editMode = true;
             $this->userId = $userId;
@@ -181,25 +231,43 @@ class UserManagement extends Component
 
         try {
             DB::transaction(function () {
-                $user = User::find($this->userId);
+                $user = User::findOrFail($this->userId);
                 $user->name = $this->name;
                 $user->username = $this->username;
                 $user->email = $this->email;
                 $user->save();
 
-                // Use updateOrCreate for metadata
-                UserMetadata::updateOrCreate(
-                    ['user_id' => $user->id],
-                    [
-                        'ref_division_id' => $this->ref_division_id === '' ? null : $this->ref_division_id,
-                        'ref_position_id' => $this->ref_position_id === '' ? null : $this->ref_position_id
-                    ]
-                );
+                // Update user metadata
+                $user_metadata = UserMetadata::findOrFail($this->userId);
+                $user_metadata->ref_division_id = $this->ref_division_id;
+                $user_metadata->ref_position_id = $this->ref_position_id;
+                $user_metadata->user_id = $user->id;
 
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $user_metadata->is_office_admin = $this->is_office_admin;
+                }
+
+                $user_metadata->save();
+
+                // // Use updateOrCreate for metadata
+                // $userMetadataData = [
+                //     'ref_division_id' => $this->ref_division_id === '' ? null : $this->ref_division_id,
+                //     'ref_position_id' => $this->ref_position_id === '' ? null : $this->ref_position_id,
+                // ];
+
+                // if (Auth::user()->hasRole('Super Admin')) {
+                //     $userMetadataData['is_office_admin'] = $this->is_office_admin;
+                // }
+
+                // UserMetadata::updateOrCreate(
+                //     ['user_id' => $this->userId],
+                //     $userMetadataData
+                // );
+
+                // Sync roles and permissions
                 $role = Role::findOrFail($this->role_id);
                 $user->syncRoles($role);
-
-                $user->syncPermissions($this->permissions); // Sync permissions if needed
+                $user->syncPermissions($this->permissions);
 
                 $this->clear();
                 $this->dispatch('hide-users-modal');

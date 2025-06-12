@@ -10,7 +10,7 @@
             <div class="card-toolbar">
                 <div class="d-flex align-items-center gap-2">
                     <!--begin::Menu Filter-->
-                    <livewire:components.menu-filter-component />
+                    <livewire:components.menu-filter-component page="meetings" />
                     <!--end::Menu Filter-->
 
                     <!--begin::Menu 2-->
@@ -179,7 +179,7 @@
                                 <select class="form-select" aria-label="Select approved by" wire:model="approved_by">
                                     <option>-Select-</option>
                                     @foreach ($signatories as $item)
-                                    <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
                                 @error('approved_by')
@@ -191,7 +191,7 @@
                                 <select class="form-select" aria-label="Select noted by" wire:model="noted_by">
                                     <option>-Select-</option>
                                     @foreach ($signatories as $item)
-                                    <option value="{{ $item->user_id }}">{{ $item->user->name }}</option>
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
                                 </select>
                                 @error('noted_by')

@@ -4,6 +4,7 @@ namespace App\Models\Apo;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
@@ -26,6 +27,12 @@ class MinutesOfMeeting extends Model
         return LogOptions::defaults()
             ->useLogName('apo_minutes_of_meetings')
             ->logOnly(['*'])
+            ->setDescriptionForEvent(function (string $eventName) {
+                $user = Auth::user();
+                $userName = $user ? $user->name : 'System';
+
+                return "{$userName} has {$eventName} a minutes of meeting.";
+            })
             ->logOnlyDirty();
     }
 }

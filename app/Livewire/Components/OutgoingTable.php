@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Components;
 
+use App\Models\File;
 use App\Models\Outgoing;
 use App\Models\OutgoingOthers;
 use App\Models\OutgoingPayrolls;
@@ -9,12 +10,14 @@ use App\Models\OutgoingProcurement;
 use App\Models\OutgoingRis;
 use App\Models\OutgoingVoucher;
 use App\Models\RefStatus;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\On;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
+use Spatie\Activitylog\Models\Activity;
 
 class OutgoingTable extends Component
 {
@@ -23,7 +26,9 @@ class OutgoingTable extends Component
     public $editMode;
     public $search,
         $filter_start_date,
-        $filter_end_date;
+        $filter_end_date,
+        $filter_status,
+        $filter_outgoing_category;
     public $outgoingId, $typeId;
     public $type;
     public $preview_file = [];
@@ -91,10 +96,12 @@ class OutgoingTable extends Component
         return $rules;
     }
     #[On('filter')]
-    public function filter($start_date, $end_date)
+    public function filter($start_date, $end_date, $status, $outgoing_category)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
+        $this->filter_status = $status;
+        $this->filter_outgoing_category = $outgoing_category;
     }
 
     #[On('clear-filter-data')]
@@ -125,6 +132,22 @@ class OutgoingTable extends Component
             })
             ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
                 $query->dateRange($this->filter_start_date, $this->filter_end_date);
+            })
+            ->when($this->filter_status, function ($query) {
+                $query->where('ref_status_id', $this->filter_status);
+            })
+            ->when($this->filter_outgoing_category, function ($query) {
+                if ($this->filter_outgoing_category == 'others') {
+                    $query->where('outgoingable_type', OutgoingOthers::class);
+                } elseif ($this->filter_outgoing_category == 'payroll') {
+                    $query->where('outgoingable_type', OutgoingPayrolls::class);
+                } elseif ($this->filter_outgoing_category == 'procurement') {
+                    $query->where('outgoingable_type', OutgoingProcurement::class);
+                } elseif ($this->filter_outgoing_category == 'ris') {
+                    $query->where('outgoingable_type', OutgoingRis::class);
+                } elseif ($this->filter_outgoing_category == 'voucher') {
+                    $query->where('outgoingable_type', OutgoingVoucher::class);
+                }
             })
             ->paginate(10);
     }
@@ -228,6 +251,8 @@ class OutgoingTable extends Component
             'destination'        => $this->destination,
             'person_responsible' => $this->person_responsible,
             'ref_status_id'      => $this->ref_status_id ?? '1',
+            'office_id'          => auth()->user()->roles()->first()->id,
+            'ref_division_id'    => auth()->user()->user_metadata->ref_division_id
         ];
 
         if ($this->outgoingId) {
@@ -305,6 +330,111 @@ class OutgoingTable extends Component
             $this->dispatch('show-outgoing-modal');
         } catch (\Throwable $th) {
             //throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    public function activityLog($id)
+    {
+        try {
+            // Step 1: Get OutgoingModel
+            $outgoing = Outgoing::with('outgoingable')->findOrFail($id);
+
+            // Step 2: Collect related file IDs if any
+            $fileIds = File::where('fileable_type', Outgoing::class)
+                ->where('fileable_id', $id)
+                ->pluck('id');
+
+            // Optional: Include file IDs from the polymorphic model
+            if ($outgoing->outgoingable) {
+                $fileIds = $fileIds->merge(
+                    File::where('fileable_type', get_class($outgoing->outgoingable))
+                        ->where('fileable_id', $outgoing->outgoingable->id)
+                        ->pluck('id')
+                );
+            }
+
+            // Step 3: Fetch activity logs for OutgoingModel and its morph
+            $outgoingLogs = Activity::where(function ($query) use ($outgoing) {
+                $query->where('subject_type', Outgoing::class)
+                    ->where('subject_id', $outgoing->id);
+            })
+                ->orWhere(function ($query) use ($outgoing) {
+                    $query->where('subject_type', get_class($outgoing->outgoingable))
+                        ->where('subject_id', $outgoing->outgoingable->id);
+                })
+                ->with(['causer.user_metadata.division'])
+                ->get();
+
+            // Step 4: Fetch file logs
+            $fileLogs = Activity::where('subject_type', File::class)
+                ->whereIn('subject_id', $fileIds)
+                ->with(['causer.user_metadata.division'])
+                ->get();
+
+            // Step 5: Combine and sort
+            $this->activity_log = $outgoingLogs->merge($fileLogs)
+                ->sortByDesc('created_at')
+                ->values()
+                ->map(function ($activity) {
+                    return [
+                        'id' => $activity->id,
+                        'file_log_description' => $activity->description,
+                        'causer' => $activity->causer?->name ?? 'System',
+                        'division' => $activity->causer?->user_metadata?->division?->name
+                            ? '[' . $activity->causer->user_metadata->division->name . ']'
+                            : '',
+                        'created_at' => Carbon::parse($activity->created_at)->format('M d, Y h:i A'),
+                        'changes' => collect($activity->properties['attributes'] ?? [])
+                            ->except(['id', 'created_at', 'updated_at', 'deleted_at', 'outgoingable_type', 'outgoingable_id', 'office_id'])
+                            ->map(function ($newValue, $key) use ($activity) {
+                                $oldValue = $activity->properties['old'][$key] ?? 'N/A';
+                                $fieldName = match ($key) {
+                                    'file_id' => 'Files',
+                                    'ref_status_id' => 'Status',
+                                    // Add additional mappings here
+                                    default => ucfirst(str_replace('_', ' ', $key)),
+                                };
+
+                                // Handle status
+                                if ($key === "ref_status_id") {
+                                    $oldValue = $oldValue !== 'N/A' ? RefStatus::find($oldValue)?->name : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? RefStatus::find($newValue)?->name : 'N/A';
+                                }
+
+                                // Handle dates
+                                if (in_array($key, ['date', 'deleted_at'])) {
+                                    $oldValue = $oldValue !== 'N/A' ? Carbon::parse($oldValue)->format('M d, Y') : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? Carbon::parse($newValue)->format('M d, Y') : 'N/A';
+                                }
+
+                                // Handle file IDs
+                                if ($key === 'file_id') {
+                                    $oldValue = is_string($oldValue) ? json_decode($oldValue, true) : $oldValue;
+                                    $newValue = is_string($newValue) ? json_decode($newValue, true) : $newValue;
+
+                                    $oldValue = is_array($oldValue)
+                                        ? implode(', ', File::whereIn('id', $oldValue)->pluck('name')->toArray())
+                                        : 'N/A';
+                                    $newValue = is_array($newValue)
+                                        ? implode(', ', File::whereIn('id', $newValue)->pluck('name')->toArray())
+                                        : 'N/A';
+                                }
+
+                                return [
+                                    'field' => $fieldName,
+                                    'old' => $oldValue,
+                                    'new' => $newValue,
+                                ];
+                            })
+                            ->values()
+                            ->toArray(),
+                    ];
+                });
+
+            $this->dispatch('show-activity-log-modal');
+        } catch (\Throwable $th) {
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

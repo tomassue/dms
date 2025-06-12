@@ -6,7 +6,7 @@
             <!--begin::Row-->
             <div class="row g-5 g-xl-12">
                 <!--begin::Mixed Widget 5-->
-                <div class="card card-xxl-stretch">
+                <div class="card card-xxl-stretch" wire:loading.class="opacity-50 pe-none">
                     <!--begin::Beader-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
@@ -33,10 +33,13 @@
                         </div>
                         <!-- end:search -->
 
-                        <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveIncomingDocumentCategory">
+                        <div class="table-responsive" wire:target.except="saveIncomingDocumentCategory">
                             <table class="table align-middle table-hover table-rounded table-striped border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                        @role('Super Admin')
+                                        <th>Office</th>
+                                        @endrole
                                         <th>Name</th>
                                         <th>Status</th>
                                         @can('reference.accomplishmentCategory.create')
@@ -47,7 +50,10 @@
                                 <tbody>
                                     @forelse($incoming_document_categories as $item)
                                     <tr>
-                                        <td>{{ $item->name }}</td>
+                                        @role('Super Admin')
+                                        <th>{{ $item->office->name }}</th>
+                                        @endrole
+                                        <td>{{ $item->incoming_document_category_name }}</td>
                                         <td>
                                             @if(!$item->deleted_at)
                                             <span class="badge badge-light-success">Active</span>
@@ -56,35 +62,37 @@
                                             @endif
                                         </td>
                                         <td>
-                                            @can('reference.incomingDocumentCategory.update')
-                                            <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocumentCategory({{ $item->id }})">
-                                                <div wire:loading.remove wire:target="editIncomingDocumentCategory({{ $item->id }})">
-                                                    <i class="bi bi-pencil"></i>
-                                                </div>
-
-                                                <div wire:loading wire:target="editIncomingDocumentCategory({{ $item->id }})">
-                                                    <div class="spinner-border spinner-border-sm" role="status">
-                                                        <span class="visually-hidden">Loading...</span>
+                                            <div class="btn-group" role="group" aria-label="Actions">
+                                                @can('reference.incomingDocumentCategory.update')
+                                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocumentCategory({{ $item->id }})">
+                                                    <div wire:loading.remove wire:target="editIncomingDocumentCategory({{ $item->id }})">
+                                                        <i class="bi bi-pencil"></i>
                                                     </div>
-                                                </div>
-                                            </a>
 
-                                            <a
-                                                href="#"
-                                                class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
-                                                title="Delete"
-                                                wire:click="{{ $item->deleted_at ? 'restoreIncomingDocumentCategory' : 'deleteIncomingDocumentCategory' }}({{ $item->id }})">
-                                                <div wire:loading.remove wire:target="deleteIncomingDocumentCategory, restoreIncomingDocumentCategory">
-                                                    <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
-                                                </div>
-
-                                                <div wire:loading wire:target="deleteIncomingDocumentCategory, restoreIncomingDocumentCategory">
-                                                    <div class="spinner-border spinner-border-sm" role="status">
-                                                        <span class="visually-hidden">Loading...</span>
+                                                    <div wire:loading wire:target="editIncomingDocumentCategory({{ $item->id }})">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            </a>
-                                            @endcan
+                                                </button>
+
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
+                                                    title="Delete"
+                                                    wire:click="{{ $item->deleted_at ? 'restoreIncomingDocumentCategory' : 'deleteIncomingDocumentCategory' }}({{ $item->id }})">
+                                                    <div wire:loading.remove wire:target="{{ $item->deleted_at ? 'restoreIncomingDocumentCategory' : 'deleteIncomingDocumentCategory' }}({{ $item->id }})">
+                                                        <i class="bi {{ $item->deleted_at ? 'bi-arrow-counterclockwise' : 'bi-trash' }}"></i>
+                                                    </div>
+
+                                                    <div wire:loading wire:target="{{ $item->deleted_at ? 'restoreIncomingDocumentCategory' : 'deleteIncomingDocumentCategory' }}({{ $item->id }})">
+                                                        <div class="spinner-border spinner-border-sm" role="status">
+                                                            <span class="visually-hidden">Loading...</span>
+                                                        </div>
+                                                    </div>
+                                                </button>
+                                                @endcan
+                                            </div>
                                         </td>
                                     </tr>
                                     @empty
@@ -137,39 +145,54 @@
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label required">Name</label>
-                                <input type="text" class="form-control" wire:model="name">
-                                @error('name')
+                                <input type="text" class="form-control" wire:model="incoming_document_category_name">
+                                @error('incoming_document_category_name')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+
+                            @role('Super Admin')
+                            <div class="mb-10">
+                                <label class="form-label required">Office</label>
+                                <select class="form-select" wire:model="office_id">
+                                    <option>-Select an office-</option>
+                                    @foreach ($offices as $item)
+                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('office_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @endrole
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                            <div wire:loading.remove>
-                                <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
-                            </div>
-                            <div wire:loading wire:target="saveIncomingDocumentCategory">
-                                <button class="btn btn-primary" type="button" disabled>
-                                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                                    <span role="status">Loading...</span>
-                                </button>
-                            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                    <div wire:loading.remove>
+                        <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                    </div>
+                    <div wire:loading wire:target="saveIncomingDocumentCategory">
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    </div>
                     </form>
                 </div>
             </div>
         </div>
+        <!--end::Modal - Incoming Document Category-->
     </div>
-    <!--end::Modal - Incoming Document Category-->
-</div>
 
-@script
-<script>
-    $wire.on('hide-incoming-document-category-modal', () => {
-        $('#incomingDocumentCategoryModal').modal('hide');
-    });
+    @script
+    <script>
+        $wire.on('hide-incoming-document-category-modal', () => {
+            $('#incomingDocumentCategoryModal').modal('hide');
+        });
 
-    $wire.on('show-incoming-document-category-modal', () => {
-        $('#incomingDocumentCategoryModal').modal('show');
-    });
-</script>
-@endscript
+        $wire.on('show-incoming-document-category-modal', () => {
+            $('#incomingDocumentCategoryModal').modal('show');
+        });
+    </script>
+    @endscript

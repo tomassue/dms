@@ -10,6 +10,7 @@ use App\Models\RefDivision;
 use App\Models\RefIncomingDocumentCategory;
 use App\Models\RefStatus;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\On;
@@ -28,7 +29,8 @@ class Documents extends Component
     public $editMode;
     public $search,
         $filter_start_date,
-        $filter_end_date;
+        $filter_end_date,
+        $filter_status;
     public $incomingDocumentId;
     public $selected_divisions = [],
         $forwarded_divisions = [];
@@ -72,10 +74,11 @@ class Documents extends Component
     }
 
     #[On('filter')]
-    public function filter($start_date, $end_date)
+    public function filter($start_date, $end_date, $status)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
+        $this->filter_status = $status;
     }
 
     #[On('clear-filter-data')]
@@ -102,6 +105,9 @@ class Documents extends Component
             ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
                 $query->DateRangeFilter($this->filter_start_date, $this->filter_end_date);
             })
+            ->when($this->filter_status, function ($query) {
+                $query->where('ref_status_id', $this->filter_status);
+            })
             ->latest()
             ->paginate(10);
     }
@@ -113,12 +119,13 @@ class Documents extends Component
 
     public function loadRefStatus()
     {
-        return RefStatus::all();
+        return RefStatus::incoming()
+            ->get();
     }
 
     public function loadDivisions()
     {
-        return RefDivision::where('role_id', auth()->user()->roles()->first()->id)
+        return RefDivision::where('office_id', auth()->user()->roles()->first()->id)
             ->get()
             ->map(function ($division) {
                 return [
@@ -159,15 +166,17 @@ class Documents extends Component
     public function editIncomingDocument(IncomingDocument $incomingDocument)
     {
         try {
-            // Mark all forwarded documents to this division (division level) as opened
-            $incomingDocument->forwards()
-                ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
-                ->update([
-                    'is_opened' => true
-                ]);
+            if (!Auth::user()->hasRole('Super Admin')) {
+                // Mark all forwarded documents to this division (division level) as opened
+                $incomingDocument->forwards()
+                    ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
+                    ->update([
+                        'is_opened' => true
+                    ]);
 
-            // Check if all divisions have opened their copies
-            $this->checkAllDivisionsOpened($incomingDocument);
+                // Check if all divisions have opened their copies
+                $this->checkAllDivisionsOpened($incomingDocument);
+            }
 
             $this->ref_incoming_document_category_id = $incomingDocument->ref_incoming_document_category_id;
             $this->document_info = $incomingDocument->document_info;
@@ -186,6 +195,7 @@ class Documents extends Component
             $this->editMode = true;
             $this->dispatch('show-incoming-document-modal');
         } catch (\Throwable $th) {
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -265,7 +275,8 @@ class Documents extends Component
             'document_info' => $this->document_info,
             'date' => $this->date,
             'ref_status_id' => $this->ref_status_id ?? '1', //! Default value set in the database is not working. - Set to pending.
-            'remarks' => $this->remarks
+            'remarks' => $this->remarks,
+            'office_id' => auth()->user()->roles()->first()->id
         ];
 
         return IncomingDocument::updateOrCreate(
@@ -322,17 +333,139 @@ class Documents extends Component
     {
         try {
             // Shows activity log
-            $this->activity_log = Activity::whereIn('subject_type', [IncomingDocument::class, ApoIncomingDocument::class])
+            // $this->activity_log = Activity::whereIn('subject_type', [IncomingDocument::class, ApoIncomingDocument::class])
+            //     ->whereIn('log_name', ['incoming_document', 'apo_incoming_document'])
+            //     ->whereNot('event', 'created')
+            //     ->where('subject_id', $id)
+            //     ->with(['causer.user_metadata.division']) // ✅ Eager-load nested relations
+            //     ->latest()
+            //     ->get()
+            //     ->map(function ($activity) {
+            //         return [
+            //             'id' => $activity->id,
+            //             'description' => $activity->description,
+            //             'causer' => $activity->causer?->name ?? 'System',
+            //             'division' => $activity->causer?->user_metadata?->division?->name ? '[' . $activity->causer?->user_metadata?->division?->name . ']' : '', // ✅ Access nested data
+            //             'created_at' => Carbon::parse($activity->created_at)->format('M d, Y h:i A'),
+            //             'changes' => collect($activity->properties['attributes'] ?? [])
+            //                 ->except(['id', 'created_at', 'updated_at', 'deleted_at', 'incoming_document_id']) // Exclude
+            //                 ->map(function ($newValue, $key) use ($activity) {
+            //                     $oldValue = $activity->properties['old'][$key] ?? 'N/A';
+
+            //                     // Custom field name mapping
+            //                     $fieldName = match ($key) {
+            //                         'file_id' => 'Files',
+            //                         'ref_status_id' => 'Status',
+            //                         'ref_incoming_document_category_id' => 'Category',
+            //                         'document_info' => 'Info',
+            //                         'ref_division_id' => 'Division',
+            //                         'is_opened' => 'Opened',
+            //                         // Add other field mappings here as needed
+            //                         // 'another_field' => 'Friendly Name',
+            //                         default => ucfirst(str_replace('_', ' ', $key))
+            //                     };
+
+            //                     // Format date fields
+            //                     if (in_array($key, ['deleted_at'])) {
+            //                         $oldValue = $oldValue !== 'N/A' ? Carbon::parse($oldValue)->format('M d, Y') : 'N/A';
+            //                         $newValue = $newValue !== 'N/A' ? Carbon::parse($newValue)->format('M d, Y') : 'N/A';
+            //                     }
+
+            //                     if ($key === 'date') {
+            //                         $oldValue = $oldValue !== 'N/A' ? Carbon::parse($oldValue)->format('M d, Y') : 'N/A';
+            //                         $newValue = $newValue !== 'N/A' ? Carbon::parse($newValue)->format('M d, Y') : 'N/A';
+            //                     }
+
+            //                     // Replace foreign keys with related names
+            //                     if ($key === 'ref_incoming_document_category_id') {
+            //                         $oldValue = $oldValue !== 'N/A' ? RefIncomingDocumentCategory::find($oldValue)?->name : 'N/A';
+            //                         $newValue = $newValue !== 'N/A' ? RefIncomingDocumentCategory::find($newValue)?->name : 'N/A';
+            //                     }
+
+            //                     if ($key === "ref_status_id") {
+            //                         $oldValue = $oldValue !== 'N/A' ? RefStatus::find($oldValue)?->name : 'N/A';
+            //                         $newValue = $newValue !== 'N/A' ? RefStatus::find($newValue)?->name : 'N/A';
+            //                     }
+
+            //                     if ($key === "ref_division_id") {
+            //                         $oldValue = $oldValue !== 'N/A' ? RefDivision::find($oldValue)?->name : 'N/A';
+            //                         $newValue = $newValue !== 'N/A' ? RefDivision::find($newValue)?->name : 'N/A';
+            //                     }
+
+            //                     // Replace boolean values with "Yes" or "No"
+            //                     if ($key === "is_opened") {
+            //                         $oldValue = $oldValue !== 'N/A' ? $oldValue ? 'Yes' : 'No' : 'N/A';
+            //                         $newValue = $newValue !== 'N/A' ? $newValue ? 'Yes' : 'No' : 'N/A';
+            //                     }
+
+            //                     // Convert array values to a string (e.g., file IDs to filenames)
+            //                     if ($key === 'file_id') {
+            //                         // Ensure values are decoded from JSON if stored as a string
+            //                         $oldValue = is_string($oldValue) ? json_decode($oldValue, true) : $oldValue;
+            //                         $newValue = is_string($newValue) ? json_decode($newValue, true) : $newValue;
+
+            //                         if (is_array($oldValue)) {
+            //                             $oldValue = File::whereIn('id', $oldValue)->pluck('name')->toArray();
+            //                             $oldValue = !empty($oldValue) ? implode(', ', $oldValue) : 'N/A';
+            //                         }
+
+            //                         if (is_array($newValue)) {
+            //                             $newValue = File::whereIn('id', $newValue)->pluck('name')->toArray();
+            //                             $newValue = !empty($newValue) ? implode(', ', $newValue) : 'N/A';
+            //                         }
+            //                     }
+
+            //                     return [
+            //                         'field' => $fieldName, // Format key
+            //                         'old' => $oldValue,
+            //                         'new' => $newValue,
+            //                     ];
+            //                 })
+            //                 ->values()
+            //                 ->toArray()
+            //         ];
+            //     });
+
+            // // 2. Get Forward records (only ref_division_id)
+            // $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingDocument::class)
+            //     ->where('forwardable_id', $id)
+            //     ->with(['division']) // Assuming 'division' is a relationship
+            //     ->latest()
+            //     ->get()
+            //     ->map(function ($forward) {
+            //         return [
+            //             'division_name' => $forward->division?->name ?? 'N/A',
+            //         ];
+            //     });
+
+
+            // Step 1: Get all file IDs related to this IncomingDocument
+            $fileIds = File::where('fileable_type', IncomingDocument::class)
+                ->where('fileable_id', $id)
+                ->pluck('id');
+
+            // Step 2: Fetch IncomingDocument activity
+            $incomingDocumentLogs = Activity::whereIn('subject_type', [IncomingDocument::class, ApoIncomingDocument::class])
                 ->whereIn('log_name', ['incoming_document', 'apo_incoming_document'])
                 ->whereNot('event', 'created')
                 ->where('subject_id', $id)
                 ->with(['causer.user_metadata.division']) // ✅ Eager-load nested relations
-                ->latest()
-                ->get()
+                ->get();
+
+            // Step 3: Fetch File activity logs
+            $fileLogs = Activity::where('subject_type', File::class)
+                ->whereIn('subject_id', $fileIds)
+                ->with(['causer.user_metadata.division'])
+                ->get();
+
+            // Step 4: Combine and sort by created_at DESC
+            $this->activity_log = $incomingDocumentLogs->merge($fileLogs)
+                ->sortByDesc('created_at')
+                ->values()
                 ->map(function ($activity) {
                     return [
                         'id' => $activity->id,
-                        'description' => $activity->description,
+                        'file_log_description' => $activity->description, // File activity log
                         'causer' => $activity->causer?->name ?? 'System',
                         'division' => $activity->causer?->user_metadata?->division?->name ? '[' . $activity->causer?->user_metadata?->division?->name . ']' : '', // ✅ Access nested data
                         'created_at' => Carbon::parse($activity->created_at)->format('M d, Y h:i A'),
@@ -367,8 +500,8 @@ class Documents extends Component
 
                                 // Replace foreign keys with related names
                                 if ($key === 'ref_incoming_document_category_id') {
-                                    $oldValue = $oldValue !== 'N/A' ? RefIncomingDocumentCategory::find($oldValue)?->name : 'N/A';
-                                    $newValue = $newValue !== 'N/A' ? RefIncomingDocumentCategory::find($newValue)?->name : 'N/A';
+                                    $oldValue = $oldValue !== 'N/A' ? RefIncomingDocumentCategory::find($oldValue)?->incoming_document_category_name : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? RefIncomingDocumentCategory::find($newValue)?->incoming_document_category_name : 'N/A';
                                 }
 
                                 if ($key === "ref_status_id") {
@@ -415,7 +548,7 @@ class Documents extends Component
                     ];
                 });
 
-            // 2. Get Forward records (only ref_division_id)
+            // Forwarded division logs (no change)
             $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingDocument::class)
                 ->where('forwardable_id', $id)
                 ->with(['division']) // Assuming 'division' is a relationship
@@ -461,6 +594,36 @@ class Documents extends Component
             $this->dispatch('success', message: 'Request forwarded successfully.');
         } catch (\Throwable $th) {
             // throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    public function viewIncomingDocument(IncomingDocument $incomingDocument)
+    {
+        try {
+            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingDocument::class)
+                ->where('forwardable_id', $incomingDocument->id)
+                ->with(['division']) // Assuming 'division' is a relationship
+                ->latest()
+                ->get()
+                ->map(function ($forward) {
+                    return [
+                        'division_name' => $forward->division?->name ?? 'N/A',
+                    ];
+                });
+
+            $this->ref_incoming_document_category_id = $incomingDocument->category->incoming_document_category_name;
+            $this->document_info = $incomingDocument->document_info;
+            $this->date = Carbon::parse($incomingDocument->date)->format('M d, Y');
+            $this->ref_status_id = $incomingDocument->status->name;
+            $this->source = $incomingDocument->apoDocument->source;
+            $this->remarks = $incomingDocument->remarks;
+
+            $this->preview_file = $incomingDocument->files;
+
+            $this->dispatch('show-details-modal');
+        } catch (\Throwable $th) {
+            //throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

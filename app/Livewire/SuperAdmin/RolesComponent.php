@@ -2,9 +2,11 @@
 
 namespace App\Livewire\SuperAdmin;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Role;
 
 class RolesComponent extends Component
@@ -57,6 +59,20 @@ class RolesComponent extends Component
                 $role->name = $this->name;
                 $role->save();
 
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn(new Role())
+                    ->useLog('role')
+                    ->event('created')
+                    ->withProperties([
+                        'name' => $this->name
+                    ])
+                    ->tap(function (Activity $activity) {
+                        $activity->log_name = 'role';
+                        $activity->subject_id = Role::latest()->first()->id;
+                    })
+                    ->log('Role has been created by ' . Auth::user()->name);
+
                 $this->clear();
                 $this->dispatch('hide-roles-modal');
                 $this->dispatch('success', message: 'Role created successfully.');
@@ -91,6 +107,20 @@ class RolesComponent extends Component
                 $role = Role::find($this->roleId);
                 $role->name = $this->name;
                 $role->save();
+
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn(new Role())
+                    ->useLog('role')
+                    ->event('updated')
+                    ->withProperties([
+                        'name' => $this->name
+                    ])
+                    ->tap(function (Activity $activity) {
+                        $activity->log_name = 'role';
+                        $activity->subject_id = Role::latest()->first()->id;
+                    })
+                    ->log('Role has been updated by ' . Auth::user()->name);
 
                 $this->clear();
                 $this->dispatch('hide-roles-modal');

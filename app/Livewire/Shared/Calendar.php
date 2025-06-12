@@ -40,7 +40,7 @@ class Calendar extends Component
                     'processed'  => '#7239ea', // Purple
                     'forwarded'  => '#ffc700', // Yellow
                     'completed'  => '#00d9d9', // Neon Blue
-                    'cancelled'  => '#181c32', // Black
+                    'cancelled'  => '#aeaeae', // Light gray
                     'received'   => '#181c32', // Black
                 ];
 

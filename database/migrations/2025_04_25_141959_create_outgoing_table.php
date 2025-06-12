@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('destination');
             $table->string('person_responsible');
             $table->foreignId('ref_status_id');
+            $table->foreignId('office_id')->comment('a.k.a role_id or Offices');
+            $table->foreignId('ref_division_id')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });
@@ -68,7 +70,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('outgoing');
         Schema::dropIfExists('outgoing_others');
-        Schema::dropIfExists('outgoing_payroll');
+        Schema::dropIfExists('outgoing_payrolls');
         Schema::dropIfExists('outgoing_procurement');
         Schema::dropIfExists('outgoing_ris');
         Schema::dropIfExists('outgoing_vouchers');

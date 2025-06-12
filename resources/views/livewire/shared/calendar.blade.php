@@ -65,7 +65,7 @@
                                         badge-light-dark
                                         @break
                                     @default
-                                        badge-light-secondary
+                                        badge-light-dark
                                 @endswitch
                                 text-capitalize">
                                     {{ $incomingRequest->status->name ?? '-' }}
@@ -94,7 +94,7 @@
                         </div>
                         <div class="row">
                             <div class="col-5 fw-bold">Category:</div>
-                            <div class="col-7">{{ $incomingRequest->category->name ?? '-' }}</div>
+                            <div class="col-7">{{ $incomingRequest->category->incoming_request_category_name ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-5 fw-bold">Date and Time:</div>

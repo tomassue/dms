@@ -1,6 +1,6 @@
 <div>
     <!--begin::Row-->
-    <div class="row g-5 g-xl-8">
+    <div class="row g-5 g-xl-8 justify-content-center">
         <!--begin::Col-->
         <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3 col-xxl-3">
             <div class="card card-dashed">
@@ -27,8 +27,11 @@
         </div>
         <!--end::Col-->
 
+        @php
+        //* Hidden because completed requests are not needed at the moment. Just keeping this in case it will be needed in the future.
+        @endphp
         <!--begin::Col-->
-        <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3 col-xxl-3">
+        <!-- <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3 col-xxl-3">
             <div class="card card-dashed">
                 <div class="card-header">
                     <h3 class="card-title">Completed Request</h3>
@@ -37,7 +40,7 @@
                     {{ $completed_incoming_requests->count() }}
                 </div>
             </div>
-        </div>
+        </div> -->
         <!--end::Col-->
 
         <!--begin::Col-->
@@ -80,7 +83,7 @@
                                     <td>{{ $item->no }}</td>
                                     <td>{{ $item->date_requested }}</td>
                                     <td>{{ $item->office_barangay_organization }}</td>
-                                    <td>{{ $item->category->name }}</td>
+                                    <td>{{ $item->category->incoming_request_category_name }}</td>
                                 </tr>
                                 @empty
                                 <tr>

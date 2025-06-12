@@ -16,6 +16,7 @@ return new class extends Migration
     {
         Schema::create('users_metadata', function (Blueprint $table) {
             $table->foreignIdFor(User::class)->unique();
+            $table->enum('is_office_admin', [0, 1])->nullable();
             $table->foreignIdFor(RefDivision::class);
             $table->foreignIdFor(RefPosition::class);
             $table->timestamps();

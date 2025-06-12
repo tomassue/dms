@@ -3,10 +3,12 @@
 namespace App\Livewire\Shared\Settings;
 
 use App\Models\RefIncomingDocumentCategory;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Permission\Models\Role;
 
 #[Title('Incoming Document Category')]
 class IncomingDocumentCategory extends Component
@@ -16,13 +18,19 @@ class IncomingDocumentCategory extends Component
     public $editMode;
     public $incomingDocumentCategoryId;
     public $search;
-    public $name;
+    public $incoming_document_category_name, $office_id;
 
     public function rules()
     {
-        return [
-            'name' => 'required|unique:ref_incoming_documents_categories,name,' . $this->incomingDocumentCategoryId,
+        $rules = [
+            'incoming_document_category_name' => 'required|unique:ref_incoming_documents_categories,incoming_document_category_name,' . $this->incomingDocumentCategoryId,
         ];
+
+        if (Auth::user()->hasRole('Super Admin')) {
+            $rules['office_id'] = 'required';
+        }
+
+        return $rules;
     }
 
     public function clear()
@@ -41,7 +49,8 @@ class IncomingDocumentCategory extends Component
         return view(
             'livewire.shared.settings.incoming-document-category',
             [
-                'incoming_document_categories' => $this->loadIncomingDocumentCategories()
+                'incoming_document_categories' => $this->loadIncomingDocumentCategories(),
+                'offices' => $this->loadOffices(), // Office Dropdown
             ]
         );
     }
@@ -50,10 +59,19 @@ class IncomingDocumentCategory extends Component
     {
         return RefIncomingDocumentCategory::query()
             ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%');
+                $query->where('incoming_document_category_name', 'like', '%' . $this->search . '%');
             })
             ->withTrashed()
             ->paginate(10);
+    }
+
+    /**
+     * Load Offices
+     * Only shown when superadmin adds categories since we will be assigning categories to a specific office.
+     */
+    public function loadOffices()
+    {
+        return Role::all();
     }
 
     public function saveIncomingDocumentCategory()
@@ -62,16 +80,27 @@ class IncomingDocumentCategory extends Component
 
         try {
             DB::transaction(function () {
+                $data = [
+                    'incoming_document_category_name' => $this->incoming_document_category_name,
+                ];
+
+                if (!Auth::user()->hasRole('Super Admin')) {
+                    $data['office_id'] = auth()->user()->roles()->first()->id;
+                } else {
+                    $data['office_id'] = $this->office_id;
+                }
+
                 RefIncomingDocumentCategory::updateOrCreate(
                     ['id' => $this->incomingDocumentCategoryId],
-                    ['name' => $this->name]
+                    $data
                 );
+
                 $this->clear();
                 $this->dispatch('hide-incoming-document-category-modal');
                 $this->dispatch('success', message: 'Incoming Document Category saved successfully.');
             });
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -80,7 +109,11 @@ class IncomingDocumentCategory extends Component
     {
         try {
             $incoming_document_category = RefIncomingDocumentCategory::findOrFail($incomingDocumentCategoryId);
-            $this->name = $incoming_document_category->name;
+            $this->incoming_document_category_name = $incoming_document_category->incoming_document_category_name;
+            if (Auth::user()->hasRole('Super Admin')) {
+                $this->office_id = $incoming_document_category->office_id;
+            }
+
             $this->incomingDocumentCategoryId = $incoming_document_category->id;
             $this->editMode = true;
             $this->dispatch('show-incoming-document-category-modal');

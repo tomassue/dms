@@ -171,8 +171,8 @@
             @php
             $accomplishments = is_array($accomplishments) ? collect($accomplishments) : $accomplishments;
             $accomplishment_category = $accomplishments->groupBy(function($item) {
-            return $item['accomplishment_category']['name'] ??
-            ($item->accomplishment_category->name ?? 'Uncategorized');
+            return $item['accomplishment_category']['accomplishment_category_name'] ??
+            ($item->accomplishment_category->accomplishment_category_name ?? 'Uncategorized');
             });
             @endphp
 
@@ -214,15 +214,15 @@
                 <td style="height: 40px; font-weight: bold; text-transform: uppercase; vertical-align: bottom">{{ $approved ?? '' }}</td>
             </tr>
             <tr>
-                <td style="vertical-align: top; border-top: 1px solid black;">
+                <td style="vertical-align: top; border-top: 1px solid black; text-transform: uppercase;">
                     {{ trim(($prepared_by_position ?? '') . ($prepared_by_position && $prepared_by_division ? ', ' : '') . ($prepared_by_division ?? '')) }}
                 </td>
                 <td></td>
-                <td style="vertical-align: top; border-top: 1px solid black;">
+                <td style="vertical-align: top; border-top: 1px solid black; text-transform: uppercase;">
                     {{ trim(($conforme_position ?? '') . ($conforme_position && $conforme_division ? ', ' : '') . ($conforme_division ?? '')) }}
                 </td>
                 <td></td>
-                <td style="vertical-align: top; border-top: 1px solid black;">
+                <td style="vertical-align: top; border-top: 1px solid black; text-transform: uppercase;">
                     {{ trim(($approved_position ?? '') . ($approved_position && $approved_division ? ', ' : '') . ($approved_division ?? '')) }}
                 </td>
             </tr>

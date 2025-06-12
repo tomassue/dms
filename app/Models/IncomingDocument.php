@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Models\Apo\IncomingDocument as ApoIncomingDocument;
 use App\Models\Scopes\IsForwardedFilterScope;
+use App\Models\Scopes\OfficeScope;
 use App\Models\Scopes\RoleBasedFilterScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
@@ -12,9 +13,10 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\Models\Activity;
 
-#[ScopedBy([RoleBasedFilterScope::class, IsForwardedFilterScope::class])]
+#[ScopedBy([OfficeScope::class, IsForwardedFilterScope::class])]
 class IncomingDocument extends Model
 {
     use SoftDeletes, LogsActivity;
@@ -25,7 +27,8 @@ class IncomingDocument extends Model
         'document_info',
         'date',
         'ref_status_id',
-        'remarks'
+        'remarks',
+        'office_id'
     ];
 
     //* Scopes
@@ -50,6 +53,9 @@ class IncomingDocument extends Model
             $query->where('document_info', 'like', '%' . $search . '%')
                 ->orWhereHas('apoDocument', function ($q) use ($search) {
                     $q->where('source', 'like', '%' . $search . '%');
+                })
+                ->orWhereHas('category', function ($q) use ($search) {
+                    $q->where('incoming_document_category_name', 'like', '%' . $search . '%');
                 });
         });
     }
@@ -87,6 +93,12 @@ class IncomingDocument extends Model
         return LogOptions::defaults()
             ->useLogName('incoming_document')
             ->logOnly(['*'])
+            ->setDescriptionForEvent(function (string $eventName) {
+                $user = Auth::user();
+                $userName = $user ? $user->name : 'System';
+
+                return "{$userName} has {$eventName} an incoming document with a document info of {$this->document_info}";
+            })
             ->logOnlyDirty();
     }
 

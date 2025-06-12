@@ -14,7 +14,8 @@ return new class extends Migration
     {
         Schema::create('ref_incoming_documents_categories', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
+            $table->string('incoming_document_category_name');
+            $table->foreignId('office_id')->comment('a.k.a role_id from roles or offices');
             $table->softDeletes();
             $table->timestamps();
         });

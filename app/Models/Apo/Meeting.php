@@ -2,17 +2,22 @@
 
 namespace App\Models\Apo;
 
+use App\Models\File;
 use App\Models\RefApoMeetingsCategory;
+use App\Models\RefSignatories;
+use App\Models\Scopes\DivisionScope;
+use App\Models\Scopes\OfficeScope;
 use App\Models\Scopes\RoleAndDivisionBasedScope;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-#[ScopedBy([RoleAndDivisionBasedScope::class])]
+#[ScopedBy([OfficeScope::class, DivisionScope::class])]
 class Meeting extends Model
 {
     use SoftDeletes, LogsActivity;
@@ -27,7 +32,10 @@ class Meeting extends Model
         'venue',
         'prepared_by',
         'approved_by',
-        'noted_by'
+        'noted_by',
+        //* file is not fillable.
+        'office_id',
+        'ref_division_id',
     ];
 
     // Accessors
@@ -69,17 +77,22 @@ class Meeting extends Model
 
     public function approvedBy()
     {
-        return $this->belongsTo(User::class, 'approved_by', 'id');
+        return $this->belongsTo(RefSignatories::class, 'approved_by', 'id');
     }
 
     public function notedBy()
     {
-        return $this->belongsTo(User::class, 'noted_by', 'id');
+        return $this->belongsTo(RefSignatories::class, 'noted_by', 'id');
     }
 
     public function apoMeetingsCategory()
     {
         return $this->belongsTo(RefApoMeetingsCategory::class, 'ref_apo_meetings_category_id', 'id');
+    }
+
+    public function files()
+    {
+        return $this->morphOne(File::class, 'fileable');
     }
 
     // Activity Log
@@ -88,6 +101,12 @@ class Meeting extends Model
         return LogOptions::defaults()
             ->useLogName('meeting')
             ->logOnly(['*'])
+            ->setDescriptionForEvent(function (string $eventName) {
+                $user = Auth::user();
+                $userName = $user ? $user->name : 'System';
+
+                return "{$userName} has {$eventName} a meeting held on {$this->date}.";
+            })
             ->logOnlyDirty();
     }
 }

@@ -2,9 +2,11 @@
 
 namespace App\Livewire\SuperAdmin;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Component;
 use Livewire\WithPagination;
+use Spatie\Activitylog\Models\Activity;
 use Spatie\Permission\Models\Permission;
 
 class PermissionsComponent extends Component
@@ -65,6 +67,21 @@ class PermissionsComponent extends Component
                 $permission->name = $this->name;
                 $permission->guard_name = 'web';
                 $permission->save();
+
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn(new Permission())
+                    ->useLog('permission')
+                    ->event('created')
+                    ->withProperties([
+                        'name' => $this->name,
+                        'guard_name' => 'web'
+                    ])
+                    ->tap(function (Activity $activity) {
+                        $activity->log_name = 'role';
+                        $activity->subject_id = Permission::latest()->first()->id;
+                    })
+                    ->log('Permission has been created by ' . Auth::user()->name);
 
                 $this->clear();
                 $this->dispatch('hide-permissions-modal');

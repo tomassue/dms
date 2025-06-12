@@ -3,6 +3,7 @@
 namespace App\Livewire\Shared\Settings;
 
 use App\Models\RefDivision;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
@@ -19,21 +20,26 @@ class Divisions extends Component
     public $editMode;
     public $divisionId;
     public $name,
-        $role_id;
+        $office_id;
 
     public function rules()
     {
-        return [
+        $rules = [
             'name' => [
                 'required',
                 'string',
                 'max:255',
                 Rule::unique('ref_divisions')->where(function ($query) {
-                    return $query->where('role_id', $this->role_id);
+                    return $query->where('office_id', $this->office_id);
                 })->ignore($this->divisionId),
             ],
-            'role_id' => 'required|exists:roles,id',
         ];
+
+        if (auth()->user()->hasRole('Super Admin')) {
+            $rules['office_id'] = 'required';
+        }
+
+        return $rules;
     }
 
     public function clear()
@@ -78,7 +84,11 @@ class Divisions extends Component
         try {
             DB::transaction(function () {
                 $division = new RefDivision();
-                $division->role_id = $this->role_id;
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $division->office_id = $this->office_id;
+                } else {
+                    $division->office_id = auth()->user()->roles()->first()->id;
+                }
                 $division->name = $this->name;
                 $division->save();
 
@@ -100,7 +110,7 @@ class Divisions extends Component
 
             $division = RefDivision::find($divisionId);
             $this->name = $division->name;
-            $this->role_id = $division->role_id;
+            $this->office_id = $division->office_id;
 
             $this->dispatch('show-division-modal');
         } catch (\Throwable $th) {
@@ -116,7 +126,11 @@ class Divisions extends Component
         try {
             DB::transaction(function () {
                 $division = RefDivision::find($this->divisionId);
-                $division->role_id = $this->role_id;
+                if (Auth::user()->hasRole('Super Admin')) {
+                    $division->office_id = $this->office_id;
+                } else {
+                    $division->office_id = auth()->user()->roles()->first()->id;
+                }
                 $division->name = $this->name;
                 $division->save();
 

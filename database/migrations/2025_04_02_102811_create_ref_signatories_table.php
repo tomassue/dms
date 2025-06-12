@@ -16,7 +16,10 @@ return new class extends Migration
     {
         Schema::create('ref_signatories', function (Blueprint $table) {
             $table->id();
-            $table->foreignIdFor(User::class); # Get name from users but when we retrieve it, users should only see records associated with their role (office).
+            $table->string('name');
+            $table->string('title');
+            $table->foreignId('office_id');
+            $table->foreignId('division_id');
             $table->softDeletes();
             $table->timestamps();
         });

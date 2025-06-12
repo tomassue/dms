@@ -2,7 +2,9 @@
 
 namespace App\Providers;
 
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -24,6 +26,12 @@ class AppServiceProvider extends ServiceProvider
         // This works in the app by using gate-related functions like auth()->user->can() and @can()
         Gate::before(function ($user, $ability) {
             return $user->hasRole('Super Admin') ? true : null;
+        });
+
+        // Share variable globally to all views
+        View::composer('*', function ($view) {
+            $isOfficeAdmin = auth()->check() && optional(auth()->user()->user_metadata)->is_office_admin == 1;
+            $view->with('is_office_admin', $isOfficeAdmin);
         });
     }
 }

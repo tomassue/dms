@@ -10,6 +10,7 @@ use App\Models\RefSignatories;
 use App\Models\User;
 use Dompdf\Dompdf;
 use Dompdf\Options;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -138,7 +139,9 @@ class Accomplishments extends Component
 
     public function loadConformeesSignatories()
     {
-        return RefSignatories::withinDivision()->get();
+        return RefSignatories::withinOffice()
+            // ->where('ref_division_id', Auth::user()->user_metadata->ref_division_id) //! removed
+            ->get();
     }
 
     /**
@@ -183,14 +186,15 @@ class Accomplishments extends Component
 
     public function loadAccomplishmentCategories()
     {
-        return RefAccomplishmentCategory::query()
-            ->when(auth()->user()->hasRole('Super Admin'), function ($query) {
-                // Super Admin sees all
-            }, function ($query) {
-                $roleId = auth()->user()->roles()->first()->id; // Explicitly fails if no role
-                $query->where('role_id', $roleId);
-            })
-            ->get();
+        $accomplishment_categories = RefAccomplishmentCategory::get()
+            ->map(function ($query) {
+                return [
+                    'id' => $query->id,
+                    'name' => $query->accomplishment_category_name
+                ];
+            });
+
+        return $accomplishment_categories;
     }
 
     public function saveAccomplishment()
@@ -200,7 +204,7 @@ class Accomplishments extends Component
         try {
             DB::transaction(function () {
                 $accomplishment = $this->saveMainAccomplishment();
-                $this->saveApoAccomplishment($accomplishment);
+                $this->saveApoAccomplishment($accomplishment); // Save APO Accomplishment
 
                 $this->clear();
                 $this->dispatch('hide-accomplishment-modal');
@@ -217,7 +221,9 @@ class Accomplishments extends Component
         $data = [
             'ref_accomplishment_category_id' => $this->ref_accomplishment_category_id,
             'date' => $this->date,
-            'details' => $this->details
+            'details' => $this->details,
+            'office_id' => auth()->user()->roles()->first()->id,
+            'ref_division_id' => auth()->user()->user_metadata?->ref_division_id
         ];
 
         return Accomplishment::updateOrCreate(
@@ -307,20 +313,20 @@ class Accomplishments extends Component
             $viewData['prepared_by_division'] = $preparedUser->user_metadata->division->name ?? null;
 
             // Get conforme user data
-            $conformeUser = User::with('user_metadata.position')->find($this->conforme);
-            $viewData['conforme'] = $conformeUser
-                ? $conformeUser->name
+            $conforme = RefSignatories::find($this->conforme);
+            $viewData['conforme'] = $conforme
+                ? $conforme->name
                 : '';
-            $viewData['conforme_position'] = $conformeUser->user_metadata->position->name ?? null;
-            $viewData['conforme_division'] = $conformeUser->user_metadata->division->name ?? null;
+            $viewData['conforme_position'] = null;
+            $viewData['conforme_division'] = $conforme->title ?? null;
 
             // Get approved user data
-            $approvedUser = User::with('user_metadata.position')->find($this->approved);
-            $viewData['approved'] = $approvedUser
-                ? $approvedUser->name
+            $approved = RefSignatories::find($this->approved);
+            $viewData['approved'] = $approved
+                ? $approved->name
                 : '';
-            $viewData['approved_position'] = $approvedUser->user_metadata->position->name ?? null;
-            $viewData['approved_division'] = $approvedUser->user_metadata->division->name ?? null;
+            $viewData['approved_position'] = null;
+            $viewData['approved_division'] = $approved->title ?? null;
 
             // Hide the modal
             $this->dispatch('hide-accomplishment-signatories-modal');

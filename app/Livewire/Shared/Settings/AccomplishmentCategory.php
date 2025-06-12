@@ -19,26 +19,26 @@ class AccomplishmentCategory extends Component
     public $editMode;
     public $accomplishmentCategoryId;
     # Properties Form
-    public $name,
-        $role_id;
+    public $accomplishment_category_name,
+        $office_id;
 
     public function rules()
     {
-        //* Determine the role_id to use since if the user is the Super Admin, we will choose the role the category is associated to. Otherwise, we will use the user's role when creating a new Accomplishment Category.
-        $roleId = $this->role_id ?? auth()->user()->roles()->first()->id;
+        //* Determine the office_id to use since if the user is the Super Admin, we will choose the role the category is associated to. Otherwise, we will use the user's role when creating a new Accomplishment Category.
+        $officeId = $this->office_id ?? auth()->user()->roles()->first()->id;
 
         $rules = [
-            'name' => [
+            'accomplishment_category_name' => [
                 'required',
                 'string',
                 Rule::unique('ref_accomplishment_categories')
-                    ->where('role_id', $roleId)
+                    ->where('office_id', $officeId)
                     ->ignore($this->accomplishmentCategoryId)
             ],
         ];
 
         if (auth()->user()->hasRole('Super Admin')) {
-            $rules['role_id'] = 'required';
+            $rules['office_id'] = 'required';
         }
 
         return $rules;
@@ -70,14 +70,14 @@ class AccomplishmentCategory extends Component
     {
         return RefAccomplishmentCategory::query()
             ->withTrashed()
-            ->when(auth()->user()->hasRole('Super Admin'), function ($query) {
-                // Super Admin sees all
-            }, function ($query) {
-                $roleId = auth()->user()->roles()->first()->id; // Explicitly fails if no role
-                $query->where('role_id', $roleId);
-            })
+            // ->when(auth()->user()->hasRole('Super Admin'), function ($query) {
+            //     // Super Admin sees all
+            // }, function ($query) {
+            //     $roleId = auth()->user()->roles()->first()->id; // Explicitly fails if no role
+            //     $query->where('role_id', $roleId);
+            // })
             ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%');
+                $query->where('accomplishment_category_name', 'like', '%' . $this->search . '%');
             })
             ->paginate(10);
     }
@@ -98,11 +98,11 @@ class AccomplishmentCategory extends Component
             DB::transaction(function () {
                 $accomplishment_category = new RefAccomplishmentCategory();
                 if (auth()->user()->hasRole('Super Admin')) {
-                    $accomplishment_category->role_id = $this->role_id;
+                    $accomplishment_category->office_id = $this->office_id;
                 } else {
-                    $accomplishment_category->role_id = auth()->user()->roles()->first()->id;
+                    $accomplishment_category->office_id = auth()->user()->roles()->first()->id;
                 }
-                $accomplishment_category->name = $this->name;
+                $accomplishment_category->accomplishment_category_name = $this->accomplishment_category_name;
                 $accomplishment_category->save();
             });
 
@@ -110,7 +110,7 @@ class AccomplishmentCategory extends Component
             $this->dispatch('hide-accomplishment-category-modal');
             $this->dispatch('success', message: 'Accomplishment Category successfully created.');
         } catch (\Throwable $th) {
-            //throw $th;
+            throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -119,11 +119,11 @@ class AccomplishmentCategory extends Component
     {
         try {
             $accomplishment_category = RefAccomplishmentCategory::findOrFail($accomplishmentCategoryId);
-            $this->name = $accomplishment_category->name;
+            $this->accomplishment_category_name = $accomplishment_category->accomplishment_category_name;
             $this->accomplishmentCategoryId = $accomplishment_category->id;
 
             if (auth()->user()->hasRole('Super Admin')) {
-                $this->role_id = $accomplishment_category->role_id;
+                $this->office_id = $accomplishment_category->office_id;
             }
 
             $this->editMode = true;
@@ -142,9 +142,9 @@ class AccomplishmentCategory extends Component
             DB::transaction(function () {
                 $accomplishment_category = RefAccomplishmentCategory::findOrFail($this->accomplishmentCategoryId);
                 if (auth()->user()->hasRole('Super Admin')) {
-                    $accomplishment_category->role_id = $this->role_id;
+                    $accomplishment_category->office_id = $this->office_id;
                 }
-                $accomplishment_category->name = $this->name;
+                $accomplishment_category->accomplishment_category_name = $this->accomplishment_category_name;
                 $accomplishment_category->save();
 
                 $this->clear();

@@ -106,7 +106,10 @@ class Meetings extends Component
 
     public function loadSignatories()
     {
-        return RefSignatories::all();
+        // return RefSignatories::all();
+        return RefSignatories::withinOffice()
+            // ->where('ref_division_id', Auth::user()->user_metadata->ref_division_id) //! removed
+            ->get();
     }
 
     public function getApoMeetingsCategories()
@@ -120,19 +123,23 @@ class Meetings extends Component
 
         try {
             DB::transaction(function () {
+                $data = [
+                    'date' => $this->date,
+                    'ref_apo_meetings_category_id' => $this->ref_apo_meetings_category_id,
+                    'description' => $this->description,
+                    'time_start' => $this->time_start,
+                    'time_end' => $this->time_end,
+                    'venue' => $this->venue,
+                    'prepared_by' => Auth::user()->id ?? null,
+                    'approved_by' => $this->approved_by ?: null,
+                    'noted_by' => $this->noted_by ?: null,
+                    'office_id' => Auth::user()->roles()->first()->id,
+                    'ref_division_id' => Auth::user()?->user_metadata?->ref_division_id ?? null
+                ];
+
                 Meeting::updateOrCreate(
                     ['id' => $this->meetingId],
-                    [
-                        'date' => $this->date,
-                        'ref_apo_meetings_category_id' => $this->ref_apo_meetings_category_id,
-                        'description' => $this->description,
-                        'time_start' => $this->time_start,
-                        'time_end' => $this->time_end,
-                        'venue' => $this->venue,
-                        'prepared_by' => Auth::user()->id ?? null,
-                        'approved_by' => $this->approved_by ?: null,
-                        'noted_by' => $this->noted_by ?: null,
-                    ]
+                    $data
                 );
 
                 $this->clear();

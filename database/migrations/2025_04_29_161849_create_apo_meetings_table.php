@@ -22,6 +22,9 @@ return new class extends Migration
             $table->foreignId('prepared_by')->nullable();
             $table->foreignId('approved_by')->nullable();
             $table->foreignId('noted_by')->nullable();
+            $table->binary('file')->nullable();
+            $table->foreignId('office_id')->comment('a.k.a role_id from roles or offices');
+            $table->foreignId('ref_division_id')->nullable()->comment('a.k.a division_id from divisions');
             $table->softDeletes();
             $table->timestamps();
         });

@@ -59,7 +59,7 @@
 
                         @can('incoming.documents.read')
                         <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'incoming.documents' ? 'active' : '' }}" href="{{ route('incoming-documents') }}">
+                            <a class="menu-link {{ Route::currentRouteName() == 'incoming-documents' ? 'active' : '' }}" href="{{ route('incoming-documents') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>
@@ -243,6 +243,17 @@
                         </div>
                         @endcan
 
+                        @can('reference.accomplishmentCategory.read')
+                        <div class="menu-item">
+                            <a class="menu-link {{ Route::currentRouteName() == 'accomplishment-category' ? 'active' : '' }}" href="{{ route('accomplishment-category') }}">
+                                <span class="menu-bullet">
+                                    <span class="bullet bullet-dot"></span>
+                                </span>
+                                <span class="menu-title">Accomplishment Category</span>
+                            </a>
+                        </div>
+                        @endcan
+
                         <!-- Outgoing Category -->
 
                         @can('reference.divisions.read')
@@ -256,13 +267,13 @@
                         </div>
                         @endcan
 
-                        @can('reference.accomplishmentCategory.read')
-                        <div class="menu-item">
-                            <a class="menu-link {{ Route::currentRouteName() == 'accomplishment-category' ? 'active' : '' }}" href="{{ route('accomplishment-category') }}">
+                        @can('reference.position.read')
+                        <div class="menu-item" style="display: none;">
+                            <a class="menu-link {{ Route::currentRouteName() == 'settings.positions' ? 'active' : '' }}" href="{{ route('settings.positions') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>
-                                <span class="menu-title">Accomplishment Category</span>
+                                <span class="menu-title">Positions</span>
                             </a>
                         </div>
                         @endcan
