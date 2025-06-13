@@ -118,7 +118,7 @@
 
 .page-link:hover {
     z-index: 2;
-    color: #639a56 !important;
+    color: #c0c3c6 !important;
     text-decoration: none;
     background-color: #f8f5ff;
     border-color: transparent;
@@ -127,8 +127,9 @@
 .page-item.active .page-link {
     z-index: 3;
     color: #fff;
-    background-color: #639a56 !important;
+    background-color: #0e4a84 !important;
     border-color: transparent;
+    cursor: pointer;
 }
 
 .btn-active-light-primary {

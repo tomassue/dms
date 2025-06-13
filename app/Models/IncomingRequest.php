@@ -47,6 +47,11 @@ class IncomingRequest extends Model
         return $this->date_time ? Carbon::parse($this->date_time)->format('M d, Y h:i A') : null;
     }
 
+    public function getRequestAgeAttribute()
+    {
+        return Carbon::parse($this->created_at)->diffForHumans();
+    }
+
     // Scopes
     public function scopeIsForwarded()
     {

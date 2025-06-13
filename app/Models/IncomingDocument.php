@@ -31,6 +31,12 @@ class IncomingDocument extends Model
         'office_id'
     ];
 
+    // Accessor
+    public function getDocumentAgeAttribute()
+    {
+        return Carbon::parse($this->created_at)->diffForHumans();
+    }
+
     //* Scopes
     public function scopeIsForwarded()
     {
@@ -70,6 +76,11 @@ class IncomingDocument extends Model
     public function scopeDateRangeFilter($query, $start_date, $end_date)
     {
         return $query->whereBetween('date', [$start_date, $end_date]);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->whereHas('status', fn($q) => $q->where('name', 'pending'));
     }
 
     /**

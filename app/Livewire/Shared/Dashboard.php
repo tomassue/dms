@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Shared;
 
+use App\Models\IncomingDocument;
 use App\Models\IncomingRequest;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -22,6 +23,7 @@ class Dashboard extends Component
                 'completed_incoming_requests' => $this->loadCompletedIncomingRequests(),
                 'total_incoming_requests' => $this->loadTotalIncomingRequests(),
                 'incoming_requests' => $this->loadIncomingRequests(),
+                'incoming_documents' => $this->loadIncomingDocuments(),
             ]
         );
     }
@@ -51,6 +53,11 @@ class Dashboard extends Component
 
     public function loadIncomingRequests()
     {
-        return IncomingRequest::paginate(5);
+        return IncomingRequest::paginate(5, pageName: 'incoming_requests');
+    }
+
+    public function loadIncomingDocuments()
+    {
+        return IncomingDocument::paginate(5, pageName: 'incoming_documents');
     }
 }

@@ -656,7 +656,30 @@
 
                                     <div style="display: {{ $role_id == '2' ? '' : 'none' }};">
                                         <div class="separator my-10">City Veterinary</div>
-                                        -- Nothing --
+
+                                        <!-- Accomplishments -->
+                                        <li class="d-flex align-items-center py-2">
+                                            <span class="bullet me-5"></span> Accomplishments
+                                        </li>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="accomplishments.create" id="accomplishmentsCreate" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentsCreate"> Create </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="accomplishments.read" id="accomplishmentsRead" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentsRead"> Read </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="accomplishments.update" id="accomplishmentsUpdate" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentsUpdate"> Update </label>
+                                            </div>
+                                        </div>
+
                                         <div class="separator my-10">City Veterinary</div>
                                     </div>
 
