@@ -215,7 +215,7 @@
             </tr>
             <tr>
                 <td style="vertical-align: top; border-top: 1px solid black; text-transform: uppercase;">
-                    {{ trim(($prepared_by_position ?? '') . ($prepared_by_position && $prepared_by_division ? ', ' : '') . ($prepared_by_division ?? '')) }}
+                    {{ $prepared_by_position ?? ''}}
                 </td>
                 <td></td>
                 <td style="vertical-align: top; border-top: 1px solid black; text-transform: uppercase;">

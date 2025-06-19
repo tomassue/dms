@@ -4,8 +4,8 @@
         <!--begin::Container-->
         <div class="container-xxl" id="kt_content_container">
             <!--begin::Row-->
-            <div class="row g-5 g-xl-12">
-                <div class=" col-lg-4">
+            <div class="row g-5 g-xl-12" wire:loading.class="opacity-50 pe-none" wire:target.except="saveAccomplishment, details">
+                <div class=" col-lg-6">
                     <!--begin::Mixed Widget 5-->
                     <div class="card">
                         <!--begin::Header-->
@@ -66,7 +66,7 @@
 
                                         @role('APOO')
                                         <div class="mb-10">
-                                            <label class="form-label required">Sub-category</label>
+                                            <label class="form-label">Sub-category</label>
                                             <input type="text" class="form-control" wire:model="sub_category">
                                             @error('sub_category')
                                             <span class="text-danger">{{ $message }}</span>
@@ -77,7 +77,10 @@
                                         <div class="mb-10">
                                             <label class="form-label required">Details</label>
                                             <!-- <input type="text" class="form-control" wire:model="details"> -->
-                                            <textarea class="form-control" wire:model="details"></textarea>
+                                            <!-- <textarea class="form-control" wire:model="details"></textarea> -->
+                                            <div wire:ignore>
+                                                <div id="summernote_details"></div>
+                                            </div>
                                             @error('details')
                                             <span class="text-danger">{{ $message }}</span>
                                             @enderror
@@ -92,7 +95,7 @@
                                         @endrole
 
                                         <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 gap-sm-5 mt-10">
-                                            <button type="button" class="btn btn-danger" wire:click="cancel">
+                                            <button type="button" class="btn btn-danger" wire:click="clear">
                                                 <span>Cancel</span>
                                             </button>
                                             @can('accomplishments.create')
@@ -120,7 +123,7 @@
                     </div>
                     <!--end::Mixed Widget 5-->
                 </div>
-                <div class="col-lg-8">
+                <div class="col-lg-6">
                     <!--begin::Mixed Widget 5-->
                     <div class="card">
                         <!--begin::Header-->
@@ -178,13 +181,12 @@
                             </div>
                             <!-- end:search -->
 
-                            <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveAccomplishment">
+                            <div class="table-responsive">
                                 <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                     <thead>
                                         <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
                                             <th>Accomplishment Category</th>
                                             <th class="min-w-200px">Date</th>
-                                            <th>Details</th>
                                             @role('APOO')
                                             <th>Next Steps</th>
                                             @endrole
@@ -208,9 +210,6 @@
                                                 @else
                                                 {{ $item->formatted_date }}
                                                 @endrole
-                                            </td>
-                                            <td>
-                                                {{ $item->details }}
                                             </td>
                                             @role('APOO')
                                             <td>
@@ -260,106 +259,6 @@
 
     @include('livewire.shared.modals.pdf-modal')
 
-    <!--begin::Modal - Accomplishment-->
-    <div class="modal fade" tabindex="-1" id="accomplishmentModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
-        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Accomplishment</h5>
-                    <!--begin::Close-->
-                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
-                        <i class="bi bi-x-circle"></i>
-                    </div>
-                    <!--end::Close-->
-                </div>
-
-                <div class="modal-body">
-                    <form wire:submit="saveAccomplishment">
-                        <div class="p-2">
-                            @role('APOO')
-                            <div class="mb-10">
-                                <label class="form-label required">Start Date</label>
-                                <input type="date" class="form-control" wire:model="start_date">
-                                @error('start_date')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div class="mb-10">
-                                <label class="form-label required">End Date</label>
-                                <input type="date" class="form-control" wire:model="end_date">
-                                @error('end_date')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            @else
-                            <div class="mb-10">
-                                <label class="form-label required">Date</label>
-                                <input type="date" class="form-control" wire:model="date">
-                                @error('date')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            @endrole
-                            <div class="mb-10">
-                                <label class="form-label required">Accomplishment Category</label>
-                                <select class="form-select" aria-label="Select example" wire:model="ref_accomplishment_category_id">
-                                    <option>Open this select menu</option>
-                                    @foreach ($accomplishment_categories as $item)
-                                    <option value="{{ $item['id'] }}">{{ $item['name'] }}</option>
-                                    @endforeach
-                                </select>
-                                @error('ref_accomplishment_category_id')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            @role('APOO')
-                            <div class="mb-10">
-                                <label class="form-label required">Sub-category</label>
-                                <input type="text" class="form-control" wire:model="sub_category">
-                                @error('sub_category')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            @endrole
-
-                            <div class="mb-10">
-                                <label class="form-label required">Details</label>
-                                <!-- <input type="text" class="form-control" wire:model="details"> -->
-                                <textarea class="form-control" wire:model="details"></textarea>
-                                @error('details')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            @role('APOO')
-                            <div class="mb-10">
-                                <label class="form-label">Next Steps</label>
-                                <!-- <input type="text" class="form-control" wire:model="next_steps"> -->
-                                <textarea class="form-control" wire:model="next_steps"></textarea>
-                            </div>
-                            @endrole
-                        </div>
-                </div>
-
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                    <div wire:loading.remove>
-                        <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
-                    </div>
-                    <div wire:loading wire:target="saveAccomplishment">
-                        <button class="btn btn-primary" type="button" disabled>
-                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                            <span role="status">Loading...</span>
-                        </button>
-                    </div>
-                </div>
-                </form>
-            </div>
-        </div>
-        <!--end::Modal - Accomplishment-->
-    </div>
-
     @role('APOO')
     <!--begin::Modal - Accomplishment Signatory-->
     <div class="modal fade" tabindex="-1" id="accomplishmentSignatoriesModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
@@ -379,7 +278,14 @@
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label required">Prepared by</label>
-                                <input type="text" class="form-control" wire:model="prepared_by" disabled>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" wire:model="prepared_by" placeholder="Name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" wire:model="prepared_by_position" placeholder="Position">
+                                    </div>
+                                </div>
                                 @error('prepared_by')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
@@ -446,6 +352,38 @@
 
         $wire.on('hide-accomplishment-signatories-modal', () => {
             $('#accomplishmentSignatoriesModal').modal('hide');
+        });
+
+        $(document).ready(function() {
+            $('#summernote_details').summernote({
+                placeholder: 'Write your content here...',
+                tabsize: 2,
+                height: 300,
+                toolbar: [
+                    ['style', ['style']],
+                    ['font', ['bold', 'underline', 'clear']],
+                    ['color', ['color']],
+                    ['para', ['ul', 'ol', 'paragraph']],
+                    ['table', ['table']],
+                    ['insert', ['picture']],
+                    ['view', ['fullscreen']]
+                ],
+                callbacks: {
+                    onChange: function(contents, $editable) {
+                        @this.set('details', contents);
+                    }
+                }
+            });
+        });
+
+        $wire.on('clear-summernote-details', () => {
+            $('#summernote_details').summernote('code', '');
+        });
+
+        $wire.on('set-summernote-details', ({
+            contents
+        }) => {
+            $('#summernote_details').summernote('code', contents);
         });
 
         /* -------------------------------------------------------------------------- */

@@ -68,7 +68,7 @@
                                         <td>
                                             <div class="btn-group" role="group" aria-label="Actions">
                                                 @can('reference.userManagement.update')
-                                                <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
+                                                <button class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
                                                     <div wire:loading.remove wire:target="editUser({{ $item->id }})">
                                                         <i class="bi bi-pencil"></i>
                                                     </div>
@@ -77,9 +77,9 @@
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
                                                     </div>
-                                                </a>
+                                                </button>
 
-                                                <a href="#" class="btn btn-icon btn-sm btn-warning" title="Reset Password" wire:click="resetPasswordUser({{ $item->id }})">
+                                                <button class="btn btn-icon btn-sm btn-warning" title="Reset Password" wire:click="resetPasswordUser({{ $item->id }})">
                                                     <div wire:loading.remove wire:target="resetPasswordUser({{ $item->id }})">
                                                         <i class="bi bi-key"></i>
                                                     </div>
@@ -88,10 +88,9 @@
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
                                                     </div>
-                                                </a>
+                                                </button>
 
-                                                <a
-                                                    href="#"
+                                                <button
                                                     class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
                                                     title="Delete"
                                                     wire:click="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
@@ -103,7 +102,7 @@
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
                                                     </div>
-                                                </a>
+                                                </button>
                                                 @endcan
                                             </div>
                                         </td>

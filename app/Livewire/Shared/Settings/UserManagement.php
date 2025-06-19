@@ -73,7 +73,7 @@ class UserManagement extends Component
 
     public function clear()
     {
-        $this->reset();
+        $this->resetExcept('search');
         $this->resetValidation();
     }
 
@@ -94,7 +94,10 @@ class UserManagement extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('username', 'like', '%' . $this->search . '%');
+                        ->orWhere('username', 'like', '%' . $this->search . '%')
+                        ->orWhereHas('roles', function ($q) {
+                            $q->where('name', 'like', '%' . $this->search . '%');
+                        });
                 });
             })
             ->withTrashed()
