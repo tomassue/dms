@@ -60,9 +60,15 @@ class Meeting extends Model
         return $this->formatted_time_end ? $this->formatted_time_start . ' - ' . $this->formatted_time_end : $this->formatted_time_start;
     }
 
+    // Helpers
+    /**
+     * Summary of pdfFileExist
+     * The current logic is the user can only upload one pdf file.
+     * @return bool
+     */
     public function pdfFileExist()
     {
-        // return true if pdfFile exists
+        // return true if a pdfFile exists
         return $this->files()->where('type', 'application/pdf')->exists();
     }
 

@@ -29,7 +29,8 @@ class MinutesOfAMeeting extends Component
     public $apoMeetingId;
     public $activity, $point_person, $expected_output, $agreements;
     public $pdf;
-    public $uploadPdf = false, $exportedMinutesFile;
+    public $uploadPdf = false,
+        $file_id;
 
     public function rules()
     {
@@ -64,6 +65,12 @@ class MinutesOfAMeeting extends Component
     {
         $this->resetExcept('apoMeetingId', 'show');
         $this->resetValidation();
+    }
+
+    public function cancelUploadPdf()
+    {
+        $this->uploadPdf = false;
+        $this->dispatch('reset-files');
     }
 
     public function render()
@@ -290,28 +297,32 @@ class MinutesOfAMeeting extends Component
     {
         $this->validate(
             [
-                'exportedMinutesFile' => 'required|mimetypes:application/pdf'
+                'file_id' => 'required|mimetypes:application/pdf'
+            ],
+            [],
+            [
+                'file_id' => 'file'
             ]
         );
 
         // Check if file has already uploaded
         $apo_meeting = Meeting::find($this->apoMeetingId);
 
-        if ($apo_meeting->files) {
+        if ($apo_meeting->pdfFileExist()) {
             $this->dispatch('error', message: 'Minutes already uploaded.');
             return;
         }
 
         try {
             $apo_meeting->files()->create([
-                'name' => $this->exportedMinutesFile->getClientOriginalName(),
-                'size' => $this->exportedMinutesFile->getSize(),
-                'type' => $this->exportedMinutesFile->getMimeType(),
-                'file' => file_get_contents($this->exportedMinutesFile->getRealPath()),
+                'name' => $this->file_id->getClientOriginalName(),
+                'size' => $this->file_id->getSize(),
+                'type' => $this->file_id->getMimeType(),
+                'file' => file_get_contents($this->file_id->getRealPath()),
             ]);
 
-            $this->reset('exportedMinutesFile');
-            $this->dispatch('hide-upload-pdf-modal');
+            $this->reset('file_id');
+            $this->cancelUploadPdf();
             $this->dispatch('success', message: 'Minutes successfully uploaded.');
         } catch (\Throwable $th) {
             //throw $th;

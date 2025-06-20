@@ -164,6 +164,8 @@ class Meetings extends Component
         }
     }
 
+    //TODO: Save the photos
+
     public function editMeeting(Meeting $meeting)
     {
         try {
