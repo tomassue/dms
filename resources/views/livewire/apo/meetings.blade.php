@@ -57,7 +57,7 @@
                             <td>{{ $item->apoMeetingsCategory->name ?? '' }}</td>
                             <td>{{ $item->time_range }}</td>
                             <td>{{ $item->description }}</td>
-                            <td>{{ $item->preparedBy->name }}</td>
+                            <td>{{ $item->prepared_by }}</td>
                             <td>{{ $item->approvedBy->name ?? '-' }}</td>
                             <td>{{ $item->notedBy->name ?? '-' }}</td>
                             <td class="text-center" wire:loading.class="pe-none">
@@ -172,7 +172,14 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label">Prepared by</label>
-                                <input type="text" class="form-control" wire:model="prepared_by" disabled>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" wire:model="prepared_by" placeholder="Name">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <input type="text" class="form-control" wire:model="prepared_by_position" placeholder="Position">
+                                    </div>
+                                </div>
                             </div>
                             <div class="mb-10">
                                 <label class="form-label">Approved by</label>
@@ -198,6 +205,44 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <div class="mb-10">
+                                <label class="form-label">Photos</label>
+                                <div wire:ignore>
+                                    <input type="file" class="form-control files" multiple>
+                                </div>
+                                @error('file_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <!-- begin::Files -->
+                            <div class="col-12 mb-3" style="display: {{ $editMode ? '' : 'none' }};">
+                                <table class="table table-row-dashed table-row-gray-300 gy-7">
+                                    <thead>
+                                        <tr class="fw-bolder fs-6 text-gray-800">
+                                            <th width="80%">File</th>
+                                            <th>Action</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($preview_file as $item)
+                                        <tr>
+                                            <td>
+                                                {{ $item->name }}
+                                            </td>
+                                            <td>
+                                                <a href="#" class="btn btn-sm btn-info" wire:click="viewFile({{ $item->id }})">View</a>
+                                            </td>
+                                        </tr>
+                                        @empty
+                                        <tr>
+                                            <td colspan="2" class="text-center">No files uploaded.</td>
+                                            <td class="text-center"></td>
+                                        </tr>
+                                        @endforelse
+                                    </tbody>
+                                </table>
+                            </div>
+                            <!-- end::Files -->
                         </div>
                 </div>
                 <div class="modal-footer">
@@ -231,6 +276,39 @@
 
     $wire.on('hide-meeting-modal', () => {
         $('#meetingModal').modal('hide');
+    });
+
+    /* -------------------------------------------------------------------------- */
+
+    // Register the plugin 
+    FilePond.registerPlugin(FilePondPluginFileValidateType); // for file type validation
+    FilePond.registerPlugin(FilePondPluginFileValidateSize); // for file size validation
+    FilePond.registerPlugin(FilePondPluginImagePreview); // for image preview
+
+    // Turn input element into a pond with configuration options
+    $('.files').filepond({
+        // required: true,
+        allowFileTypeValidation: true,
+        acceptedFileTypes: ['image/jpeg', 'image/png'],
+        labelFileTypeNotAllowed: 'File of invalid type',
+        allowFileSizeValidation: true,
+        maxFileSize: '10MB',
+        labelMaxFileSizeExceeded: 'File is too large',
+        server: {
+            // This will assign the data to the files[] property.
+            process: (fieldName, file, metadata, load, error, progress, abort) => {
+                @this.upload('file_id', file, load, error, progress);
+            },
+            revert: (uniqueFileId, load, error) => {
+                @this.removeUpload('file_id', uniqueFileId, load, error);
+            }
+        }
+    });
+
+    $wire.on('reset-files', () => {
+        $('.files').each(function() {
+            $(this).filepond('removeFiles');
+        });
     });
 </script>
 @endscript

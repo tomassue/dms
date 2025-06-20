@@ -11,19 +11,30 @@ use Illuminate\Validation\Rule;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
 use Livewire\Component;
+use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 
 #[Title('Meetings')]
 class Meetings extends Component
 {
-    use WithPagination;
+    use WithPagination, WithFileUploads;
 
     public $show = true; //* An indicator to show/hide this component. Related to MinutesOfAMeeting child component.
     public $filter_start_date, $filter_end_date;
     public $editMode;
     public $meetingId;
     /* ----------------------- begin:: meeting properties ----------------------- */
-    public $date, $ref_apo_meetings_category_id, $description, $time_start, $time_end, $venue, $prepared_by, $approved_by, $noted_by;
+    public $date,
+        $ref_apo_meetings_category_id,
+        $description,
+        $time_start,
+        $time_end,
+        $venue,
+        $prepared_by, $prepared_by_position,
+        $approved_by,
+        $noted_by,
+        $file_id = [];
+    public $preview_file = [];
     /* ------------------------ end:: meeting properties ------------------------ */
 
     /**
@@ -33,12 +44,12 @@ class Meetings extends Component
      * and then trying to access ->name causes the 404 (or sometimes a null property access error, depending on your config).
      * * Add a guard against this by checking if the user is still authenticated before accessing auth()->user()->name. 
      */
-    public function dehydrate()
-    {
-        if (auth()->check()) {
-            $this->prepared_by = Auth::user()->name;
-        }
-    }
+    // public function dehydrate()
+    // {
+    //     if (auth()->check()) {
+    //         $this->prepared_by = Auth::user()->name;
+    //     }
+    // }
 
     public function rules()
     {
@@ -130,7 +141,8 @@ class Meetings extends Component
                     'time_start' => $this->time_start,
                     'time_end' => $this->time_end,
                     'venue' => $this->venue,
-                    'prepared_by' => Auth::user()->id ?? null,
+                    'prepared_by' => $this->prepared_by ?? null,
+                    'prepared_by_position' => $this->prepared_by_position ?? null,
                     'approved_by' => $this->approved_by ?: null,
                     'noted_by' => $this->noted_by ?: null,
                     'office_id' => Auth::user()->roles()->first()->id,
@@ -164,7 +176,8 @@ class Meetings extends Component
             $this->time_start = $meeting->time_start;
             $this->time_end = $meeting->time_end;
             $this->venue = $meeting->venue;
-            $this->prepared_by = $meeting->prepared_by;
+            $this->prepared_by = $meeting->prepared_by ?? '';
+            $this->prepared_by_position = $meeting->prepared_by_position ?? '';
             $this->approved_by = $meeting->approved_by ?? '';
             $this->noted_by = $meeting->noted_by ?? '';
 

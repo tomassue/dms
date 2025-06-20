@@ -339,6 +339,7 @@ class Accomplishments extends Component
         $options->set('isRemoteEnabled', true);
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isPhpEnabled', true); // Important for base64 support
+        $options->set('dpi', 150);
 
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($htmlContent);

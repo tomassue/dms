@@ -29,7 +29,7 @@ class MinutesOfAMeeting extends Component
     public $apoMeetingId;
     public $activity, $point_person, $expected_output, $agreements;
     public $pdf;
-    public $exportedMinutesFile;
+    public $uploadPdf = false, $exportedMinutesFile;
 
     public function rules()
     {
@@ -270,10 +270,16 @@ class MinutesOfAMeeting extends Component
     public function viewExportedMinutesOfMeeting(Meeting $apoMeeting)
     {
         try {
-            if ($apoMeeting->files) {
-                $this->viewFile($apoMeeting->files->id);
+            $apooExportedMeetingPdf = $apoMeeting->files()
+                ->where('type', 'application/pdf')
+                ->where('fileable_id', $apoMeeting->id)
+                ->first();
+
+            if ($apooExportedMeetingPdf) {
+                $this->viewFile($apooExportedMeetingPdf->id);
             } else {
-                $this->dispatch('show-upload-pdf-modal');
+                // $this->dispatch('show-upload-pdf-modal');
+                $this->uploadPdf = true;
             }
         } catch (\Throwable $th) {
             $this->dispatch('error', message: 'Something went wrong.');

@@ -11,7 +11,7 @@
                         <!--begin::Header-->
                         <div class="card-header border-0 py-5">
                             <h3 class="card-title align-items-start flex-column">
-                                <span class="card-label fw-bolder fs-3 mb-1">Add Accomplishment</span>
+                                <span class="card-label fw-bolder fs-3 mb-1">{{ $editMode ? 'Update' : 'Add' }} Accomplishment</span>
                                 <span class="text-muted fw-bold fs-7"></span>
                             </h3>
                         </div>
@@ -159,13 +159,6 @@
                                     <!--begin::Menu Filter-->
                                     <livewire:components.menu-filter-component page="accomplishments" />
                                     <!--end::Menu Filter-->
-
-                                    <!--begin::Menu 2-->
-                                    @can('accomplishments.create')
-                                    <!-- <div class="vr"></div> Vertical Divider -->
-                                    <!-- <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentModal"><i class="bi bi-plus-circle"></i></a> -->
-                                    @endcan
-                                    <!--end::Menu 2-->
                                 </div>
                             </div>
                         </div>
@@ -278,7 +271,7 @@
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label required">Prepared by</label>
-                                <div class="row">
+                                <div class="row g-2">
                                     <div class="col-md-6">
                                         <input type="text" class="form-control" wire:model="prepared_by" placeholder="Name">
                                     </div>
