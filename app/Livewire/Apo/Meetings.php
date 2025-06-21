@@ -20,7 +20,7 @@ class Meetings extends Component
     use WithPagination, WithFileUploads;
 
     public $show = true; //* An indicator to show/hide this component. Related to MinutesOfAMeeting child component.
-    public $filter_start_date, $filter_end_date;
+    public $search, $filter_start_date, $filter_end_date;
     public $editMode;
     public $meetingId;
     /* ----------------------- begin:: meeting properties ----------------------- */
@@ -94,6 +94,8 @@ class Meetings extends Component
     {
         $this->resetExcept($this->show);
         $this->resetPage();
+
+        $this->dispatch('reset-files');
     }
 
     public function render()
@@ -112,6 +114,8 @@ class Meetings extends Component
     {
         return Meeting::query()
             ->dateRange($this->filter_start_date, $this->filter_end_date)
+            ->search($this->search)
+            ->orderBy('date', 'desc')
             ->paginate(10);
     }
 
@@ -143,28 +147,48 @@ class Meetings extends Component
                     'venue' => $this->venue,
                     'prepared_by' => $this->prepared_by ?? null,
                     'prepared_by_position' => $this->prepared_by_position ?? null,
-                    'approved_by' => $this->approved_by ?: null,
-                    'noted_by' => $this->noted_by ?: null,
+                    'approved_by' => $this->approved_by ?? null,
+                    'noted_by' => $this->noted_by ?? null,
                     'office_id' => Auth::user()->roles()->first()->id,
                     'ref_division_id' => Auth::user()?->user_metadata?->ref_division_id ?? null
                 ];
 
-                Meeting::updateOrCreate(
+                $meeting = Meeting::updateOrCreate(
                     ['id' => $this->meetingId],
                     $data
                 );
+
+                $this->saveFiles($meeting);
 
                 $this->clear();
                 $this->dispatch('hide-meeting-modal');
                 $this->dispatch('success', message: 'Meeting saved successfully.');
             });
         } catch (\Throwable $th) {
-            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
 
-    //TODO: Save the photos
+    protected function saveFiles($model)
+    {
+        if (empty($this->file_id)) return null;
+
+        $uploadedFiles = [];
+
+        foreach ((array)$this->file_id as $file) {
+            if ($file->isValid()) {
+                $uploadedFiles[] = $model->files()->create([
+                    'name' => $file->getClientOriginalName(),
+                    'size' => $file->getSize(),
+                    'type' => $file->getMimeType(),
+                    'file' => file_get_contents($file->getRealPath()),
+                ]);
+            }
+        }
+
+        return $uploadedFiles;
+    }
+
 
     public function editMeeting(Meeting $meeting)
     {
@@ -182,6 +206,7 @@ class Meetings extends Component
             $this->prepared_by_position = $meeting->prepared_by_position ?? '';
             $this->approved_by = $meeting->approved_by ?? '';
             $this->noted_by = $meeting->noted_by ?? '';
+            $this->preview_file = $meeting->files->where('type', '!=', 'application/pdf'); // We will be only showing images and not the PDF file.
 
             $this->dispatch('show-meeting-modal');
         } catch (\Throwable $th) {

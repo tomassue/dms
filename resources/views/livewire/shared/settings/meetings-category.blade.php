@@ -10,13 +10,13 @@
                     <!--begin::Beader-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
-                            <span class="card-label fw-bolder fs-3 mb-1">Incoming Request Category</span>
-                            <span class="text-muted fw-bold fs-7">Over {{ $incoming_request_categories->count() }} categories</span>
+                            <span class="card-label fw-bolder fs-3 mb-1">Meetings Category</span>
+                            <span class="text-muted fw-bold fs-7">Over {{ $meeting_categories->count() }} categories</span>
                         </h3>
                         <div class="card-toolbar">
-                            @can('reference.incomingRequestCategory.create')
+                            @can('reference.meetingsCategory.create')
                             <!--begin::Menu-->
-                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingRequestCategoryModal"><i class="bi bi-plus-circle"></i></a>
+                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#meetingCategoryModal"><i class="bi bi-plus-circle"></i></a>
                             <!--end::Menu-->
                             @endcan
                         </div>
@@ -37,23 +37,17 @@
                             <table class="table align-middle table-hover table-rounded table-striped border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
-                                        @role('Super Admin')
-                                        <th>Office</th>
-                                        @endrole
                                         <th>Name</th>
                                         <th>Status</th>
-                                        @can('reference.incomingRequestCategory.update')
+                                        @can('reference.meetingsCategory.update')
                                         <th>Actions</th>
                                         @endcan
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($incoming_request_categories as $item)
+                                    @forelse($meeting_categories as $item)
                                     <tr>
-                                        @role('Super Admin')
-                                        <td>{{ $item->office->name }}</td>
-                                        @endrole
-                                        <td>{{ $item->incoming_request_category_name }}</td>
+                                        <td>{{ $item->name }}</td>
                                         <td>
                                             @if(!$item->deleted_at)
                                             <span class="badge badge-light-success">Active</span>
@@ -63,13 +57,13 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group" aria-label="Basic example">
-                                                @can('reference.incomingRequestCategory.update')
-                                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequestCategory({{ $item->id }})">
-                                                    <div wire:loading.remove wire:target="editIncomingRequestCategory({{ $item->id }})">
+                                                @can('reference.meetingsCategory.update')
+                                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editMeetingCategory({{ $item->id }})">
+                                                    <div wire:loading.remove wire:target="editMeetingCategory({{ $item->id }})">
                                                         <i class="bi bi-pencil"></i>
                                                     </div>
 
-                                                    <div wire:loading wire:target="editIncomingRequestCategory({{ $item->id }})">
+                                                    <div wire:loading wire:target="editMeetingCategory({{ $item->id }})">
                                                         <div class="spinner-border spinner-border-sm" role="status">
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
@@ -111,7 +105,7 @@
 
                         <!--begin::Pagination-->
                         <div class="pt-3">
-                            {{ $incoming_request_categories->links(data: ['scrollTo' => false]) }}
+                            {{ $meeting_categories->links(data: ['scrollTo' => false]) }}
                         </div>
                         <!--end::Pagination-->
 
@@ -132,8 +126,8 @@
     </div>
     <!--end::Content-->
 
-    <!--begin::Modal - Incoming Request Category-->
-    <div class="modal fade" tabindex="-1" id="incomingRequestCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+    <!--begin::Modal - Meeting Category-->
+    <div class="modal fade" tabindex="-1" id="meetingCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
@@ -146,29 +140,15 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="saveIncomingRequestCategory">
+                    <form wire:submit="saveMeetingCategory">
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label required">Name</label>
-                                <input type="text" class="form-control" wire:model="incoming_request_category_name">
-                                @error('incoming_request_category_name')
+                                <input type="text" class="form-control" wire:model="name">
+                                @error('name')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            @role('Super Admin')
-                            <div class="mb-10">
-                                <label class="form-label required">Office</label>
-                                <select class="form-select" wire:model="office_id">
-                                    <option value="">--Select an office--</option>
-                                    @foreach ($offices as $item)
-                                    <option value="{{ $item->id }}">{{ $item->name }}</option>
-                                    @endforeach
-                                </select>
-                                @error('office_id')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            @endrole
                         </div>
                 </div>
                 <div class="modal-footer">
@@ -176,7 +156,7 @@
                     <div wire:loading.remove>
                         <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
                     </div>
-                    <div wire:loading wire:target="saveIncomingRequestCategory">
+                    <div wire:loading wire:target="saveMeetingCategory">
                         <button class="btn btn-primary" type="button" disabled>
                             <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                             <span role="status">Loading...</span>
@@ -186,17 +166,17 @@
                 </div>
             </div>
         </div>
-        <!--end::Modal - Incoming Request Category-->
+        <!--end::Modal - Meeting Category-->
     </div>
 
     @script
     <script>
-        $wire.on('hide-incoming-request-category-modal', () => {
-            $('#incomingRequestCategoryModal').modal('hide');
+        $wire.on('show-meeting-category-modal', () => {
+            $('#meetingCategoryModal').modal('show');
         });
 
-        $wire.on('show-incoming-request-category-modal', () => {
-            $('#incomingRequestCategoryModal').modal('show');
+        $wire.on('hide-meeting-category-modal', () => {
+            $('#meetingCategoryModal').modal('hide');
         });
     </script>
     @endscript

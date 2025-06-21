@@ -14,7 +14,7 @@
                 <!--end::Header-->
 
                 <!--begin::Body-->
-                <div class="card-body d-flex flex-column" style="position: relative; padding-top: unset;">
+                <div class="card-body d-flex flex-column overflow-auto" style="position: relative; padding-top: unset; height: 120px;">
                     <div id="kt_customer_view_details" class="collapse show">
                         <div class="py-5 fs-6">
                             <!--begin::Details item-->
@@ -69,6 +69,36 @@
                                 <span class="badge badge-danger">Not assigned</span>
                                 @endif
                             </div>
+                            <!--begin::Details item-->
+                            <!--begin::Details item-->
+                            <div class="fw-bolder mt-5">Photos</div>
+                            <table class="table table-row-dashed table-row-gray-300 gy-7">
+                                <thead>
+                                    <tr class="fw-bolder fs-6 text-gray-800">
+                                        <th width="80%">File</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($preview_file as $item)
+                                    <tr>
+                                        <td>
+                                            {{ $item->name }}
+                                        </td>
+                                        <td>
+                                            <a href="data:{{ $item->type }};base64,{{ base64_encode($item->file) }}" data-lightbox="image-gallery">
+                                                <img src="data:{{ $item->type }};base64,{{ base64_encode($item->file) }}" width="100">
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="2" class="text-center">No files uploaded.</td>
+                                        <td class="text-center"></td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                             <!--begin::Details item-->
                         </div>
                     </div>
@@ -176,84 +206,6 @@
 
         <!-- begin::Meeting Minutes -->
         <div class="row">
-            <div class="col-xxl-9 g-5">
-                <!--begin::Mixed Widget 5-->
-                <div class="card card-xxl-stretch">
-                    <!--begin::Header-->
-                    <div class="card-header border-0 py-5">
-                        <h3 class="card-title align-items-start flex-column">
-                            <span class="card-label fw-bolder fs-3 mb-1">Minutes of a Meeting</span>
-                            <span class="text-muted fw-bold fs-7">Over {{ $minutes_of_meeting->count() }} entries</span>
-                        </h3>
-                    </div>
-                    <!--end::Header-->
-
-                    <!--begin::Body-->
-                    <div class="card-body d-flex flex-column" style="position: relative;">
-                        <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveOutgoing">
-                            <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
-                                <thead>
-                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
-                                        <th>No.</th>
-                                        <th>Activities</th>
-                                        <th>Point Person</th>
-                                        <th>Expected Output</th>
-                                        <th>Agreements</th>
-                                        @can('minutesOfMeeting.update')
-                                        <th class="text-center">Actions</th>
-                                        @endcan
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @forelse($minutes_of_meeting as $index => $item)
-                                    <tr>
-                                        <td>{{ $index + 1 }}</td>
-                                        <td>{{ $item->activity }}</td>
-                                        <td>{{ $item->point_person }}</td>
-                                        <td>{{ $item->expected_output }}</td>
-                                        <td>{{ $item->agreements }}</td>
-                                        @can('minutesOfMeeting.update')
-                                        <td class="text-center" wire:loading.class="pe-none">
-                                            <div class="btn-group" role="group" aria-label="Actions">
-                                                @can('minutesOfMeeting.update')
-                                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editMinute({{ $item->id }})" wire:loading.attr="disabled">
-                                                    <i class="bi bi-pencil" wire:loading.remove wire:target="editMinute({{ $item->id }})"></i>
-                                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="editMinute({{ $item->id }})">
-                                                        <span class="sr-only">Loading...</span>
-                                                    </div>
-                                                </button>
-                                                <button type="button" class="btn btn-icon btn-sm btn-danger" title="Remove" wire:confirm="Are you sure you want to remove this record?" wire:click="removeMinute({{ $item->id }})" wire:loading.attr="disabled">
-                                                    <i class="bi bi-dash-circle-dotted" wire:loading.remove wire:target="removeMinute({{ $item->id }})"></i>
-                                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="removeMinute({{ $item->id }})">
-                                                        <span class="sr-only">Loading...</span>
-                                                    </div>
-                                                </button>
-                                                @endcan
-                                            </div>
-                                        </td>
-                                        @endcan
-                                    </tr>
-                                    @empty
-                                    <tr>
-                                        <td colspan="6" class="text-center">No records found.</td>
-                                    </tr>
-                                    @endforelse
-                                </tbody>
-                            </table>
-                        </div>
-
-                        <div class="resize-triggers">
-                            <div class="expand-trigger">
-                                <div style="width: 404px; height: 426px;"></div>
-                            </div>
-                            <div class="contract-trigger"></div>
-                        </div>
-                    </div>
-                    <!--end::Body-->
-                </div>
-                <!--end::Mixed Widget 5-->
-            </div>
-
             <div class="col-xxl-3 g-5">
                 <!--begin::Mixed Widget 5-->
                 <div class="card">
@@ -336,8 +288,85 @@
                 </div>
                 <!--end::Mixed Widget 5-->
             </div>
-        </div>
 
+            <div class="col-xxl-9 g-5">
+                <!--begin::Mixed Widget 5-->
+                <div class="card card-xxl-stretch">
+                    <!--begin::Header-->
+                    <div class="card-header border-0 py-5">
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bolder fs-3 mb-1">Minutes of a Meeting</span>
+                            <span class="text-muted fw-bold fs-7">Over {{ $minutes_of_meeting->count() }} entries</span>
+                        </h3>
+                    </div>
+                    <!--end::Header-->
+
+                    <!--begin::Body-->
+                    <div class="card-body d-flex flex-column" style="position: relative;">
+                        <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveOutgoing">
+                            <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
+                                <thead>
+                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
+                                        <th>No.</th>
+                                        <th>Activities</th>
+                                        <th>Point Person</th>
+                                        <th>Expected Output</th>
+                                        <th>Agreements</th>
+                                        @can('minutesOfMeeting.update')
+                                        <th class="text-center">Actions</th>
+                                        @endcan
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($minutes_of_meeting as $index => $item)
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $item->activity }}</td>
+                                        <td>{{ $item->point_person }}</td>
+                                        <td>{{ $item->expected_output }}</td>
+                                        <td>{{ $item->agreements }}</td>
+                                        @can('minutesOfMeeting.update')
+                                        <td class="text-center" wire:loading.class="pe-none">
+                                            <div class="btn-group" role="group" aria-label="Actions">
+                                                @can('minutesOfMeeting.update')
+                                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editMinute({{ $item->id }})" wire:loading.attr="disabled">
+                                                    <i class="bi bi-pencil" wire:loading.remove wire:target="editMinute({{ $item->id }})"></i>
+                                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="editMinute({{ $item->id }})">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                </button>
+                                                <button type="button" class="btn btn-icon btn-sm btn-danger" title="Remove" wire:confirm="Are you sure you want to remove this record?" wire:click="removeMinute({{ $item->id }})" wire:loading.attr="disabled">
+                                                    <i class="bi bi-dash-circle-dotted" wire:loading.remove wire:target="removeMinute({{ $item->id }})"></i>
+                                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="removeMinute({{ $item->id }})">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                </button>
+                                                @endcan
+                                            </div>
+                                        </td>
+                                        @endcan
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center">No records found.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="resize-triggers">
+                            <div class="expand-trigger">
+                                <div style="width: 404px; height: 426px;"></div>
+                            </div>
+                            <div class="contract-trigger"></div>
+                        </div>
+                    </div>
+                    <!--end::Body-->
+                </div>
+                <!--end::Mixed Widget 5-->
+            </div>
+        </div>
         <!-- end::Meeting Minutes -->
     </div>
 

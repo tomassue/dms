@@ -7,11 +7,8 @@ use App\Models\Apo\MinutesOfMeeting;
 use App\Models\PdfAsset;
 use Dompdf\Dompdf;
 use Dompdf\Options;
-use GuzzleHttp\Psr7\Message;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Validation\Rule;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -31,6 +28,13 @@ class MinutesOfAMeeting extends Component
     public $pdf;
     public $uploadPdf = false,
         $file_id;
+    public $preview_file = []; // Photos from Meetings
+
+    public function mount()
+    {
+        $apoo_meeting = Meeting::find($this->apoMeetingId);
+        $this->preview_file = $apoo_meeting->files->where('type', '!=', 'application/pdf'); // We will be only showing images and not the PDF file.;
+    }
 
     public function rules()
     {
@@ -63,7 +67,7 @@ class MinutesOfAMeeting extends Component
 
     public function cancel()
     {
-        $this->resetExcept('apoMeetingId', 'show');
+        $this->resetExcept('apoMeetingId', 'show', 'preview_file');
         $this->resetValidation();
     }
 

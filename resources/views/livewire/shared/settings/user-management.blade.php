@@ -650,6 +650,34 @@
                                             </div>
                                         </div>
 
+                                        <!-- References -->
+                                        <li class="d-flex align-items-center py-2">
+                                            <span class="bullet me-5"></span> References
+                                        </li>
+
+                                        <!-- References.Meetings Category -->
+                                        <li class="d-flex align-items-center py-2 ms-8">
+                                            <span class="bullet me-5"></span> Meetings Category
+                                        </li>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="reference.meetingsCategory.create" id="meetingsCategoryCreate" wire:model="permissions" />
+                                                <label class="form-check-label" for="meetingsCategoryCreate"> Create </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="reference.meetingsCategory.read" id="meetingsCategoryRead" wire:model="permissions" />
+                                                <label class="form-check-label" for="meetingsCategoryRead"> Read </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="reference.meetingsCategory.update" id="meetingsCategoryUpdate" wire:model="permissions" />
+                                                <label class="form-check-label" for="meetingsCategoryUpdate"> Update </label>
+                                            </div>
+                                        </div>
+
                                         <div class="separator my-10">APOO</div>
                                     </div>
 

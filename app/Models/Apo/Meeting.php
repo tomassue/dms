@@ -82,6 +82,15 @@ class Meeting extends Model
         return $query->whereBetween('date', [$start_date, $end_date]);
     }
 
+    public function scopeSearch($query, $search)
+    {
+        return $query->whereHas('apoMeetingsCategory', function ($query) use ($search) {
+            $query->where('name', 'like', '%' . $search . '%');
+        })
+            ->orWhere('description', 'like', '%' . $search . '%')
+            ->orWhere('venue', 'like', '%' . $search . '%');
+    }
+
     // Relationship
     public function preparedBy()
     {

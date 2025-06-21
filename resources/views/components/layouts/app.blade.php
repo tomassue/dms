@@ -40,6 +40,7 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('plugins/dropzonejs/dropzone.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('plugins/summernote/summernote.min.css') }}" />
     <link rel="stylesheet" href="{{ asset('plugins/summernote/summernote-lite.css') }}" />
+    <link rel="stylesheet" href="{{ asset('plugins/lightbox2/lightbox.min.css') }}">
     <!-- end::Plugins -->
 </head>
 
@@ -93,6 +94,7 @@
     <script src="{{ asset('plugins/dropzonejs/dropzone.min.js') }}"></script>
     <script src="{{ asset('plugins/summernote/summernote.min.js') }}"></script>
     <script src="{{ asset('plugins/summernote/summernote-lite.js') }}"></script>
+    <script src="{{ asset('plugins/lightbox2/lightbox.min.js') }}"></script>
     <!-- end::Plugins -->
 </body>
 
