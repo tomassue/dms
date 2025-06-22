@@ -42,7 +42,8 @@ class Documents extends Component
     public $activity_log = [];
 
     /* ---------------------------- begin::Properties --------------------------- */
-    public $ref_incoming_document_category_id,
+    public $no,
+        $ref_incoming_document_category_id,
         $document_info,
         $date,
         $ref_status_id,
@@ -55,6 +56,7 @@ class Documents extends Component
     public function rules()
     {
         $rules = [
+            'no' => 'required|unique:incoming_documents,no,' . $this->incomingDocumentId,
             'ref_incoming_document_category_id' => 'required|exists:ref_incoming_documents_categories,id',
             'document_info' => 'required',
             'date' => 'required|date'
@@ -92,11 +94,17 @@ class Documents extends Component
         $this->resetValidation();
 
         $this->dispatch('reset-files');
+        $this->dispatch('reset-division-select');
     }
 
     public function updatedSearch()
     {
         $this->resetPage();
+    }
+
+    public function generateReferenceNo()
+    {
+        $this->no = IncomingDocument::generateUniqueReference('INCD-', 8); // Pre-generate reference number to show in the input field (disabled).
     }
 
     public function loadIncomingDocuments()
@@ -178,10 +186,20 @@ class Documents extends Component
                         'is_opened' => true
                     ]);
 
+                // Log the activity of opening the document
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn($incomingDocument) // Equivalent to setting subject_type & subject_id manually
+                    ->useLog('incoming_document')
+                    ->event('updated')
+                    ->withProperties(['is_opened' => true])
+                    ->log('Opened incoming document for division: ' . auth()->user()->user_metadata->division->name);
+
                 // Check if all divisions have opened their copies
                 $this->checkAllDivisionsOpened($incomingDocument);
             }
 
+            $this->no = $incomingDocument->no;
             $this->ref_incoming_document_category_id = $incomingDocument->ref_incoming_document_category_id;
             $this->document_info = $incomingDocument->document_info;
             $this->date = $incomingDocument->date;
@@ -275,6 +293,7 @@ class Documents extends Component
     protected function saveMainIncomingDocument()
     {
         $data = [
+            'no' => $this->no,
             'ref_incoming_document_category_id' => $this->ref_incoming_document_category_id,
             'document_info' => $this->document_info,
             'date' => $this->date,
@@ -295,7 +314,7 @@ class Documents extends Component
         if (!auth()->user()->hasRole('APOO')) return; // Return if not APO
 
         return ApoIncomingDocument::updateOrCreate(
-            ['incoming_document_id' => $incomingDocument->id], // Update if exists. Otherwise, create
+            ['incoming_document_id' => $incomingDocument->id ?? null], // Update if exists. Otherwise, create
             [
                 'source' => $this->source,
             ]
@@ -342,11 +361,21 @@ class Documents extends Component
                 ->pluck('id');
 
             // Step 2: Fetch IncomingDocument activity
-            $incomingDocumentLogs = Activity::whereIn('subject_type', [IncomingDocument::class, ApoIncomingDocument::class])
-                ->whereIn('log_name', ['incoming_document', 'apo_incoming_document'])
-                ->whereNot('event', 'created')
-                ->where('subject_id', $id)
-                ->with(['causer.user_metadata.division']) // ✅ Eager-load nested relations
+            $apoIds = ApoIncomingDocument::where('incoming_document_id', $id)->pluck('id'); // Get related ApoIncomingDocument IDs
+
+            // Step 2: Fetch IncomingDocument & ApoIncomingDocument activities
+            $incomingDocumentLogs = Activity::where(function ($query) use ($id, $apoIds) {
+                $query->where(function ($q) use ($id) {
+                    $q->where('subject_type', IncomingDocument::class)
+                        ->where('subject_id', $id);
+                })->orWhere(function ($q) use ($apoIds) {
+                    $q->where('subject_type', ApoIncomingDocument::class)
+                        ->whereIn('subject_id', $apoIds);
+                });
+            })
+                ->whereIn('log_name', ['incoming_document', 'apo_incoming_document', 'forwarded']) // Filter by log names
+                ->where('event', '!=', 'created') // same as ->whereNot('event', 'created')
+                ->with(['causer.user_metadata.division'])
                 ->get();
 
             // Step 3: Fetch File activity logs
@@ -445,18 +474,6 @@ class Documents extends Component
                     ];
                 });
 
-            // Forwarded division logs (no change)
-            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingDocument::class)
-                ->where('forwardable_id', $id)
-                ->with(['division']) // Assuming 'division' is a relationship
-                ->latest()
-                ->get()
-                ->map(function ($forward) {
-                    return [
-                        'division_name' => $forward->division?->name ?? 'N/A',
-                    ];
-                });
-
             $this->dispatch('show-activity-log-modal');
         } catch (\Throwable $th) {
             // throw $th;
@@ -464,6 +481,35 @@ class Documents extends Component
         }
     }
 
+    /**
+     * getForwardedDivisions
+     * * This function is used to get the forwarded divisions of the incoming document.
+     * * It will return the forwarded divisions of the incoming document.
+     */
+    public function getForwardedDivisions(IncomingDocument $incomingDocument)
+    {
+        try {
+            $forwarded_divisions = $incomingDocument->forwards()
+                ->with(['division'])
+                ->get()
+                ->map(function ($forward) {
+                    return $forward->ref_division_id;
+                })
+                ->toArray();
+
+            if ($forwarded_divisions) {
+                $this->dispatch('set-division-select', $forwarded_divisions);
+            }
+        } catch (\Throwable $th) {
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    /**
+     * forward
+     * * This function is used to forward the incoming document to the selected divisions.
+     * * It will validate the selected divisions and then create a new forward for each division.
+     */
     public function forward()
     {
         $this->validate([
@@ -478,7 +524,7 @@ class Documents extends Component
 
             /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
 
-            //TODO:
+            //TODO
             //! SMS server status is always FAIL
             if (Auth::user()->hasRole('CITY VETERINARY OFFICE')) {
                 /**
@@ -493,6 +539,11 @@ class Documents extends Component
                     ->values(); // reindex if needed;
 
                 foreach ($phoneNumbers as $phoneNumber) {
+                    if (empty($phoneNumber)) {
+                        Log::error('SMS not sent: Phone number is empty for division ID');
+                        continue; // Log and skip if no phone number
+                    }
+
                     /**
                      * We enclosed the SMS sending code in a try-catch block to handle any exceptions that might occur during the SMS sending process.
                      * If an exception occurs, we will log the error message and continue to the next iteration of the loop.
@@ -520,7 +571,7 @@ class Documents extends Component
                         ]);
                     } catch (\Throwable $th) {
                         // log or ignore to keep processing
-                        Log::error('SMS failed for phone: ' . $phoneNumber . ', Error: ' . $e->getMessage());
+                        Log::error('SMS failed for phone: ' . $phoneNumber . ', Error: ' . $th->getMessage());
                         continue;
                     }
                 }
@@ -529,15 +580,75 @@ class Documents extends Component
 
             /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
 
-            foreach ($this->selected_divisions as $division) {
+            // foreach ($this->selected_divisions as $division) {
+            //     $incomingDocument->forwards()->create([
+            //         'ref_division_id' => $division,
+            //     ]);
+            // }
+
+            // Get current forwarded division IDs, including soft-deleted
+            $currentForwarded = $incomingDocument->forwards()->withTrashed()->pluck('ref_division_id');
+
+            // Convert to collections for easier diffing
+            $selected = collect($this->selected_divisions)->map(fn($id) => (int)$id);
+
+            // Soft-delete divisions that are no longer selected
+            $toSoftDelete = $currentForwarded->diff($selected);
+            if ($toSoftDelete->isNotEmpty()) {
+                $incomingDocument->forwards()->whereIn('ref_division_id', $toSoftDelete)->delete();
+            }
+
+            // Restore soft-deleted if re-selected
+            $toRestore = $selected->intersect($currentForwarded);
+            if ($toRestore->isNotEmpty()) {
+                $incomingDocument->forwards()->withTrashed()
+                    ->whereIn('ref_division_id', $toRestore)
+                    ->whereNotNull('deleted_at')
+                    ->restore();
+            }
+
+            // Create new forwards for divisions not yet in the DB
+            $toAdd = $selected->diff($currentForwarded);
+            foreach ($toAdd as $divisionId) {
                 $incomingDocument->forwards()->create([
-                    'ref_division_id' => $division,
+                    'ref_division_id' => $divisionId,
                 ]);
             }
 
+            // Update the status of the incoming document to "forwarded"
+            // This is to indicate that the document has been forwarded to the selected divisions.
             $incomingDocument->update([
                 'ref_status_id' => RefStatus::where('name', 'forwarded')->first()->id,
             ]);
+
+            // Log the forwarding action - a central log per document.
+            // Get the division names based on each action
+            $addedNames = RefDivision::whereIn('id', $toAdd)->pluck('name')->toArray();
+            $restoredNames = RefDivision::whereIn('id', $toRestore)->pluck('name')->toArray();
+            $deletedNames = RefDivision::whereIn('id', $toSoftDelete)->pluck('name')->toArray();
+
+            $logMessages = [];
+
+            if (!empty($addedNames)) {
+                $logMessages[] = 'added: ' . implode(', ', $addedNames);
+            }
+
+            if (!empty($restoredNames)) {
+                $logMessages[] = 'restored: ' . implode(', ', $restoredNames);
+            }
+
+            if (!empty($deletedNames)) {
+                $logMessages[] = 'removed: ' . implode(', ', $deletedNames);
+            }
+
+            $finalLogMessage = auth()->user()->name . ' updated forwarded divisions - ' . implode(' | ', $logMessages) . '.';
+
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($incomingDocument) // Equivalent to setting subject_type & subject_id manually
+                ->useLog('forwarded')
+                ->event('updated')
+                ->log($finalLogMessage);
 
             $this->clear();
             $this->dispatch('hide-forward-modal');
@@ -577,7 +688,7 @@ class Documents extends Component
 
             $this->dispatch('show-details-modal');
         } catch (\Throwable $th) {
-            throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

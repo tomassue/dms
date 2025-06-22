@@ -101,7 +101,7 @@ class Requests extends Component
 
     public function generateReferenceNo()
     {
-        $this->no = IncomingRequest::generateUniqueReference('REF-', 8); // Pre-generate reference number to show in the input field (disabled).
+        $this->no = IncomingRequest::generateUniqueReference('INCR-', 8); // Pre-generate reference number to show in the input field (disabled).
     }
 
     public function render()
@@ -238,12 +238,20 @@ class Requests extends Component
         try {
             if (!Auth::user()->hasRole('Super Admin')) {
                 // Mark all forwarded requests to this division as opened
-                //! Not sure why this doesn't work. The update is not logged in activity_log.
                 $incomingRequest->forwards()
                     ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
                     ->update([
                         'is_opened' => true
                     ]);
+
+                // Log the activity of opening the request
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn($incomingRequest) // Equivalent to setting subject_type & subject_id manually
+                    ->useLog('incoming_request')
+                    ->event('updated')
+                    ->withProperties(['is_opened' => true])
+                    ->log('Opened incoming request for division: ' . auth()->user()->user_metadata->division->name);
 
                 // Check if all divisions have opened their copies
                 $this->checkAllDivisionsOpened($incomingRequest);
@@ -337,7 +345,7 @@ class Requests extends Component
 
             // Step 2: Fetch IncomingRequest activity
             $incomingRequestLogs = Activity::where('subject_type', IncomingRequest::class)
-                ->where('log_name', 'incoming_request')
+                ->whereIn('log_name', ['incoming_request', 'forwarded'])
                 ->whereNot('event', 'created')
                 ->where('subject_id', $id)
                 ->with(['causer.user_metadata.division'])
@@ -434,18 +442,42 @@ class Requests extends Component
                 });
 
             // Forwarded division logs (no change)
-            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingRequest::class)
-                ->where('forwardable_id', $id)
-                ->with(['division'])
-                ->latest()
-                ->get()
-                ->map(fn($forward) => [
-                    'division_name' => $forward->division?->name ?? 'N/A',
-                ]);
+            // $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingRequest::class)
+            //     ->where('forwardable_id', $id)
+            //     ->with(['division'])
+            //     ->latest()
+            //     ->get()
+            //     ->map(fn($forward) => [
+            //         'division_name' => $forward->division?->name ?? 'N/A',
+            //     ]);
 
             $this->dispatch('show-activity-log-modal');
         } catch (\Throwable $th) {
             // throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    /**
+     * getForwardedDivisions
+     * * This function is used to get the forwarded divisions of the incoming document.
+     * * It will return the forwarded divisions of the incoming document.
+     */
+    public function getForwardedDivisions(IncomingRequest $incomingRequest)
+    {
+        try {
+            $forwarded_divisions = $incomingRequest->forwards()
+                ->with(['division'])
+                ->get()
+                ->map(function ($forward) {
+                    return $forward->ref_division_id;
+                })
+                ->toArray();
+
+            if ($forwarded_divisions) {
+                $this->dispatch('set-division-select', $forwarded_divisions);
+            }
+        } catch (\Throwable $th) {
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -514,15 +546,73 @@ class Requests extends Component
 
             /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
 
-            foreach ($this->selected_divisions as $division) {
+            // foreach ($this->selected_divisions as $division) {
+            //     $incomingRequest->forwards()->create([
+            //         'ref_division_id' => $division,
+            //     ]);
+            // }
+
+            // Get current forwarded division IDs, including soft-deleted
+            $currentForwarded = $incomingRequest->forwards()->withTrashed()->pluck('ref_division_id');
+
+            // Convert to collections for easier diffing
+            $selected = collect($this->selected_divisions)->map(fn($id) => (int)$id);
+
+            // Soft-delete divisions that are no longer selected
+            $toSoftDelete = $currentForwarded->diff($selected);
+            if ($toSoftDelete->isNotEmpty()) {
+                $incomingRequest->forwards()->whereIn('ref_division_id', $toSoftDelete)->delete();
+            }
+
+            // Restore soft-deleted if re-selected
+            $toRestore = $selected->intersect($currentForwarded);
+            if ($toRestore->isNotEmpty()) {
+                $incomingRequest->forwards()->withTrashed()
+                    ->whereIn('ref_division_id', $toRestore)
+                    ->whereNotNull('deleted_at')
+                    ->restore();
+            }
+
+            // Create new forwards for divisions not yet in the DB
+            $toAdd = $selected->diff($currentForwarded);
+            foreach ($toAdd as $divisionId) {
                 $incomingRequest->forwards()->create([
-                    'ref_division_id' => $division,
+                    'ref_division_id' => $divisionId,
                 ]);
             }
 
             $incomingRequest->update([
                 'ref_status_id' => RefStatus::where('name', 'forwarded')->first()->id,
             ]);
+
+            // Log the forwarding action - a central log per document.
+            // Get the division names based on each action
+            $addedNames = RefDivision::whereIn('id', $toAdd)->pluck('name')->toArray();
+            $restoredNames = RefDivision::whereIn('id', $toRestore)->pluck('name')->toArray();
+            $deletedNames = RefDivision::whereIn('id', $toSoftDelete)->pluck('name')->toArray();
+
+            $logMessages = [];
+
+            if (!empty($addedNames)) {
+                $logMessages[] = 'added: ' . implode(', ', $addedNames);
+            }
+
+            if (!empty($restoredNames)) {
+                $logMessages[] = 'restored: ' . implode(', ', $restoredNames);
+            }
+
+            if (!empty($deletedNames)) {
+                $logMessages[] = 'removed: ' . implode(', ', $deletedNames);
+            }
+
+            $finalLogMessage = auth()->user()->name . ' updated forwarded divisions - ' . implode(' | ', $logMessages) . '.';
+
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($incomingRequest) // Equivalent to setting subject_type & subject_id manually
+                ->useLog('forwarded')
+                ->event('updated')
+                ->log($finalLogMessage);
 
             $this->clear();
             $this->dispatch('hide-forward-modal');

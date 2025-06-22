@@ -23,6 +23,7 @@ class IncomingDocument extends Model
 
     protected $table = 'incoming_documents';
     protected $fillable = [
+        'no',
         'ref_incoming_document_category_id',
         'document_info',
         'date',
@@ -30,6 +31,29 @@ class IncomingDocument extends Model
         'remarks',
         'office_id'
     ];
+
+    // Generate Unique Reference No.
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            // Check if the reference number is already set
+            if (empty($model->no)) {
+                $model->no = self::generateUniqueReference('INCD-', 8);
+            }
+        });
+    }
+
+    public static function generateUniqueReference(string $prefix = '', int $length = 6): string
+    {
+        do {
+            // Generate the reference number with the specified prefix
+            $reference = $prefix . strtoupper(substr(uniqid(), -$length));
+        } while (self::where('no', $reference)->exists());
+
+        return $reference;
+    }
 
     // Accessor
     public function getDocumentAgeAttribute()

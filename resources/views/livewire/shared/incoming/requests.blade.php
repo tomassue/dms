@@ -60,7 +60,7 @@
                                             @forelse($incoming_requests as $item)
                                             <tr wire:click="viewIncomingRequest({{ $item->id }})" class="cursor-pointer">
                                                 <td>
-                                                    {{ $item->no }}
+                                                    <span class="badge badge-light-info text-uppercase">{{ $item->no }}</span>
                                                 </td>
                                                 <td>
                                                     {{ $item->formatted_date_requested }}
@@ -113,7 +113,7 @@
                                                         </button>
                                                         @endcan
                                                         @can('incoming.requests.forward')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" @click.stop {{ ($item->IsForwarded() || $item->IsCancelled() || $item->IsCompleted()) ? 'disabled' : '' }}>
+                                                        <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" @click.stop {{ ($item->IsCancelled() || $item->IsCompleted()) ? 'disabled' : '' }}>
                                                             <i class="bi bi-arrow-up-square"></i>
                                                         </button>
                                                         @endcan

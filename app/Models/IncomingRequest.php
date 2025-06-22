@@ -108,7 +108,7 @@ class IncomingRequest extends Model
         static::saving(function ($model) {
             // Check if the reference number is already set
             if (empty($model->no)) {
-                $model->no = self::generateUniqueReference('REF-', 8);
+                $model->no = self::generateUniqueReference('INCR-', 8);
             }
         });
     }

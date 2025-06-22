@@ -16,6 +16,7 @@ return new class extends Migration
             $table->morphs('forwardable');
             $table->foreignId('ref_division_id')->constrained('ref_divisions');
             $table->boolean('is_opened')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

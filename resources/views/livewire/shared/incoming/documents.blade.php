@@ -23,7 +23,7 @@
                                     <!--begin::Menu 2-->
                                     @can('incoming.documents.create')
                                     <div class="vr"></div> <!-- Vertical Divider -->
-                                    <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingDocumentsModal"><i class="bi bi-plus-circle"></i></a>
+                                    <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#incomingDocumentsModal" wire:click="{{ $editMode ? '' : 'generateReferenceNo' }}"><i class="bi bi-plus-circle"></i></a>
                                     @endcan
                                     <!--end::Menu 2-->
                                 </div>
@@ -45,6 +45,7 @@
                                 <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                     <thead>
                                         <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
+                                            <th>No</th>
                                             <th>Document Category</th>
                                             <th>Info</th>
                                             <th>Date</th>
@@ -60,6 +61,9 @@
                                     <tbody>
                                         @forelse($incoming_documents as $item)
                                         <tr wire:click="viewIncomingDocument({{ $item->id }})" class="cursor-pointer">
+                                            <td>
+                                                <span class="badge badge-light-info text-uppercase">{{ $item->no ?? '' }}</span>
+                                            </td>
                                             <td>
                                                 {{ $item->category->incoming_document_category_name }}
                                             </td>
@@ -115,7 +119,7 @@
                                                     </button>
                                                     @endcan
                                                     @can('incoming.documents.forward')
-                                                    <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" @click.stop {{ $item->isForwarded() || $item->isCancelled() || $item->isCompleted() ? 'disabled' : '' }}>
+                                                    <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" @click.stop {{ $item->isCancelled() || $item->isCompleted() ? 'disabled' : '' }}>
                                                         <i class="bi bi-arrow-up-square"></i>
                                                     </button>
                                                     @endcan
@@ -200,6 +204,13 @@
                                 @enderror
                             </div>
                             @endcan
+                            <div class="mb-10">
+                                <label class="form-label required">No.</label>
+                                <input type="text" class="form-control" wire:model="no" disabled>
+                                @error('no')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
                             <div class="mb-10">
                                 <label class="form-label required">Document Category</label>
                                 <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_document_category_id" {{ $is_office_admin ? '' : 'disabled' }}>
