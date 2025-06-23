@@ -523,9 +523,6 @@ class Documents extends Component
             $incomingDocument = IncomingDocument::find($this->incomingDocumentId);
 
             /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
-
-            //TODO
-            //! SMS server status is always FAIL
             if (Auth::user()->hasRole('CITY VETERINARY OFFICE')) {
                 /**
                  * In CVO, we have a customed function to send an SMS to the selected divisions.
@@ -550,7 +547,9 @@ class Documents extends Component
                      * This allows us to send the SMS to the next phone number without stopping the entire process.
                      */
                     try {
-                        $message = "TEST incoming document";
+                        $message = "APO-DMS NOTIFICATION\n\n" .
+                            "An incoming document with a reference no. of " . $incomingDocument->no . " has been forwarded.\n\n" .
+                            "This is a system-generated message. DO NOT REPLY.";
 
                         SmsSender::create([
                             'trans_id' => time() . '-' . mt_rand(),
@@ -577,7 +576,6 @@ class Documents extends Component
                 }
                 //* After it being sent, we will them save them to forwarded table.
             }
-
             /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
 
             // foreach ($this->selected_divisions as $division) {
