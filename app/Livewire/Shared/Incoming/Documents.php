@@ -193,7 +193,7 @@ class Documents extends Component
                     ->useLog('incoming_document')
                     ->event('updated')
                     ->withProperties(['is_opened' => true])
-                    ->log('Opened incoming document for division: ' . auth()->user()->user_metadata->division->name);
+                    ->log('Opened incoming document ' . ($incomingDocument->no ?? '') . ': ' . (auth()->user()?->user_metadata?->division?->name ?? 'System'));
 
                 // Check if all divisions have opened their copies
                 $this->checkAllDivisionsOpened($incomingDocument);

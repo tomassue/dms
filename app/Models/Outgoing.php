@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Models\Scopes\DivisionScope;
 use App\Models\Scopes\OfficeScope;
-use App\Models\Scopes\RoleAndDivisionBasedScope;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +20,7 @@ class Outgoing extends Model
 
     protected $table = "outgoing";
     protected $fillable = [
+        'no',
         'date',
         'details',
         'destination',
@@ -122,4 +122,28 @@ class Outgoing extends Model
             ->logOnly(['*'])
             ->logOnlyDirty();
     }
+
+    /* ---------------------- Generate Unique Reference No. --------------------- */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            // Check if the reference number is already set
+            if (empty($model->no)) {
+                $model->no = self::generateUniqueReference('OUT-', 8);
+            }
+        });
+    }
+
+    public static function generateUniqueReference(string $prefix = '', int $length = 6): string
+    {
+        do {
+            // Generate the reference number with the specified prefix
+            $reference = $prefix . strtoupper(substr(uniqid(), -$length));
+        } while (self::where('no', $reference)->exists());
+
+        return $reference;
+    }
+    /* ---------------------- Generate Unique Reference No. --------------------- */
 }

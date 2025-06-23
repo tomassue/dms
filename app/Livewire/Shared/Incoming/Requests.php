@@ -251,7 +251,7 @@ class Requests extends Component
                     ->useLog('incoming_request')
                     ->event('updated')
                     ->withProperties(['is_opened' => true])
-                    ->log('Opened incoming request for division: ' . auth()->user()->user_metadata->division->name);
+                    ->log('Opened incoming request ' . ($incomingRequest->no ?? '') . ': ' . (auth()->user()?->user_metadata?->division?->name ?? 'System'));
 
                 // Check if all divisions have opened their copies
                 $this->checkAllDivisionsOpened($incomingRequest);
