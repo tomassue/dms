@@ -53,11 +53,13 @@ class Dashboard extends Component
 
     public function loadIncomingRequests()
     {
-        return IncomingRequest::paginate(5, pageName: 'incoming_requests');
+        return IncomingRequest::pending()
+            ->paginate(5, pageName: 'incoming_requests');
     }
 
     public function loadIncomingDocuments()
     {
-        return IncomingDocument::paginate(5, pageName: 'incoming_documents');
+        return IncomingDocument::pending()
+            ->paginate(5, pageName: 'incoming_documents');
     }
 }

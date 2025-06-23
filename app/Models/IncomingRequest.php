@@ -49,8 +49,20 @@ class IncomingRequest extends Model
 
     public function getRequestAgeAttribute()
     {
-        return Carbon::parse($this->created_at)->diffForHumans();
+        $created = $this->created_at instanceof Carbon
+            ? $this->created_at
+            : Carbon::parse($this->created_at);
+
+        // If the time difference is less than 1 day, use diffForHumans()
+        if ($created->diffInDays(now()) < 1) {
+            return $created->diffForHumans();
+        }
+
+        // Otherwise, return the difference in days only.
+        $diffInDays = $created->diffInDays(now());
+        return $diffInDays . ' day' . ($diffInDays === 1 ? '' : 's') . ' ago';
     }
+
 
     // Scopes
     public function scopeIsForwarded()
