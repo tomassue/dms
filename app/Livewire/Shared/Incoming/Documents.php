@@ -548,7 +548,8 @@ class Documents extends Component
                      */
                     try {
                         $message = "APO-DMS NOTIFICATION\n\n" .
-                            "An incoming document with a reference no. of " . $incomingDocument->no . " has been forwarded.\n\n" .
+                            "An incoming document with a reference no. of " . $incomingDocument->no . " and an info of " . $incomingDocument->document_info . ", " .
+                            " has been forwarded.\n\n" .
                             "This is a system-generated message. DO NOT REPLY.";
 
                         SmsSender::create([

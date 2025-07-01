@@ -58,8 +58,8 @@ class IncomingRequest extends Model
             return $created->diffForHumans();
         }
 
-        // Otherwise, return the difference in days only.
-        $diffInDays = $created->diffInDays(now());
+        // Otherwise, return the difference in days only, as a whole number.
+        $diffInDays = (int) $created->diffInDays(now()); // Cast to integer here
         return $diffInDays . ' day' . ($diffInDays === 1 ? '' : 's') . ' ago';
     }
 

@@ -53,7 +53,7 @@
 
                         <!--begin::Text-->
                         <div class="fw-mormal timeline-content text-muted ps-3">
-                            {{ $item->forwardable->category->name ?? '' }}
+                            {{ $item->forwardable->no ?? '' }}
                             forwarded to
                             {{ $item->division->name ?? '' }}
                             &nbsp;

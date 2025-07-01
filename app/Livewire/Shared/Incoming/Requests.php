@@ -515,7 +515,8 @@ class Requests extends Component
                      */
                     try {
                         $message = "APO-DMS NOTIFICATION\n\n" .
-                            "An incoming request with a reference no. of " . $incomingRequest->no . " has been forwarded.\n\n" .
+                            "An incoming request with a reference no. of " . $incomingRequest->no . " and a description of " . $incomingRequest->description . ", " .
+                            " has been forwarded.\n\n" .
                             "This is a system-generated message. DO NOT REPLY.";
 
                         SmsSender::create([
@@ -537,7 +538,7 @@ class Requests extends Component
                         ]);
                     } catch (\Throwable $th) {
                         // log or ignore to keep processing
-                        FacadesLog::error('SMS failed for phone: ' . $phoneNumber . ', Error: ' . $e->getMessage());
+                        FacadesLog::error('SMS failed for phone: ' . $phoneNumber . ', Error: ' . $th->getMessage());
                         continue;
                     }
                 }
