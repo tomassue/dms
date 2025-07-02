@@ -8,8 +8,8 @@
 
     <style>
         @page {
-            /* Increased top margin to accommodate header */
-            margin: 120px 25px 80px 25px;
+            /* Push all page content down 160px from the very top */
+            margin: 160px 25px 80px 25px;
         }
 
         body {
@@ -18,24 +18,22 @@
             padding: 0;
         }
 
-        /* Fixed header */
+        /* Fixed header stays in that 160px top margin */
         #header {
             position: fixed;
-            top: -120px;
-            /* Adjusted to match @page margin */
+            top: -140px;
             left: 0;
             right: 0;
-            height: 100px;
-            /* Reduced height slightly */
+            height: 140px;
+            /* whatever your header actually needs */
             padding: 10px;
-            background-color: white;
             z-index: 1000;
         }
 
         /* Fixed footer */
         #footer {
             position: fixed;
-            bottom: -60px;
+            bottom: -50px;
             left: 0;
             right: 0;
             height: 50px;
@@ -47,9 +45,10 @@
         }
 
         /* Main content */
+        /* No extra margin here — content starts right at the page margin */
         .content {
-            margin-top: 10px;
-            /* Increased margin */
+            /* you can still add inner padding if you like, but no top-margin */
+            padding: 0px 20px 0px 20px;
         }
 
         /* Add page break class */
@@ -118,7 +117,7 @@
         <tr>
             <td style="vertical-align: middle; text-align: left; padding-left: 10px;" width="70px">
                 @if(!empty($cdo_seal))
-                <img src="{{ $cdo_seal }}" class="header-image" alt="CDO Seal">
+                <img src="{{ $cdo_seal }}" class="header-image" alt="CDO Seal" style="width: 100px;">
                 @endif
             </td>
             <td style="vertical-align: bottom;">
@@ -130,7 +129,7 @@
             </td>
             <td style="vertical-align: middle; text-align: right; padding-right: 10px;">
                 @if(!empty($rise))
-                <img src="{{ $rise }}" class="header-image" alt="RISE Logo" style="width: 150px;">
+                <img src="{{ $rise }}" class="header-image" alt="RISE Logo" style="width: 170px;">
                 @endif
             </td>
         </tr>
@@ -178,19 +177,18 @@
 
             <tr>
                 <th width="25%">OBJECT OF EXPENDITURE <br> (commodity, OMOE, Capital Outlay)</th>
-                <th width="45%">Accomplished Activities/Status/Updates</th>
-                <th width="30%">Next Steps</th>
+                <th width="55%">Accomplished Activities/Status/Updates</th>
+                <th width="20%">Next Steps</th>
             </tr>
 
             @foreach($accomplishment_category as $category => $items)
             <tr>
                 <td colspan="3"><strong>{{ $category }}</strong></td>
             </tr>
-
             @foreach($items as $index => $item)
             <tr>
                 <td>{{ $index + 1 }}. {{ $item['apo']['sub_category'] ?? ($item->apo->sub_category ?? 'N/A') }}</td>
-                <td>{{ $item['details'] ?? ($item->details ?? '') }}</td>
+                <td>{!! $item['details'] ?? ($item->details ?? '') !!}</td>
                 <td>{{ $item['apo']['next_steps'] ?? ($item->apo->next_steps ?? '') }}</td>
             </tr>
             @endforeach
@@ -215,7 +213,7 @@
             </tr>
             <tr>
                 <td style="vertical-align: top; border-top: 1px solid black; text-transform: uppercase;">
-                    {{ trim(($prepared_by_position ?? '') . ($prepared_by_position && $prepared_by_division ? ', ' : '') . ($prepared_by_division ?? '')) }}
+                    {{ $prepared_by_position ?? ''}}
                 </td>
                 <td></td>
                 <td style="vertical-align: top; border-top: 1px solid black; text-transform: uppercase;">

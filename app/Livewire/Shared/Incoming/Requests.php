@@ -5,12 +5,16 @@ namespace App\Livewire\Shared\Incoming;
 use App\Models\File;
 use App\Models\Forwarded;
 use App\Models\IncomingRequest;
+use App\Models\NumberMessage;
 use App\Models\RefDivision;
 use App\Models\RefIncomingRequestCategory;
 use App\Models\RefStatus;
+use App\Models\SmsSender;
+use App\Models\UserMetadata;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log as FacadesLog;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -97,7 +101,7 @@ class Requests extends Component
 
     public function generateReferenceNo()
     {
-        $this->no = IncomingRequest::generateUniqueReference('REF-', 8); // Pre-generate reference number to show in the input field (disabled).
+        $this->no = IncomingRequest::generateUniqueReference('INCR-', 8); // Pre-generate reference number to show in the input field (disabled).
     }
 
     public function render()
@@ -240,6 +244,15 @@ class Requests extends Component
                         'is_opened' => true
                     ]);
 
+                // Log the activity of opening the request
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn($incomingRequest) // Equivalent to setting subject_type & subject_id manually
+                    ->useLog('incoming_request')
+                    ->event('updated')
+                    ->withProperties(['is_opened' => true])
+                    ->log('Opened incoming request ' . ($incomingRequest->no ?? '') . ': ' . (auth()->user()?->user_metadata?->division?->name ?? 'System'));
+
                 // Check if all divisions have opened their copies
                 $this->checkAllDivisionsOpened($incomingRequest);
             }
@@ -332,7 +345,7 @@ class Requests extends Component
 
             // Step 2: Fetch IncomingRequest activity
             $incomingRequestLogs = Activity::where('subject_type', IncomingRequest::class)
-                ->where('log_name', 'incoming_request')
+                ->whereIn('log_name', ['incoming_request', 'forwarded'])
                 ->whereNot('event', 'created')
                 ->where('subject_id', $id)
                 ->with(['causer.user_metadata.division'])
@@ -429,18 +442,42 @@ class Requests extends Component
                 });
 
             // Forwarded division logs (no change)
-            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingRequest::class)
-                ->where('forwardable_id', $id)
-                ->with(['division'])
-                ->latest()
-                ->get()
-                ->map(fn($forward) => [
-                    'division_name' => $forward->division?->name ?? 'N/A',
-                ]);
+            // $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingRequest::class)
+            //     ->where('forwardable_id', $id)
+            //     ->with(['division'])
+            //     ->latest()
+            //     ->get()
+            //     ->map(fn($forward) => [
+            //         'division_name' => $forward->division?->name ?? 'N/A',
+            //     ]);
 
             $this->dispatch('show-activity-log-modal');
         } catch (\Throwable $th) {
             // throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    /**
+     * getForwardedDivisions
+     * * This function is used to get the forwarded divisions of the incoming document.
+     * * It will return the forwarded divisions of the incoming document.
+     */
+    public function getForwardedDivisions(IncomingRequest $incomingRequest)
+    {
+        try {
+            $forwarded_divisions = $incomingRequest->forwards()
+                ->with(['division'])
+                ->get()
+                ->map(function ($forward) {
+                    return $forward->ref_division_id;
+                })
+                ->toArray();
+
+            if ($forwarded_divisions) {
+                $this->dispatch('set-division-select', $forwarded_divisions);
+            }
+        } catch (\Throwable $th) {
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -457,15 +494,125 @@ class Requests extends Component
         try {
             $incomingRequest = IncomingRequest::find($this->incomingRequestId);
 
-            foreach ($this->selected_divisions as $division) {
+            /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
+            if (Auth::user()->hasRole('CITY VETERINARY OFFICE')) {
+                /**
+                 * In CVO, we have a customed function to send an SMS to the selected divisions.
+                 * We updated user_metadata and added phone_number column.
+                 * Now we can use the phone_number column to send an SMS to the selected divisions.
+                 */
+                $phoneNumbers = UserMetadata::whereIn('ref_division_id', (array) $this->selected_divisions)
+                    ->pluck('phone_number')
+                    ->filter() // optional: remove null values
+                    ->unique() // optional: remove duplicates
+                    ->values(); // reindex if needed;
+
+                foreach ($phoneNumbers as $phoneNumber) {
+                    /**
+                     * We enclosed the SMS sending code in a try-catch block to handle any exceptions that might occur during the SMS sending process.
+                     * If an exception occurs, we will log the error message and continue to the next iteration of the loop.
+                     * This allows us to send the SMS to the next phone number without stopping the entire process.
+                     */
+                    try {
+                        $message = "APO-DMS NOTIFICATION\n\n" .
+                            "An incoming request with a reference no. of " . $incomingRequest->no . " and a description of " . $incomingRequest->description . ", " .
+                            " has been forwarded.\n\n" .
+                            "This is a system-generated message. DO NOT REPLY.";
+
+                        SmsSender::create([
+                            'trans_id' => time() . '-' . mt_rand(),
+                            'received_id' => 'CVO-DMS-NOTIFICATION',
+                            'recipient' => $phoneNumber,
+                            'reciepient_name' => 'CVO',
+                            'recipient_message' => $message
+                        ]);
+
+                        $userIds = UserMetadata::where('phone_number', $phoneNumber)->pluck('user_id');
+
+                        NumberMessage::create([
+                            'user_id' => $userIds[0],
+                            'phone_number' => $phoneNumber,
+                            'sms_trans_id' => time() . '-' . mt_rand(),
+                            'otp_type' => 'CVO-DMS-NOTIFICATION',
+                            'sms_status' => 'STATUS',
+                        ]);
+                    } catch (\Throwable $th) {
+                        // log or ignore to keep processing
+                        FacadesLog::error('SMS failed for phone: ' . $phoneNumber . ', Error: ' . $th->getMessage());
+                        continue;
+                    }
+                }
+                //* After it being sent, we will them save them to forwarded table.
+            }
+            /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
+
+            // foreach ($this->selected_divisions as $division) {
+            //     $incomingRequest->forwards()->create([
+            //         'ref_division_id' => $division,
+            //     ]);
+            // }
+
+            // Get current forwarded division IDs, including soft-deleted
+            $currentForwarded = $incomingRequest->forwards()->withTrashed()->pluck('ref_division_id');
+
+            // Convert to collections for easier diffing
+            $selected = collect($this->selected_divisions)->map(fn($id) => (int)$id);
+
+            // Soft-delete divisions that are no longer selected
+            $toSoftDelete = $currentForwarded->diff($selected);
+            if ($toSoftDelete->isNotEmpty()) {
+                $incomingRequest->forwards()->whereIn('ref_division_id', $toSoftDelete)->delete();
+            }
+
+            // Restore soft-deleted if re-selected
+            $toRestore = $selected->intersect($currentForwarded);
+            if ($toRestore->isNotEmpty()) {
+                $incomingRequest->forwards()->withTrashed()
+                    ->whereIn('ref_division_id', $toRestore)
+                    ->whereNotNull('deleted_at')
+                    ->restore();
+            }
+
+            // Create new forwards for divisions not yet in the DB
+            $toAdd = $selected->diff($currentForwarded);
+            foreach ($toAdd as $divisionId) {
                 $incomingRequest->forwards()->create([
-                    'ref_division_id' => $division,
+                    'ref_division_id' => $divisionId,
                 ]);
             }
 
             $incomingRequest->update([
                 'ref_status_id' => RefStatus::where('name', 'forwarded')->first()->id,
             ]);
+
+            // Log the forwarding action - a central log per document.
+            // Get the division names based on each action
+            $addedNames = RefDivision::whereIn('id', $toAdd)->pluck('name')->toArray();
+            $restoredNames = RefDivision::whereIn('id', $toRestore)->pluck('name')->toArray();
+            $deletedNames = RefDivision::whereIn('id', $toSoftDelete)->pluck('name')->toArray();
+
+            $logMessages = [];
+
+            if (!empty($addedNames)) {
+                $logMessages[] = 'added: ' . implode(', ', $addedNames);
+            }
+
+            if (!empty($restoredNames)) {
+                $logMessages[] = 'restored: ' . implode(', ', $restoredNames);
+            }
+
+            if (!empty($deletedNames)) {
+                $logMessages[] = 'removed: ' . implode(', ', $deletedNames);
+            }
+
+            $finalLogMessage = auth()->user()->name . ' updated forwarded divisions - ' . implode(' | ', $logMessages) . '.';
+
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($incomingRequest) // Equivalent to setting subject_type & subject_id manually
+                ->useLog('forwarded')
+                ->event('updated')
+                ->log($finalLogMessage);
 
             $this->clear();
             $this->dispatch('hide-forward-modal');

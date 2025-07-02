@@ -170,33 +170,33 @@
                             </div>
                             @endrole
                         </div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                            <div wire:loading.remove>
-                                <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
-                            </div>
-                            <div wire:loading wire:target="saveIncomingRequestCategory">
-                                <button class="btn btn-primary" type="button" disabled>
-                                    <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
-                                    <span role="status">Loading...</span>
-                                </button>
-                            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                    <div wire:loading.remove>
+                        <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                    </div>
+                    <div wire:loading wire:target="saveIncomingRequestCategory">
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    </div>
                     </form>
                 </div>
             </div>
         </div>
+        <!--end::Modal - Incoming Request Category-->
     </div>
-    <!--end::Modal - Incoming Request Category-->
-</div>
 
-@script
-<script>
-    $wire.on('hide-incoming-request-category-modal', () => {
-        $('#incomingRequestCategoryModal').modal('hide');
-    });
+    @script
+    <script>
+        $wire.on('hide-incoming-request-category-modal', () => {
+            $('#incomingRequestCategoryModal').modal('hide');
+        });
 
-    $wire.on('show-incoming-request-category-modal', () => {
-        $('#incomingRequestCategoryModal').modal('show');
-    });
-</script>
-@endscript
+        $wire.on('show-incoming-request-category-modal', () => {
+            $('#incomingRequestCategoryModal').modal('show');
+        });
+    </script>
+    @endscript

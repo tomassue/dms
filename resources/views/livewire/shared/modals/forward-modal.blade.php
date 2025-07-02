@@ -47,10 +47,14 @@
 <script>
     $wire.on('show-forward-modal', (id) => {
         if ($wire.page == 'incoming documents') {
+            $wire.getForwardedDivisions(id.id); // Check for already forwarded divisions. If any, they will be selected in the dropdown.
+
             @this.set('incomingDocumentId', id.id);
         }
 
         if ($wire.page == 'incoming requests') {
+            $wire.getForwardedDivisions(id.id); // Check for already forwarded divisions. If any, they will be selected in the dropdown.
+
             @this.set('incomingRequestId', id.id);
         }
 
@@ -80,6 +84,10 @@
 
     $wire.on('reset-division-select', () => {
         document.querySelector('#division-select').reset();
+    });
+
+    $wire.on('set-division-select', (data) => {
+        document.querySelector('#division-select').setValue(data[0]);
     });
 </script>
 @endscript

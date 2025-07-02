@@ -31,6 +31,7 @@ class Meeting extends Model
         'time_end',
         'venue',
         'prepared_by',
+        'prepared_by_position',
         'approved_by',
         'noted_by',
         //* file is not fillable.
@@ -59,6 +60,18 @@ class Meeting extends Model
         return $this->formatted_time_end ? $this->formatted_time_start . ' - ' . $this->formatted_time_end : $this->formatted_time_start;
     }
 
+    // Helpers
+    /**
+     * Summary of pdfFileExist
+     * The current logic is the user can only upload one pdf file.
+     * @return bool
+     */
+    public function pdfFileExist()
+    {
+        // return true if a pdfFile exists
+        return $this->files()->where('type', 'application/pdf')->exists();
+    }
+
     // Scope
     public function scopeDateRange($query, $start_date, $end_date)
     {
@@ -67,6 +80,15 @@ class Meeting extends Model
         }
 
         return $query->whereBetween('date', [$start_date, $end_date]);
+    }
+
+    public function scopeSearch($query, $search)
+    {
+        return $query->whereHas('apoMeetingsCategory', function ($query) use ($search) {
+            $query->where('name', 'like', '%' . $search . '%');
+        })
+            ->orWhere('description', 'like', '%' . $search . '%')
+            ->orWhere('venue', 'like', '%' . $search . '%');
     }
 
     // Relationship
@@ -92,7 +114,7 @@ class Meeting extends Model
 
     public function files()
     {
-        return $this->morphOne(File::class, 'fileable');
+        return $this->morphMany(File::class, 'fileable');
     }
 
     // Activity Log

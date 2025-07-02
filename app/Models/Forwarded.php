@@ -5,13 +5,13 @@ namespace App\Models;
 use App\Models\Scopes\RoleBasedFilterScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Spatie\Activitylog\LogOptions;
 use Spatie\Activitylog\Traits\LogsActivity;
 
-#[ScopedBy([RoleBasedFilterScope::class])]
 class Forwarded extends Model
 {
-    use LogsActivity;
+    use SoftDeletes;
 
     protected $table = 'forwarded';
     protected $fillable = [
@@ -29,15 +29,6 @@ class Forwarded extends Model
     {
         // return forwarded incoming documents
         return $this->where('forwardable_type', IncomingDocument::class);
-    }
-
-    // Activity Log
-    public function getActivitylogOptions(): LogOptions
-    {
-        return LogOptions::defaults()
-            ->useLogName('forwarded')
-            ->logOnly(['*'])
-            ->logOnlyDirty();
     }
 
     // Relationship

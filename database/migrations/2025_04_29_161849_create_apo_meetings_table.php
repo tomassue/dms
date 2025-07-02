@@ -19,7 +19,8 @@ return new class extends Migration
             $table->time('time_start');
             $table->time('time_end')->nullable();
             $table->string('venue');
-            $table->foreignId('prepared_by')->nullable();
+            $table->string('prepared_by')->nullable();
+            $table->string('prepared_by_position')->nullable();
             $table->foreignId('approved_by')->nullable();
             $table->foreignId('noted_by')->nullable();
             $table->binary('file')->nullable();

@@ -42,6 +42,7 @@
                                         <th>Division / Title</th>
                                         <th>Position</th>
                                         <th>Username</th>
+                                        <th>Phone Number</th>
                                         <th>Status</th>
                                         @can('reference.userManagement.update')
                                         <th>Actions</th>
@@ -56,6 +57,7 @@
                                         <td>{{ $item->user_metadata->division->name ?? '-' }}</td>
                                         <td>{{ $item->user_metadata->position->position_name ?? '-' }}</td>
                                         <td>{{ $item->username }}</td>
+                                        <td>{{ $item->user_metadata->phone_number ?? '-' }}</td>
                                         <td>
                                             @if(!$item->deleted_at)
                                             <span class="badge badge-light-success">Active</span>
@@ -66,7 +68,7 @@
                                         <td>
                                             <div class="btn-group" role="group" aria-label="Actions">
                                                 @can('reference.userManagement.update')
-                                                <a href="#" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
+                                                <button class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editUser({{ $item->id }})">
                                                     <div wire:loading.remove wire:target="editUser({{ $item->id }})">
                                                         <i class="bi bi-pencil"></i>
                                                     </div>
@@ -75,9 +77,9 @@
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
                                                     </div>
-                                                </a>
+                                                </button>
 
-                                                <a href="#" class="btn btn-icon btn-sm btn-warning" title="Reset Password" wire:click="resetPasswordUser({{ $item->id }})">
+                                                <button class="btn btn-icon btn-sm btn-warning" title="Reset Password" wire:click="resetPasswordUser({{ $item->id }})">
                                                     <div wire:loading.remove wire:target="resetPasswordUser({{ $item->id }})">
                                                         <i class="bi bi-key"></i>
                                                     </div>
@@ -86,10 +88,9 @@
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
                                                     </div>
-                                                </a>
+                                                </button>
 
-                                                <a
-                                                    href="#"
+                                                <button
                                                     class="btn btn-icon btn-sm {{ $item->deleted_at ? 'btn-info' : 'btn-danger' }}"
                                                     title="Delete"
                                                     wire:click="{{ $item->deleted_at ? 'restoreUser' : 'deleteUser' }}({{ $item->id }})">
@@ -101,14 +102,14 @@
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
                                                     </div>
-                                                </a>
+                                                </button>
                                                 @endcan
                                             </div>
                                         </td>
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="7" class="text-center">No records found.</td>
+                                        <td colspan="8" class="text-center">No records found.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -158,15 +159,6 @@
                 */
                 @endphp
                 <div class="modal-body">
-                    @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    @endif
                     <form wire:submit="{{ $editMode ? 'updateUser' : 'createUser' }}">
                         <div class="p-2">
                             <div class="mb-10" style="display: {{ $editMode ? '' : 'none' }};">
@@ -230,6 +222,18 @@
                                     @endforeach
                                 </select>
                                 @error('ref_position_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="mb-10">
+                                <label class="form-label">Phone Number</label>
+                                <input type="text" class="form-control"
+                                    maxlength="11"
+                                    oninput="this.value = '09' + this.value.slice(2).replace(/\D/g, '');"
+                                    placeholder="09XXXXXXXXX"
+                                    wire:model="phone_number">
+                                @error('phone_number')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -646,12 +650,63 @@
                                             </div>
                                         </div>
 
+                                        <!-- References -->
+                                        <li class="d-flex align-items-center py-2">
+                                            <span class="bullet me-5"></span> References
+                                        </li>
+
+                                        <!-- References.Meetings Category -->
+                                        <li class="d-flex align-items-center py-2 ms-8">
+                                            <span class="bullet me-5"></span> Meetings Category
+                                        </li>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="reference.meetingsCategory.create" id="meetingsCategoryCreate" wire:model="permissions" />
+                                                <label class="form-check-label" for="meetingsCategoryCreate"> Create </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="reference.meetingsCategory.read" id="meetingsCategoryRead" wire:model="permissions" />
+                                                <label class="form-check-label" for="meetingsCategoryRead"> Read </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="reference.meetingsCategory.update" id="meetingsCategoryUpdate" wire:model="permissions" />
+                                                <label class="form-check-label" for="meetingsCategoryUpdate"> Update </label>
+                                            </div>
+                                        </div>
+
                                         <div class="separator my-10">APOO</div>
                                     </div>
 
                                     <div style="display: {{ $role_id == '2' ? '' : 'none' }};">
                                         <div class="separator my-10">City Veterinary</div>
-                                        -- Nothing --
+
+                                        <!-- Accomplishments -->
+                                        <li class="d-flex align-items-center py-2">
+                                            <span class="bullet me-5"></span> Accomplishments
+                                        </li>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="accomplishments.create" id="accomplishmentsCreate" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentsCreate"> Create </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="accomplishments.read" id="accomplishmentsRead" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentsRead"> Read </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-8">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="accomplishments.update" id="accomplishmentsUpdate" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentsUpdate"> Update </label>
+                                            </div>
+                                        </div>
+
                                         <div class="separator my-10">City Veterinary</div>
                                     </div>
 

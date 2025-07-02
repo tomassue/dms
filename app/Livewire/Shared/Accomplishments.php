@@ -32,6 +32,7 @@ class Accomplishments extends Component
         $details;
     public $pdf,
         $prepared_by,
+        $prepared_by_position,
         $conforme,
         $approved;
 
@@ -43,6 +44,7 @@ class Accomplishments extends Component
     public $report = "accomplishments";
     //* end:: APO
 
+    //! Not used for now
     /**
      * dehydrate()
      * he dehydrate() method in Livewire is triggered after every component request cycle, including on the request that occurs during logout. 
@@ -50,12 +52,14 @@ class Accomplishments extends Component
      * and then trying to access ->name causes the 404 (or sometimes a null property access error, depending on your config).
      * * Add a guard against this by checking if the user is still authenticated before accessing auth()->user()->name. 
      */
-    public function dehydrate()
-    {
-        if (auth()->check()) {
-            $this->prepared_by = auth()->user()->name;
-        }
-    }
+    // public function dehydrate()
+    // {
+    //     if (auth()->check()) {
+    //         $this->prepared_by = auth()->user()->name;
+    //         $this->prepared_by_position = auth()->user()->user_metadata->position->name;
+    //     }
+    // }
+    //! Not used for now
 
 
     public function rules()
@@ -64,7 +68,6 @@ class Accomplishments extends Component
             $rules = [
                 'ref_accomplishment_category_id' => 'required|exists:ref_accomplishment_categories,id',
                 'details' => 'required',
-                'sub_category' => 'required',
                 'start_date' => 'required|date|before_or_equal:end_date',
                 'end_date' => 'required|date|after_or_equal:start_date'
             ];
@@ -91,6 +94,7 @@ class Accomplishments extends Component
     {
         $this->resetExcept('start_date', 'end_date');
         $this->resetValidation();
+        $this->dispatch('clear-summernote-details');
     }
 
     //* Listens for an event from MenuFilterComponent (child component)
@@ -186,7 +190,8 @@ class Accomplishments extends Component
 
     public function loadAccomplishmentCategories()
     {
-        $accomplishment_categories = RefAccomplishmentCategory::get()
+        $accomplishment_categories = RefAccomplishmentCategory::orderBy('accomplishment_category_name', 'asc')
+            ->get()
             ->map(function ($query) {
                 return [
                     'id' => $query->id,
@@ -251,11 +256,11 @@ class Accomplishments extends Component
     {
         try {
             $accomplishment = Accomplishment::with('apo')->findOrFail($accomplishmentId);
-
             $this->accomplishmentId = $accomplishmentId;
+
             $this->ref_accomplishment_category_id = $accomplishment->ref_accomplishment_category_id;
             $this->date = optional($accomplishment->date)->format('Y-m-d');
-            $this->details = $accomplishment->details;
+            $this->dispatch('set-summernote-details', contents: $accomplishment->details);
 
             if (auth()->user()->hasRole('APOO') && $accomplishment->apo) {
                 $this->sub_category = $accomplishment->apo->sub_category;
@@ -265,7 +270,6 @@ class Accomplishments extends Component
             }
 
             $this->editMode = true;
-            $this->dispatch('show-accomplishment-modal');
         } catch (\Throwable $th) {
             report($th);
             $this->dispatch('error', message: 'Failed to load accomplishment data.');
@@ -304,13 +308,10 @@ class Accomplishments extends Component
                 'approved' => 'required'
             ]);
 
-            // Get prepared_by user data
-            $preparedUser = auth()->user();
-            $viewData['prepared_by'] = $preparedUser
-                ? $preparedUser->name
-                : '';
-            $viewData['prepared_by_position'] = $preparedUser->user_metadata->position->name ?? 'Admin';
-            $viewData['prepared_by_division'] = $preparedUser->user_metadata->division->name ?? null;
+            // Prepared by
+            $viewData['prepared_by'] =  $this->prepared_by ?? '';
+            $viewData['prepared_by_position'] = $this->prepared_by_position ?? '';
+            // $viewData['prepared_by_division'] = $preparedUser->user_metadata->division->name ?? null;
 
             // Get conforme user data
             $conforme = RefSignatories::find($this->conforme);
@@ -338,6 +339,7 @@ class Accomplishments extends Component
         $options->set('isRemoteEnabled', true);
         $options->set('isHtml5ParserEnabled', true);
         $options->set('isPhpEnabled', true); // Important for base64 support
+        $options->set('dpi', 150);
 
         $dompdf = new Dompdf($options);
         $dompdf->loadHtml($htmlContent);

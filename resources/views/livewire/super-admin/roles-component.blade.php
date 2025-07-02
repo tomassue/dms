@@ -42,7 +42,8 @@
                     <!--end::Section-->
                     <!--begin::Label-->
                     <!-- <div class="badge badge-light fw-bold py-4 px-3">+82$</div> -->
-                    <a href="#" class="btn btn-sm btn-secondary" wire:click="editRole({{ $item->id }})">Edit</a>
+                    <!-- EDIT IS HIDDEN FOR NOW -->
+                    <a href="#" class="btn btn-sm btn-secondary d-none" wire:click="editRole({{ $item->id }})">Edit</a>
                     <!--end::Label-->
                 </div>
                 <!--end::Item-->

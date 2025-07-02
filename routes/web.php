@@ -13,6 +13,7 @@ use App\Livewire\Shared\Settings\AccomplishmentCategory;
 use App\Livewire\Shared\Settings\Divisions;
 use App\Livewire\Shared\Settings\IncomingDocumentCategory;
 use App\Livewire\Shared\Settings\IncomingRequestCategory;
+use App\Livewire\Shared\Settings\MeetingsCategory;
 use App\Livewire\Shared\Settings\Positions;
 use App\Livewire\Shared\Settings\Signatories;
 use App\Livewire\Shared\Settings\UserManagement;
@@ -25,7 +26,7 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE']], function () {
+Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMISID']], function () {
 
     // Routes accessible only by admin of team 1
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
@@ -74,9 +75,8 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE']],
 
         /* ------------------------------- APO ROUTES ------------------------------- */
         Route::get('/meetings', Meetings::class)->name('meetings')->middleware('permission:meeting.read');
-
-
-
+        # Settings.Meetings Category
+        Route::get('/settings/meetings-category', MeetingsCategory::class)->name('meetings-category')->middleware('permission:reference.meetingsCategory.read');
 
         /* --------------------------- SUPER ADMIN ROUTES --------------------------- */
         Route::group(['middleware' => ['role:Super Admin']], function () {

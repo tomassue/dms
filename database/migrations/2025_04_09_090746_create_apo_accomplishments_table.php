@@ -15,7 +15,7 @@ return new class extends Migration
         Schema::create('apo_accomplishments', function (Blueprint $table) {
             $table->id();
             $table->foreignIdFor(Accomplishment::class);
-            $table->text('sub_category');
+            $table->text('sub_category')->nullable();
             $table->dateTime('start_date');
             $table->dateTime('end_date');
             $table->text('next_steps')->nullable();

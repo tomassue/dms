@@ -23,6 +23,7 @@ class IncomingDocument extends Model
 
     protected $table = 'incoming_documents';
     protected $fillable = [
+        'no',
         'ref_incoming_document_category_id',
         'document_info',
         'date',
@@ -30,6 +31,46 @@ class IncomingDocument extends Model
         'remarks',
         'office_id'
     ];
+
+    // Generate Unique Reference No.
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            // Check if the reference number is already set
+            if (empty($model->no)) {
+                $model->no = self::generateUniqueReference('INCD-', 8);
+            }
+        });
+    }
+
+    public static function generateUniqueReference(string $prefix = '', int $length = 6): string
+    {
+        do {
+            // Generate the reference number with the specified prefix
+            $reference = $prefix . strtoupper(substr(uniqid(), -$length));
+        } while (self::where('no', $reference)->exists());
+
+        return $reference;
+    }
+
+    // Accessor
+    public function getDocumentAgeAttribute()
+    {
+        $created = $this->created_at instanceof Carbon
+            ? $this->created_at
+            : Carbon::parse($this->created_at);
+
+        // If the time difference is less than 1 day, use diffForHumans()
+        if ($created->diffInDays(now()) < 1) {
+            return $created->diffForHumans();
+        }
+
+        // Otherwise, return the difference in days only, as a whole number.
+        $diffInDays = (int) $created->diffInDays(now()); // Cast to integer here
+        return $diffInDays . ' day' . ($diffInDays === 1 ? '' : 's') . ' ago';
+    }
 
     //* Scopes
     public function scopeIsForwarded()
@@ -70,6 +111,11 @@ class IncomingDocument extends Model
     public function scopeDateRangeFilter($query, $start_date, $end_date)
     {
         return $query->whereBetween('date', [$start_date, $end_date]);
+    }
+
+    public function scopePending($query)
+    {
+        return $query->whereHas('status', fn($q) => $q->where('name', 'pending'));
     }
 
     /**

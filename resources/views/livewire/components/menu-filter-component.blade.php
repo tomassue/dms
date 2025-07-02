@@ -31,6 +31,8 @@
                 <!--end::Input-->
             </div>
             <!--end::Input group-->
+
+            @if (in_array($page, ['outgoing', 'incoming']))
             <!--begin::Input group-->
             <div class="mb-10">
                 <!--begin::Label-->
@@ -46,6 +48,8 @@
                 <!--end::Input-->
             </div>
             <!--end::Input group-->
+            @endif
+
             @if ($page == 'outgoing')
             <!--begin::Input group-->
             <div class="mb-10">
@@ -65,6 +69,7 @@
             </div>
             <!--end::Input group-->
             @endif
+
             <!--begin::Actions-->
             <div class="d-flex justify-content-end">
                 <button type="reset" class="btn btn-sm btn-light btn-active-light-primary me-2" data-kt-menu-dismiss="true" wire:click="clear">Reset</button>

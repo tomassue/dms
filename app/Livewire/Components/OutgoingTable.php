@@ -10,7 +10,9 @@ use App\Models\OutgoingProcurement;
 use App\Models\OutgoingRis;
 use App\Models\OutgoingVoucher;
 use App\Models\RefStatus;
+use App\Models\Scopes\DivisionScope;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\On;
@@ -34,7 +36,8 @@ class OutgoingTable extends Component
     public $preview_file = [];
     public $activity_log = [];
     /* ---------------------------- begin:: OUTGOING ---------------------------- */
-    public $date,
+    public $no,
+        $date,
         $details,
         $destination,
         $person_responsible,
@@ -63,6 +66,7 @@ class OutgoingTable extends Component
     public function rules()
     {
         $rules = [
+            'no' => 'required',
             'type' => 'required',
             'date' => 'required|date',
             'details' => 'required|string|max:255',
@@ -83,7 +87,6 @@ class OutgoingTable extends Component
                 break;
             case 'procurement':
                 $rules['pr_no'] = 'required|string|max:255';
-                $rules['po_no'] = 'required|string|max:255';
                 break;
             case 'ris':
                 $rules['ppmp_code'] = 'required|string|max:255';
@@ -111,6 +114,11 @@ class OutgoingTable extends Component
         $this->resetValidation();
 
         $this->dispatch('reset-files');
+    }
+
+    public function generateReferenceNo()
+    {
+        $this->no = Outgoing::generateUniqueReference('OUT-', 8); // Pre-generate reference number to show in the input field (disabled).
     }
 
     public function render()
@@ -149,6 +157,14 @@ class OutgoingTable extends Component
                     $query->where('outgoingable_type', OutgoingVoucher::class);
                 }
             })
+            ->when(Auth::user()->hasRole('APOO'), function ($query) {
+                // APOO specifically requested the the office admin may access all outgoing entries from divisions.
+                // Thus, we removed the Global Scope
+                if (Auth::user()->user_metadata->is_office_admin) {
+                    $query->withoutGlobalScope(DivisionScope::class);
+                }
+            })
+            ->latest()
             ->paginate(10);
     }
 
@@ -246,6 +262,7 @@ class OutgoingTable extends Component
     protected function saveMainOutgoing($type)
     {
         $data = [
+            'no'                 => $this->no,
             'date'               => $this->date,
             'details'            => $this->details,
             'destination'        => $this->destination,
@@ -290,6 +307,7 @@ class OutgoingTable extends Component
             $this->outgoingId = $outgoing->id;
             $this->editMode = true;
 
+            $this->no = $outgoing->no;
             $this->date = $outgoing->date;
             $this->details = $outgoing->details;
             $this->destination = $outgoing->destination;

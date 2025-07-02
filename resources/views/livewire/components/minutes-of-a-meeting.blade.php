@@ -14,7 +14,7 @@
                 <!--end::Header-->
 
                 <!--begin::Body-->
-                <div class="card-body d-flex flex-column" style="position: relative; padding-top: unset;">
+                <div class="card-body d-flex flex-column overflow-auto" style="position: relative; padding-top: unset; height: 120px;">
                     <div id="kt_customer_view_details" class="collapse show">
                         <div class="py-5 fs-6">
                             <!--begin::Details item-->
@@ -46,7 +46,8 @@
                             <!--begin::Details item-->
                             <div class="fw-bolder mt-5">Prepared by</div>
                             <div class="text-gray-600">
-                                {{ $apo_meeting->preparedBy->name }}
+                                {{ $apo_meeting->prepared_by }}
+                                <span class="text-muted d-block">{{ $apo_meeting->prepared_by_position }}</span>
                             </div>
                             <!--begin::Details item-->
                             <!--begin::Details item-->
@@ -68,6 +69,36 @@
                                 <span class="badge badge-danger">Not assigned</span>
                                 @endif
                             </div>
+                            <!--begin::Details item-->
+                            <!--begin::Details item-->
+                            <div class="fw-bolder mt-5">Photos</div>
+                            <table class="table table-row-dashed table-row-gray-300 gy-7">
+                                <thead>
+                                    <tr class="fw-bolder fs-6 text-gray-800">
+                                        <th width="80%">File</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($preview_file as $item)
+                                    <tr>
+                                        <td>
+                                            {{ $item->name }}
+                                        </td>
+                                        <td>
+                                            <a href="data:{{ $item->type }};base64,{{ base64_encode($item->file) }}" data-lightbox="image-gallery">
+                                                <img src="data:{{ $item->type }};base64,{{ base64_encode($item->file) }}" width="100">
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="2" class="text-center">No files uploaded.</td>
+                                        <td class="text-center"></td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
                             <!--begin::Details item-->
                         </div>
                     </div>
@@ -174,109 +205,167 @@
         <!-- end::Add Meeting Minutes -->
 
         <!-- begin::Meeting Minutes -->
-        <div class="col-xxl-12 g-5">
-            <!--begin::Mixed Widget 5-->
-            <div class="card card-xxl-stretch">
-                <!--begin::Header-->
-                <div class="card-header border-0 py-5">
-                    <h3 class="card-title align-items-start flex-column">
-                        <span class="card-label fw-bolder fs-3 mb-1">Minutes of a Meeting</span>
-                        <span class="text-muted fw-bold fs-7">Over {{ $minutes_of_meeting->count() }} entries</span>
-                    </h3>
-
-                    <div class="card-toolbar">
-                        <div class="d-flex align-items-center gap-2">
-                            <!-- begin::Menu -->
-                            <div class="btn-group" role="group" aria-label="Actions">
-                                <button type="button" class="btn btn-icon btn-warning" title="Print" wire:click="printMinutesOfMeeting({{ $apoMeetingId }})">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-arrow-up" viewBox="0 0 16 16" wire:loading.remove wire:target="printMinutesOfMeeting({{ $apoMeetingId }})">
-                                        <path d="M8 11a.5.5 0 0 0 .5-.5V6.707l1.146 1.147a.5.5 0 0 0 .708-.708l-2-2a.5.5 0 0 0-.708 0l-2 2a.5.5 0 1 0 .708.708L7.5 6.707V10.5a.5.5 0 0 0 .5.5" />
-                                        <path d="M4 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm0 1h8a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1" />
-                                    </svg>
-                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="printMinutesOfMeeting({{ $apoMeetingId }})">
-                                        <span class="sr-only">Loading...</span>
+        <div class="row">
+            <div class="col-xxl-3 g-5">
+                <!--begin::Mixed Widget 5-->
+                <div class="card">
+                    <!--begin::Body-->
+                    <div class="card-body d-flex flex-column" style="position: relative;">
+                        <div class="card card-dashed">
+                            <div class="card-body text-center" style="display: {{ $apo_meeting->pdfFileExist() ? 'none' : '' }};">
+                                <button class="btn btn-flex btn-warning px-6 w-100" wire:click="printMinutesOfMeeting({{ $apoMeetingId }})">
+                                    <span class="svg-icon svg-icon-2x">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filetype-pdf" viewBox="0 0 16 16" wire:loading.remove wire:target="printMinutesOfMeeting({{ $apoMeetingId }})">
+                                            <path fill-rule="evenodd" d="M14 4.5V14a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V4.5h-2A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v9H2V2a2 2 0 0 1 2-2h5.5zM1.6 11.85H0v3.999h.791v-1.342h.803q.43 0 .732-.173.305-.175.463-.474a1.4 1.4 0 0 0 .161-.677q0-.375-.158-.677a1.2 1.2 0 0 0-.46-.477q-.3-.18-.732-.179m.545 1.333a.8.8 0 0 1-.085.38.57.57 0 0 1-.238.241.8.8 0 0 1-.375.082H.788V12.48h.66q.327 0 .512.181.185.183.185.522m1.217-1.333v3.999h1.46q.602 0 .998-.237a1.45 1.45 0 0 0 .595-.689q.196-.45.196-1.084 0-.63-.196-1.075a1.43 1.43 0 0 0-.589-.68q-.396-.234-1.005-.234zm.791.645h.563q.371 0 .609.152a.9.9 0 0 1 .354.454q.118.302.118.753a2.3 2.3 0 0 1-.068.592 1.1 1.1 0 0 1-.196.422.8.8 0 0 1-.334.252 1.3 1.3 0 0 1-.483.082h-.563zm3.743 1.763v1.591h-.79V11.85h2.548v.653H7.896v1.117h1.606v.638z" />
+                                        </svg>
+                                    </span>
+                                    <div wire:loading.remove wire:target="printMinutesOfMeeting({{ $apoMeetingId }})">
+                                        <span class="d-flex flex-column align-items-start ms-2">
+                                            <span class="fs-3 fw-bolder">Export</span>
+                                            <span class="fs-7">Generate a PDF file</span>
+                                        </span>
                                     </div>
-                                </button>
-
-                                <button class="btn btn-icon btn-info" wire:click="viewExportedMinutesOfMeeting({{ $apoMeetingId }})">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filetype-pdf" viewBox="0 0 16 16" wire:loading.remove wire:target="uploadExportedPDF">
-                                        <path fill-rule="evenodd" d="M14 4.5V14a2 2 0 0 1-2 2h-1v-1h1a1 1 0 0 0 1-1V4.5h-2A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v9H2V2a2 2 0 0 1 2-2h5.5zM1.6 11.85H0v3.999h.791v-1.342h.803q.43 0 .732-.173.305-.175.463-.474a1.4 1.4 0 0 0 .161-.677q0-.375-.158-.677a1.2 1.2 0 0 0-.46-.477q-.3-.18-.732-.179m.545 1.333a.8.8 0 0 1-.085.38.57.57 0 0 1-.238.241.8.8 0 0 1-.375.082H.788V12.48h.66q.327 0 .512.181.185.183.185.522m1.217-1.333v3.999h1.46q.602 0 .998-.237a1.45 1.45 0 0 0 .595-.689q.196-.45.196-1.084 0-.63-.196-1.075a1.43 1.43 0 0 0-.589-.68q-.396-.234-1.005-.234zm.791.645h.563q.371 0 .609.152a.9.9 0 0 1 .354.454q.118.302.118.753a2.3 2.3 0 0 1-.068.592 1.1 1.1 0 0 1-.196.422.8.8 0 0 1-.334.252 1.3 1.3 0 0 1-.483.082h-.563zm3.743 1.763v1.591h-.79V11.85h2.548v.653H7.896v1.117h1.606v.638z" />
-                                    </svg>
-                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="uploadExportedPDF">
+                                    <div class="spinner-border spinner-border-lg mx-auto" role="status" wire:loading wire:target="printMinutesOfMeeting({{ $apoMeetingId }})">
                                         <span class="sr-only">Loading...</span>
                                     </div>
                                 </button>
                             </div>
-                            <!-- end::Menu -->
+                            <div class="card-footer text-center">
+                                <button class="btn btn-flex btn-info px-6 w-100" wire:click="viewExportedMinutesOfMeeting({{ $apoMeetingId }})" style="{{ $uploadPdf ? 'display: none;' : '' }}">
+                                    <span class="svg-icon svg-icon-2x">
+                                        @if($apo_meeting->pdfFileExist())
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-eye" viewBox="0 0 16 16">
+                                            <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8M1.173 8a13 13 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5s3.879 1.168 5.168 2.457A13 13 0 0 1 14.828 8q-.086.13-.195.288c-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5s-3.879-1.168-5.168-2.457A13 13 0 0 1 1.172 8z" />
+                                            <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5M4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0" />
+                                        </svg>
+                                        @else
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-upload" viewBox="0 0 16 16">
+                                            <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5" />
+                                            <path d="M7.646 1.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1-.708.708L8.5 2.707V11.5a.5.5 0 0 1-1 0V2.707L5.354 4.854a.5.5 0 1 1-.708-.708z" />
+                                        </svg>
+                                        @endif
+                                    </span>
+                                    <span class="d-flex flex-column align-items-start ms-2">
+                                        <span class="fs-3 fw-bolder">
+                                            {{ $apo_meeting->pdfFileExist() ? 'View' : 'Upload' }}
+                                        </span>
+                                        <span class="fs-7">
+                                            {{ $apo_meeting->pdfFileExist() ? 'Click to view PDF' : 'Final scanned minutes' }}
+                                        </span>
+                                    </span>
+                                </button>
+                                <div style="{{ $uploadPdf ? '' : 'display: none;' }}">
+                                    <div wire:ignore>
+                                        <input type="file" class="form-control files">
+                                    </div>
+                                    @error('file_id')
+                                    <div class="text-start">
+                                        <span class="text-danger">{{ $message }}</span>
+                                    </div>
+                                    @enderror
+                                    <div class="d-flex flex-column flex-sm-row justify-content-center gap-3 gap-sm-5 my-10">
+                                        <button class="btn btn-danger" width="100" wire:click="resetUploadPdf">Cancel</button>
+                                        <button class="btn btn-primary" width="100" wire:click="uploadExportedPDF">
+                                            <span wire:loading.remove wire:target="uploadExportedPDF">Upload</span>
+                                            <span wire:loading wire:target="uploadExportedPDF">
+                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                                Uploading...
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="resize-triggers">
+                            <div class="expand-trigger">
+                                <div style="width: 404px; height: 426px;"></div>
+                            </div>
+                            <div class="contract-trigger"></div>
                         </div>
                     </div>
+                    <!--end::Body-->
                 </div>
-                <!--end::Header-->
-
-                <!--begin::Body-->
-                <div class="card-body d-flex flex-column" style="position: relative;">
-                    <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveOutgoing">
-                        <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
-                            <thead>
-                                <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
-                                    <th>No.</th>
-                                    <th>Activities</th>
-                                    <th>Point Person</th>
-                                    <th>Expected Output</th>
-                                    <th>Agreements</th>
-                                    @can('minutesOfMeeting.update')
-                                    <th class="text-center">Actions</th>
-                                    @endcan
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($minutes_of_meeting as $index => $item)
-                                <tr>
-                                    <td>{{ $index + 1 }}</td>
-                                    <td>{{ $item->activity }}</td>
-                                    <td>{{ $item->point_person }}</td>
-                                    <td>{{ $item->expected_output }}</td>
-                                    <td>{{ $item->agreements }}</td>
-                                    @can('minutesOfMeeting.update')
-                                    <td class="text-center" wire:loading.class="pe-none">
-                                        <div class="btn-group" role="group" aria-label="Actions">
-                                            @can('minutesOfMeeting.update')
-                                            <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editMinute({{ $item->id }})" wire:loading.attr="disabled">
-                                                <i class="bi bi-pencil" wire:loading.remove wire:target="editMinute({{ $item->id }})"></i>
-                                                <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="editMinute({{ $item->id }})">
-                                                    <span class="sr-only">Loading...</span>
-                                                </div>
-                                            </button>
-                                            <button type="button" class="btn btn-icon btn-sm btn-danger" title="Remove" wire:confirm="Are you sure you want to remove this record?" wire:click="removeMinute({{ $item->id }})" wire:loading.attr="disabled">
-                                                <i class="bi bi-dash-circle-dotted" wire:loading.remove wire:target="removeMinute({{ $item->id }})"></i>
-                                                <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="removeMinute({{ $item->id }})">
-                                                    <span class="sr-only">Loading...</span>
-                                                </div>
-                                            </button>
-                                            @endcan
-                                        </div>
-                                    </td>
-                                    @endcan
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="6" class="text-center">No records found.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="resize-triggers">
-                        <div class="expand-trigger">
-                            <div style="width: 404px; height: 426px;"></div>
-                        </div>
-                        <div class="contract-trigger"></div>
-                    </div>
-                </div>
-                <!--end::Body-->
+                <!--end::Mixed Widget 5-->
             </div>
-            <!--end::Mixed Widget 5-->
+
+            <div class="col-xxl-9 g-5">
+                <!--begin::Mixed Widget 5-->
+                <div class="card card-xxl-stretch">
+                    <!--begin::Header-->
+                    <div class="card-header border-0 py-5">
+                        <h3 class="card-title align-items-start flex-column">
+                            <span class="card-label fw-bolder fs-3 mb-1">Minutes of a Meeting</span>
+                            <span class="text-muted fw-bold fs-7">Over {{ $minutes_of_meeting->count() }} entries</span>
+                        </h3>
+                    </div>
+                    <!--end::Header-->
+
+                    <!--begin::Body-->
+                    <div class="card-body d-flex flex-column" style="position: relative;">
+                        <div class="table-responsive" wire:loading.class="opacity-50" wire:target.except="saveOutgoing">
+                            <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
+                                <thead>
+                                    <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
+                                        <th>No.</th>
+                                        <th>Activities</th>
+                                        <th>Point Person</th>
+                                        <th>Expected Output</th>
+                                        <th>Agreements</th>
+                                        @can('minutesOfMeeting.update')
+                                        <th class="text-center">Actions</th>
+                                        @endcan
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @forelse($minutes_of_meeting as $index => $item)
+                                    <tr>
+                                        <td>{{ $index + 1 }}</td>
+                                        <td>{{ $item->activity }}</td>
+                                        <td>{{ $item->point_person }}</td>
+                                        <td>{{ $item->expected_output }}</td>
+                                        <td>{{ $item->agreements }}</td>
+                                        @can('minutesOfMeeting.update')
+                                        <td class="text-center" wire:loading.class="pe-none">
+                                            <div class="btn-group" role="group" aria-label="Actions">
+                                                @can('minutesOfMeeting.update')
+                                                <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editMinute({{ $item->id }})" wire:loading.attr="disabled">
+                                                    <i class="bi bi-pencil" wire:loading.remove wire:target="editMinute({{ $item->id }})"></i>
+                                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="editMinute({{ $item->id }})">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                </button>
+                                                <button type="button" class="btn btn-icon btn-sm btn-danger" title="Remove" wire:confirm="Are you sure you want to remove this record?" wire:click="removeMinute({{ $item->id }})" wire:loading.attr="disabled">
+                                                    <i class="bi bi-dash-circle-dotted" wire:loading.remove wire:target="removeMinute({{ $item->id }})"></i>
+                                                    <div class="spinner-border spinner-border-sm" role="status" wire:loading wire:target="removeMinute({{ $item->id }})">
+                                                        <span class="sr-only">Loading...</span>
+                                                    </div>
+                                                </button>
+                                                @endcan
+                                            </div>
+                                        </td>
+                                        @endcan
+                                    </tr>
+                                    @empty
+                                    <tr>
+                                        <td colspan="6" class="text-center">No records found.</td>
+                                    </tr>
+                                    @endforelse
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="resize-triggers">
+                            <div class="expand-trigger">
+                                <div style="width: 404px; height: 426px;"></div>
+                            </div>
+                            <div class="contract-trigger"></div>
+                        </div>
+                    </div>
+                    <!--end::Body-->
+                </div>
+                <!--end::Mixed Widget 5-->
+            </div>
         </div>
         <!-- end::Meeting Minutes -->
     </div>
@@ -425,5 +514,40 @@
     $wire.on('open-file', (url) => {
         window.open(event.detail.url, '_blank'); // Open the signed URL in a new tab
     });
+
+    /* -------------------------------------------------------------------------- */
+
+    // Register the plugin 
+    FilePond.registerPlugin(FilePondPluginFileValidateType); // for file type validation
+    FilePond.registerPlugin(FilePondPluginFileValidateSize); // for file size validation
+    FilePond.registerPlugin(FilePondPluginImagePreview); // for image preview
+
+    // Turn input element into a pond with configuration options
+    $('.files').filepond({
+        required: true,
+        allowFileTypeValidation: true,
+        acceptedFileTypes: ['application/pdf'],
+        labelFileTypeNotAllowed: 'File of invalid type',
+        allowFileSizeValidation: true,
+        maxFileSize: '10MB',
+        labelMaxFileSizeExceeded: 'File is too large',
+        server: {
+            // This will assign the data to the files[] property.
+            process: (fieldName, file, metadata, load, error, progress, abort) => {
+                @this.upload('file_id', file, load, error, progress);
+            },
+            revert: (uniqueFileId, load, error) => {
+                @this.removeUpload('file_id', uniqueFileId, load, error);
+            }
+        }
+    });
+
+    $wire.on('reset-files', () => {
+        $('.files').each(function() {
+            $(this).filepond('removeFiles');
+        });
+    });
+
+    /* -------------------------------------------------------------------------- */
 </script>
 @endscript

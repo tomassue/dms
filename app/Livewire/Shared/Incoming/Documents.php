@@ -6,12 +6,16 @@ use App\Models\Apo\IncomingDocument as ApoIncomingDocument;
 use App\Models\File;
 use App\Models\Forwarded;
 use App\Models\IncomingDocument;
+use App\Models\NumberMessage;
 use App\Models\RefDivision;
 use App\Models\RefIncomingDocumentCategory;
 use App\Models\RefStatus;
+use App\Models\SmsSender;
+use App\Models\UserMetadata;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\URL;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Title;
@@ -38,7 +42,8 @@ class Documents extends Component
     public $activity_log = [];
 
     /* ---------------------------- begin::Properties --------------------------- */
-    public $ref_incoming_document_category_id,
+    public $no,
+        $ref_incoming_document_category_id,
         $document_info,
         $date,
         $ref_status_id,
@@ -51,6 +56,7 @@ class Documents extends Component
     public function rules()
     {
         $rules = [
+            'no' => 'required|unique:incoming_documents,no,' . $this->incomingDocumentId,
             'ref_incoming_document_category_id' => 'required|exists:ref_incoming_documents_categories,id',
             'document_info' => 'required',
             'date' => 'required|date'
@@ -88,11 +94,17 @@ class Documents extends Component
         $this->resetValidation();
 
         $this->dispatch('reset-files');
+        $this->dispatch('reset-division-select');
     }
 
     public function updatedSearch()
     {
         $this->resetPage();
+    }
+
+    public function generateReferenceNo()
+    {
+        $this->no = IncomingDocument::generateUniqueReference('INCD-', 8); // Pre-generate reference number to show in the input field (disabled).
     }
 
     public function loadIncomingDocuments()
@@ -174,10 +186,20 @@ class Documents extends Component
                         'is_opened' => true
                     ]);
 
+                // Log the activity of opening the document
+                activity()
+                    ->causedBy(auth()->user())
+                    ->performedOn($incomingDocument) // Equivalent to setting subject_type & subject_id manually
+                    ->useLog('incoming_document')
+                    ->event('updated')
+                    ->withProperties(['is_opened' => true])
+                    ->log('Opened incoming document ' . ($incomingDocument->no ?? '') . ': ' . (auth()->user()?->user_metadata?->division?->name ?? 'System'));
+
                 // Check if all divisions have opened their copies
                 $this->checkAllDivisionsOpened($incomingDocument);
             }
 
+            $this->no = $incomingDocument->no;
             $this->ref_incoming_document_category_id = $incomingDocument->ref_incoming_document_category_id;
             $this->document_info = $incomingDocument->document_info;
             $this->date = $incomingDocument->date;
@@ -271,6 +293,7 @@ class Documents extends Component
     protected function saveMainIncomingDocument()
     {
         $data = [
+            'no' => $this->no,
             'ref_incoming_document_category_id' => $this->ref_incoming_document_category_id,
             'document_info' => $this->document_info,
             'date' => $this->date,
@@ -291,7 +314,7 @@ class Documents extends Component
         if (!auth()->user()->hasRole('APOO')) return; // Return if not APO
 
         return ApoIncomingDocument::updateOrCreate(
-            ['incoming_document_id' => $incomingDocument->id], // Update if exists. Otherwise, create
+            ['incoming_document_id' => $incomingDocument->id ?? null], // Update if exists. Otherwise, create
             [
                 'source' => $this->source,
             ]
@@ -332,124 +355,27 @@ class Documents extends Component
     public function activityLog($id)
     {
         try {
-            // Shows activity log
-            // $this->activity_log = Activity::whereIn('subject_type', [IncomingDocument::class, ApoIncomingDocument::class])
-            //     ->whereIn('log_name', ['incoming_document', 'apo_incoming_document'])
-            //     ->whereNot('event', 'created')
-            //     ->where('subject_id', $id)
-            //     ->with(['causer.user_metadata.division']) // ✅ Eager-load nested relations
-            //     ->latest()
-            //     ->get()
-            //     ->map(function ($activity) {
-            //         return [
-            //             'id' => $activity->id,
-            //             'description' => $activity->description,
-            //             'causer' => $activity->causer?->name ?? 'System',
-            //             'division' => $activity->causer?->user_metadata?->division?->name ? '[' . $activity->causer?->user_metadata?->division?->name . ']' : '', // ✅ Access nested data
-            //             'created_at' => Carbon::parse($activity->created_at)->format('M d, Y h:i A'),
-            //             'changes' => collect($activity->properties['attributes'] ?? [])
-            //                 ->except(['id', 'created_at', 'updated_at', 'deleted_at', 'incoming_document_id']) // Exclude
-            //                 ->map(function ($newValue, $key) use ($activity) {
-            //                     $oldValue = $activity->properties['old'][$key] ?? 'N/A';
-
-            //                     // Custom field name mapping
-            //                     $fieldName = match ($key) {
-            //                         'file_id' => 'Files',
-            //                         'ref_status_id' => 'Status',
-            //                         'ref_incoming_document_category_id' => 'Category',
-            //                         'document_info' => 'Info',
-            //                         'ref_division_id' => 'Division',
-            //                         'is_opened' => 'Opened',
-            //                         // Add other field mappings here as needed
-            //                         // 'another_field' => 'Friendly Name',
-            //                         default => ucfirst(str_replace('_', ' ', $key))
-            //                     };
-
-            //                     // Format date fields
-            //                     if (in_array($key, ['deleted_at'])) {
-            //                         $oldValue = $oldValue !== 'N/A' ? Carbon::parse($oldValue)->format('M d, Y') : 'N/A';
-            //                         $newValue = $newValue !== 'N/A' ? Carbon::parse($newValue)->format('M d, Y') : 'N/A';
-            //                     }
-
-            //                     if ($key === 'date') {
-            //                         $oldValue = $oldValue !== 'N/A' ? Carbon::parse($oldValue)->format('M d, Y') : 'N/A';
-            //                         $newValue = $newValue !== 'N/A' ? Carbon::parse($newValue)->format('M d, Y') : 'N/A';
-            //                     }
-
-            //                     // Replace foreign keys with related names
-            //                     if ($key === 'ref_incoming_document_category_id') {
-            //                         $oldValue = $oldValue !== 'N/A' ? RefIncomingDocumentCategory::find($oldValue)?->name : 'N/A';
-            //                         $newValue = $newValue !== 'N/A' ? RefIncomingDocumentCategory::find($newValue)?->name : 'N/A';
-            //                     }
-
-            //                     if ($key === "ref_status_id") {
-            //                         $oldValue = $oldValue !== 'N/A' ? RefStatus::find($oldValue)?->name : 'N/A';
-            //                         $newValue = $newValue !== 'N/A' ? RefStatus::find($newValue)?->name : 'N/A';
-            //                     }
-
-            //                     if ($key === "ref_division_id") {
-            //                         $oldValue = $oldValue !== 'N/A' ? RefDivision::find($oldValue)?->name : 'N/A';
-            //                         $newValue = $newValue !== 'N/A' ? RefDivision::find($newValue)?->name : 'N/A';
-            //                     }
-
-            //                     // Replace boolean values with "Yes" or "No"
-            //                     if ($key === "is_opened") {
-            //                         $oldValue = $oldValue !== 'N/A' ? $oldValue ? 'Yes' : 'No' : 'N/A';
-            //                         $newValue = $newValue !== 'N/A' ? $newValue ? 'Yes' : 'No' : 'N/A';
-            //                     }
-
-            //                     // Convert array values to a string (e.g., file IDs to filenames)
-            //                     if ($key === 'file_id') {
-            //                         // Ensure values are decoded from JSON if stored as a string
-            //                         $oldValue = is_string($oldValue) ? json_decode($oldValue, true) : $oldValue;
-            //                         $newValue = is_string($newValue) ? json_decode($newValue, true) : $newValue;
-
-            //                         if (is_array($oldValue)) {
-            //                             $oldValue = File::whereIn('id', $oldValue)->pluck('name')->toArray();
-            //                             $oldValue = !empty($oldValue) ? implode(', ', $oldValue) : 'N/A';
-            //                         }
-
-            //                         if (is_array($newValue)) {
-            //                             $newValue = File::whereIn('id', $newValue)->pluck('name')->toArray();
-            //                             $newValue = !empty($newValue) ? implode(', ', $newValue) : 'N/A';
-            //                         }
-            //                     }
-
-            //                     return [
-            //                         'field' => $fieldName, // Format key
-            //                         'old' => $oldValue,
-            //                         'new' => $newValue,
-            //                     ];
-            //                 })
-            //                 ->values()
-            //                 ->toArray()
-            //         ];
-            //     });
-
-            // // 2. Get Forward records (only ref_division_id)
-            // $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingDocument::class)
-            //     ->where('forwardable_id', $id)
-            //     ->with(['division']) // Assuming 'division' is a relationship
-            //     ->latest()
-            //     ->get()
-            //     ->map(function ($forward) {
-            //         return [
-            //             'division_name' => $forward->division?->name ?? 'N/A',
-            //         ];
-            //     });
-
-
             // Step 1: Get all file IDs related to this IncomingDocument
             $fileIds = File::where('fileable_type', IncomingDocument::class)
                 ->where('fileable_id', $id)
                 ->pluck('id');
 
             // Step 2: Fetch IncomingDocument activity
-            $incomingDocumentLogs = Activity::whereIn('subject_type', [IncomingDocument::class, ApoIncomingDocument::class])
-                ->whereIn('log_name', ['incoming_document', 'apo_incoming_document'])
-                ->whereNot('event', 'created')
-                ->where('subject_id', $id)
-                ->with(['causer.user_metadata.division']) // ✅ Eager-load nested relations
+            $apoIds = ApoIncomingDocument::where('incoming_document_id', $id)->pluck('id'); // Get related ApoIncomingDocument IDs
+
+            // Step 2: Fetch IncomingDocument & ApoIncomingDocument activities
+            $incomingDocumentLogs = Activity::where(function ($query) use ($id, $apoIds) {
+                $query->where(function ($q) use ($id) {
+                    $q->where('subject_type', IncomingDocument::class)
+                        ->where('subject_id', $id);
+                })->orWhere(function ($q) use ($apoIds) {
+                    $q->where('subject_type', ApoIncomingDocument::class)
+                        ->whereIn('subject_id', $apoIds);
+                });
+            })
+                ->whereIn('log_name', ['incoming_document', 'apo_incoming_document', 'forwarded']) // Filter by log names
+                ->where('event', '!=', 'created') // same as ->whereNot('event', 'created')
+                ->with(['causer.user_metadata.division'])
                 ->get();
 
             // Step 3: Fetch File activity logs
@@ -548,18 +474,6 @@ class Documents extends Component
                     ];
                 });
 
-            // Forwarded division logs (no change)
-            $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingDocument::class)
-                ->where('forwardable_id', $id)
-                ->with(['division']) // Assuming 'division' is a relationship
-                ->latest()
-                ->get()
-                ->map(function ($forward) {
-                    return [
-                        'division_name' => $forward->division?->name ?? 'N/A',
-                    ];
-                });
-
             $this->dispatch('show-activity-log-modal');
         } catch (\Throwable $th) {
             // throw $th;
@@ -567,6 +481,35 @@ class Documents extends Component
         }
     }
 
+    /**
+     * getForwardedDivisions
+     * * This function is used to get the forwarded divisions of the incoming document.
+     * * It will return the forwarded divisions of the incoming document.
+     */
+    public function getForwardedDivisions(IncomingDocument $incomingDocument)
+    {
+        try {
+            $forwarded_divisions = $incomingDocument->forwards()
+                ->with(['division'])
+                ->get()
+                ->map(function ($forward) {
+                    return $forward->ref_division_id;
+                })
+                ->toArray();
+
+            if ($forwarded_divisions) {
+                $this->dispatch('set-division-select', $forwarded_divisions);
+            }
+        } catch (\Throwable $th) {
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    /**
+     * forward
+     * * This function is used to forward the incoming document to the selected divisions.
+     * * It will validate the selected divisions and then create a new forward for each division.
+     */
     public function forward()
     {
         $this->validate([
@@ -579,15 +522,132 @@ class Documents extends Component
         try {
             $incomingDocument = IncomingDocument::find($this->incomingDocumentId);
 
-            foreach ($this->selected_divisions as $division) {
+            /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
+            if (Auth::user()->hasRole('CITY VETERINARY OFFICE')) {
+                /**
+                 * In CVO, we have a customed function to send an SMS to the selected divisions.
+                 * We updated user_metadata and added phone_number column.
+                 * Now we can use the phone_number column to send an SMS to the selected divisions.
+                 */
+                $phoneNumbers = UserMetadata::whereIn('ref_division_id', (array) $this->selected_divisions)
+                    ->pluck('phone_number')
+                    ->filter() // optional: remove null values
+                    ->unique() // optional: remove duplicates
+                    ->values(); // reindex if needed;
+
+                foreach ($phoneNumbers as $phoneNumber) {
+                    if (empty($phoneNumber)) {
+                        Log::error('SMS not sent: Phone number is empty for division ID');
+                        continue; // Log and skip if no phone number
+                    }
+
+                    /**
+                     * We enclosed the SMS sending code in a try-catch block to handle any exceptions that might occur during the SMS sending process.
+                     * If an exception occurs, we will log the error message and continue to the next iteration of the loop.
+                     * This allows us to send the SMS to the next phone number without stopping the entire process.
+                     */
+                    try {
+                        $message = "APO-DMS NOTIFICATION\n\n" .
+                            "An incoming document with a reference no. of " . $incomingDocument->no . " and an info of " . $incomingDocument->document_info . ", " .
+                            " has been forwarded.\n\n" .
+                            "This is a system-generated message. DO NOT REPLY.";
+
+                        SmsSender::create([
+                            'trans_id' => time() . '-' . mt_rand(),
+                            'received_id' => 'CVO-DMS-NOTIFICATION',
+                            'recipient' => $phoneNumber,
+                            'reciepient_name' => 'CVO',
+                            'recipient_message' => $message
+                        ]);
+
+                        $userIds = UserMetadata::where('phone_number', $phoneNumber)->pluck('user_id');
+
+                        NumberMessage::create([
+                            'user_id' => $userIds[0],
+                            'phone_number' => $phoneNumber,
+                            'sms_trans_id' => time() . '-' . mt_rand(),
+                            'otp_type' => 'CVO-DMS-NOTIFICATION',
+                            'sms_status' => 'STATUS',
+                        ]);
+                    } catch (\Throwable $th) {
+                        // log or ignore to keep processing
+                        Log::error('SMS failed for phone: ' . $phoneNumber . ', Error: ' . $th->getMessage());
+                        continue;
+                    }
+                }
+                //* After it being sent, we will them save them to forwarded table.
+            }
+            /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
+
+            // foreach ($this->selected_divisions as $division) {
+            //     $incomingDocument->forwards()->create([
+            //         'ref_division_id' => $division,
+            //     ]);
+            // }
+
+            // Get current forwarded division IDs, including soft-deleted
+            $currentForwarded = $incomingDocument->forwards()->withTrashed()->pluck('ref_division_id');
+
+            // Convert to collections for easier diffing
+            $selected = collect($this->selected_divisions)->map(fn($id) => (int)$id);
+
+            // Soft-delete divisions that are no longer selected
+            $toSoftDelete = $currentForwarded->diff($selected);
+            if ($toSoftDelete->isNotEmpty()) {
+                $incomingDocument->forwards()->whereIn('ref_division_id', $toSoftDelete)->delete();
+            }
+
+            // Restore soft-deleted if re-selected
+            $toRestore = $selected->intersect($currentForwarded);
+            if ($toRestore->isNotEmpty()) {
+                $incomingDocument->forwards()->withTrashed()
+                    ->whereIn('ref_division_id', $toRestore)
+                    ->whereNotNull('deleted_at')
+                    ->restore();
+            }
+
+            // Create new forwards for divisions not yet in the DB
+            $toAdd = $selected->diff($currentForwarded);
+            foreach ($toAdd as $divisionId) {
                 $incomingDocument->forwards()->create([
-                    'ref_division_id' => $division,
+                    'ref_division_id' => $divisionId,
                 ]);
             }
 
+            // Update the status of the incoming document to "forwarded"
+            // This is to indicate that the document has been forwarded to the selected divisions.
             $incomingDocument->update([
                 'ref_status_id' => RefStatus::where('name', 'forwarded')->first()->id,
             ]);
+
+            // Log the forwarding action - a central log per document.
+            // Get the division names based on each action
+            $addedNames = RefDivision::whereIn('id', $toAdd)->pluck('name')->toArray();
+            $restoredNames = RefDivision::whereIn('id', $toRestore)->pluck('name')->toArray();
+            $deletedNames = RefDivision::whereIn('id', $toSoftDelete)->pluck('name')->toArray();
+
+            $logMessages = [];
+
+            if (!empty($addedNames)) {
+                $logMessages[] = 'added: ' . implode(', ', $addedNames);
+            }
+
+            if (!empty($restoredNames)) {
+                $logMessages[] = 'restored: ' . implode(', ', $restoredNames);
+            }
+
+            if (!empty($deletedNames)) {
+                $logMessages[] = 'removed: ' . implode(', ', $deletedNames);
+            }
+
+            $finalLogMessage = auth()->user()->name . ' updated forwarded divisions - ' . implode(' | ', $logMessages) . '.';
+
+            activity()
+                ->causedBy(auth()->user())
+                ->performedOn($incomingDocument) // Equivalent to setting subject_type & subject_id manually
+                ->useLog('forwarded')
+                ->event('updated')
+                ->log($finalLogMessage);
 
             $this->clear();
             $this->dispatch('hide-forward-modal');
@@ -616,14 +676,18 @@ class Documents extends Component
             $this->document_info = $incomingDocument->document_info;
             $this->date = Carbon::parse($incomingDocument->date)->format('M d, Y');
             $this->ref_status_id = $incomingDocument->status->name;
-            $this->source = $incomingDocument->apoDocument->source;
             $this->remarks = $incomingDocument->remarks;
-
             $this->preview_file = $incomingDocument->files;
+
+            /* ----------------------------------- APO ---------------------------------- */
+            if (Auth::user()->hasRole('APOO')) {
+                $this->source = $incomingDocument->apoDocument->source;
+            }
+            /* ----------------------------------- APO ---------------------------------- */
 
             $this->dispatch('show-details-modal');
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

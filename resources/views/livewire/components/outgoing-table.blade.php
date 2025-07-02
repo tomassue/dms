@@ -16,7 +16,7 @@
                     <!--begin::Menu 2-->
                     @can('outgoing.create')
                     <div class="vr"></div> <!-- Vertical Divider -->
-                    <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#outgoingModal"><i class="bi bi-plus-circle"></i></a>
+                    <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#outgoingModal" wire:click="{{ $editMode ? '' : 'generateReferenceNo' }}"><i class="bi bi-plus-circle"></i></a>
                     @endcan
                     <!--end::Menu 2-->
                 </div>
@@ -54,7 +54,7 @@
                         @forelse($outgoings as $item)
                         <tr>
                             <td>
-                                {{ $item->id }}
+                                <span class="badge badge-light-info text-uppercase">{{ $item->no ?? '' }}</span>
                             </td>
                             <td>
                                 @php
@@ -202,6 +202,13 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <div class="mb-10">
+                                <label class="form-label">No.</label>
+                                <input type="text" class="form-control" wire:model="no" disabled>
+                                @error('no')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
                             <div style="display: {{ empty($type) ? 'none' : '' }};">
                                 <div class="mb-10" style="display: {{ $editMode ? '' : 'none' }};">
                                     <label class="form-label required">Status</label>
@@ -251,7 +258,7 @@
                                     @enderror
                                 </div>
                                 <div class="mb-10">
-                                    <label class="form-label required">PO No.</label>
+                                    <label class="form-label">PO No.</label>
                                     <input type="text" class="form-control" wire:model="po_no">
                                     @error('po_no')
                                     <span class="text-danger">{{ $message }}</span>

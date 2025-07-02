@@ -11,7 +11,8 @@ class UserMetadata extends Model
     protected $fillable = [
         'user_id',
         'ref_division_id',
-        'ref_position_id'
+        'ref_position_id',
+        'phone_number'
     ];
 
     protected $primaryKey = 'user_id';

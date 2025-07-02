@@ -27,14 +27,7 @@
                                         @foreach ($history['changes'] as $change)
                                         <li>
                                             <strong>{{ $change['field'] }}:</strong>
-                                            <!-- Removed the $change['old'] ➡ -->
                                             <span class="text-info">{{ $change['new'] }}</span>
-                                            @if($change['new'] == 'forwarded')
-                                            ➡
-                                            <span class="text-warning">
-                                                {{ implode(', ', array_column($forwarded_divisions->toArray(), 'division_name')) }}
-                                            </span>
-                                            @endif
                                         </li>
                                         @endforeach
                                         @elseif($history['file_log_description'])

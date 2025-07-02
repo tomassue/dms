@@ -254,6 +254,17 @@
                         </div>
                         @endcan
 
+                        @can('reference.meetingsCategory.read')
+                        <div class="menu-item">
+                            <a class="menu-link {{ Route::currentRouteName() == 'meetings-category' ? 'active' : '' }}" href="{{ route('meetings-category') }}">
+                                <span class="menu-bullet">
+                                    <span class="bullet bullet-dot"></span>
+                                </span>
+                                <span class="menu-title">Apo Meetings Category</span>
+                            </a>
+                        </div>
+                        @endcan
+
                         <!-- Outgoing Category -->
 
                         @can('reference.divisions.read')

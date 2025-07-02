@@ -47,6 +47,23 @@ class IncomingRequest extends Model
         return $this->date_time ? Carbon::parse($this->date_time)->format('M d, Y h:i A') : null;
     }
 
+    public function getRequestAgeAttribute()
+    {
+        $created = $this->created_at instanceof Carbon
+            ? $this->created_at
+            : Carbon::parse($this->created_at);
+
+        // If the time difference is less than 1 day, use diffForHumans()
+        if ($created->diffInDays(now()) < 1) {
+            return $created->diffForHumans();
+        }
+
+        // Otherwise, return the difference in days only, as a whole number.
+        $diffInDays = (int) $created->diffInDays(now()); // Cast to integer here
+        return $diffInDays . ' day' . ($diffInDays === 1 ? '' : 's') . ' ago';
+    }
+
+
     // Scopes
     public function scopeIsForwarded()
     {
@@ -103,7 +120,7 @@ class IncomingRequest extends Model
         static::saving(function ($model) {
             // Check if the reference number is already set
             if (empty($model->no)) {
-                $model->no = self::generateUniqueReference('REF-', 8);
+                $model->no = self::generateUniqueReference('INCR-', 8);
             }
         });
     }
