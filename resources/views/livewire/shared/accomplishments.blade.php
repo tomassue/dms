@@ -1,6 +1,11 @@
 <div>
     <!--begin::Content-->
     <div class="content d-flex flex-column flex-column-fluid" id="kt_content">
+        @role('CITY VETERINARY OFFICE')
+        <!-- begin:: City Veterinary Office Accomplishment -->
+        <livewire:cvo.cvo-accomplishments />
+        <!-- end:: City Veterinary Office Accomplishment -->
+        @else
         <!--begin::Container-->
         <div class="container-xxl" id="kt_content_container">
             <!--begin::Row-->
@@ -247,6 +252,7 @@
             <!--end::Row-->
         </div>
         <!--end::Container-->
+        @endrole
     </div>
     <!--end::Content-->
 
@@ -327,6 +333,7 @@
         </div>
         <!--end::Modal - Accomplishment Signatory-->
     </div>
+    <!--end::Modal - Accomplishment Signatory-->
     @endrole
 
     @script
