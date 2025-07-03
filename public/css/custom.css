@@ -292,6 +292,25 @@
     fill: #639a56 !important;
 }
 
+.btn-check:active + .btn.btn-light-primary,
+.btn-check:checked + .btn.btn-light-primary,
+.btn.btn-light-primary.active,
+.btn.btn-light-primary.show,
+.btn.btn-light-primary:active:not(.btn-active),
+.btn.btn-light-primary:focus:not(.btn-active),
+.btn.btn-light-primary:hover:not(.btn-active),
+.show > .btn.btn-light-primary {
+    color: #fff;
+    border-color: #639a56;
+    background-color: #639a56 !important;
+}
+
+.btn.btn-light-primary {
+    color: #639a56;
+    border-color: #f8f5ff;
+    background-color: #f8f5ff;
+}
+
 .text-hover-primary:hover {
     transition: color 0.2s ease, background-color 0.2s ease;
     color: #0e4a84 !important;

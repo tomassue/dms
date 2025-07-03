@@ -13,20 +13,21 @@ use Spatie\Activitylog\Traits\LogsActivity;
 use Spatie\Permission\Models\Role;
 
 #[ScopedBy([OfficeScope::class])]
-class RefAccomplishmentCategory extends Model
+class RefAccomplishmentSubcategory extends Model
 {
     use SoftDeletes, LogsActivity;
 
-    protected $table = "ref_accomplishment_categories";
+    protected $table = "ref_accomplishment_sub_categories";
 
     protected $fillable = [
-        'accomplishment_category_name',
+        'accomplishment_sub_category_name',
+        'ref_accomplishment_category_id',
         'order',
         'office_id'
     ];
 
     //* Global Scope
-    # Automatically sort the accomplishment categories by order
+    # Automatically sort the accomplishment subcategories by order
     protected static function booted()
     {
         static::addGlobalScope('ancient', function (Builder $builder) {
@@ -34,7 +35,21 @@ class RefAccomplishmentCategory extends Model
         });
     }
 
+    //* Scopes
+    public function scopeSearch($query, $search)
+    {
+        return $query->whereHas('category', function ($query) use ($search) {
+            $query->where('accomplishment_category_name', 'like', '%' . $search . '%');
+        })
+            ->orWhere('accomplishment_sub_category_name', 'like', '%' . $search . '%');
+    }
+
     //* Relationships
+    public function category()
+    {
+        return $this->belongsTo(RefAccomplishmentCategory::class, 'ref_accomplishment_category_id', 'id');
+    }
+
     public function office()
     {
         return $this->belongsTo(Role::class, 'office_id', 'id');
@@ -44,13 +59,13 @@ class RefAccomplishmentCategory extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->useLogName('accomplishment_category')
+            ->useLogName('accomplishment_subcategory')
             ->logOnly(['*'])
             ->setDescriptionForEvent(function (string $eventName) {
                 $user = Auth::user();
                 $userName = $user ? $user->name : 'System';
 
-                return "{$userName} {$eventName} an accomplishment category";
+                return "{$userName} {$eventName} an accomplishment subcategory";
             })
             ->logOnlyDirty();
     }

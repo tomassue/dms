@@ -6,17 +6,17 @@
             <!--begin::Row-->
             <div class="row g-5 g-xl-12">
                 <!--begin::Mixed Widget 5-->
-                <div class="card card-xxl-stretch" wire:loading.class="opacity-50 pe-none">
+                <div class="card card-xxl-stretch" wire:loading.class="opacity-50 pe-none" wire:target.except="addSpeciesInput, removeSpeciesInput">
                     <!--begin::Beader-->
                     <div class="card-header border-0 py-5">
                         <h3 class="card-title align-items-start flex-column">
-                            <span class="card-label fw-bolder fs-3 mb-1">Accomplishment Category</span>
+                            <span class="card-label fw-bolder fs-3 mb-1">Accomplishment Sub-category</span>
                             <span class="text-muted fw-bold fs-7">Management</span>
                         </h3>
                         <div class="card-toolbar">
-                            @can('reference.accomplishmentCategory.create')
+                            @can('reference.accomplishmentSubCategory.create')
                             <!--begin::Menu-->
-                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentCategoryModal"><i class="bi bi-plus-circle"></i></a>
+                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentSubcategoryModal"><i class="bi bi-plus-circle"></i></a>
                             <!--end::Menu-->
                             @endcan
                         </div>
@@ -40,26 +40,22 @@
                                         @role('Super Admin')
                                         <th>Office</th>
                                         @endrole
+                                        <th>Category</th>
                                         <th>Name</th>
-                                        @role('CITY VETERINARY OFFICE')
-                                        <th>Order</th>
-                                        @endrole
                                         <th>Status</th>
-                                        @can('reference.accomplishmentCategory.update')
+                                        @can('reference.accomplishmentSubCategory.update')
                                         <th>Actions</th>
                                         @endcan
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @forelse($accomplishment_categories as $item)
+                                    @forelse($accomplishment_subcategories as $item)
                                     <tr>
                                         @role('Super Admin')
                                         <td>{{ $item->office->name ?? 'System' }}</td>
                                         @endrole
-                                        <td>{{ $item->accomplishment_category_name }}</td>
-                                        @role('CITY VETERINARY OFFICE')
-                                        <td>{{ $item->order ?? '' }}</td>
-                                        @endrole
+                                        <td>{{ $item->category->accomplishment_category_name }}</td>
+                                        <td>{{ $item->accomplishment_sub_category_name }}</td>
                                         <td>
                                             @if(!$item->deleted_at)
                                             <span class="badge badge-light-success">Active</span>
@@ -69,12 +65,15 @@
                                         </td>
                                         <td>
                                             <div class="btn-group" role="group" aria-label="Actions">
-                                                @can('reference.accomplishmentCategory.update')
-                                                <button class=" btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editAccomplishmentCategory({{ $item->id }})">
-                                                    <div wire:loading.remove wire:target="editAccomplishmentCategory({{ $item->id }})">
+                                                @can('reference.accomplishmentSubCategory.update')
+                                                <button
+                                                    class="btn btn-icon btn-sm btn-secondary"
+                                                    title="Edit"
+                                                    wire:click="editAccomplishmentSubcategory({{ $item->id }})">
+                                                    <div wire:loading.remove wire:target="editAccomplishmentSubcategory({{ $item->id }})">
                                                         <i class="bi bi-pencil"></i>
                                                     </div>
-                                                    <div wire:loading wire:target="editAccomplishmentCategory({{ $item->id }})">
+                                                    <div wire:loading wire:target="editAccomplishmentSubcategory({{ $item->id }})">
                                                         <div class="spinner-border spinner-border-sm" role="status">
                                                             <span class="visually-hidden">Loading...</span>
                                                         </div>
@@ -109,7 +108,7 @@
 
                         <!--begin::Pagination-->
                         <div class="pt-3">
-                            {{ $accomplishment_categories->links(data: ['scrollTo' => false]) }}
+                            {{ $accomplishment_subcategories->links(data: ['scrollTo' => false]) }}
                         </div>
                         <!--end::Pagination-->
 
@@ -130,12 +129,12 @@
     </div>
     <!--end::Content-->
 
-    <!--begin::Modal - Accomplishment Category-->
-    <div class="modal fade" tabindex="-1" id="accomplishmentCategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+    <!--begin::Modal - Accomplishment Subcategory-->
+    <div class="modal fade" tabindex="-1" id="accomplishmentSubcategoryModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Category</h5>
+                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Sub-category</h5>
                     <!--begin::Close-->
                     <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
                         <i class="bi bi-x-circle"></i>
@@ -144,15 +143,88 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="{{ $editMode ? 'updateAccomplishmentCategory' : 'createAccomplishmentCategory' }}">
+                    @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
+                    <form wire:submit="saveAccomplishmentSubcategory">
                         <div class="p-2">
                             <div class="mb-10">
-                                <label class="form-label required">Name</label>
-                                <input type="text" class="form-control" wire:model="accomplishment_category_name">
-                                @error('accomplishment_category_name')
+                                <label class="form-label required">Category</label>
+                                <select class="form-select" aria-label="Select example" wire:model="ref_accomplishment_category_id">
+                                    <option>Open this select menu</option>
+                                    @foreach($accomplishment_categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->accomplishment_category_name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_accomplishment_category_id')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Name</label>
+                                <input type="text" class="form-control" wire:model="accomplishment_sub_category_name">
+                                @error('accomplishment_sub_category_name')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @role('CITY VETERINARY OFFICE')
+                            <div class="mb-10">
+                                <label class="form-label required">Order</label>
+                                <input type="text" class="form-control" wire:model="order">
+                                @error('order')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="mb-10">
+                                <label class="form-label d-flex justify-content-between align-items-center">
+                                    <span>Species</span>
+                                    <button type="button" class="btn btn-sm btn-light-primary" wire:click="addSpeciesInput">
+                                        <div wire:loading.remove wire:target="addSpeciesInput">
+                                            Add Species
+                                        </div>
+                                        <div wire:loading wire:target="addSpeciesInput">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </label>
+                                @error('species_name')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+
+                                @forelse ($speciesInputs as $index => $speciesInput)
+                                <div class="input-group mb-3" wire:key="species-{{ $index }}">
+                                    <input type="text" class="form-control" placeholder="Species Name" wire:model="speciesInputs.{{ $index }}.species_name">
+                                    @if (count($speciesInputs) > 1) {{-- Don't allow removing the last one --}}
+                                    <button type="button" class="btn btn-icon btn-danger" wire:click="removeSpeciesInput({{ $index }})">
+                                        <div wire:loading.remove wire:target="removeSpeciesInput({{ $index }})">
+                                            <i class="bi bi-x"></i>
+                                        </div>
+                                        <div wire:loading wire:target="removeSpeciesInput({{ $index }})">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="visually-hidden">Loading...</span>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    @endif
+                                    @error('speciesInputs.' . $index . 'species_name')
+                                    <span class="text-danger mt-1">{{ $message }}</span>
+                                    @enderror
+                                </div>
+                                @empty
+                                <p class="text-muted">Click "Add Species" to add the first species.</p>
+                                @endforelse
+                            </div>
+                            @endrole
+
                             @role('Super Admin')
                             <div class="mb-10">
                                 <label class="form-label required">Office</label>
@@ -163,15 +235,6 @@
                                     @endforeach
                                 </select>
                                 @error('office_id')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            @endrole
-                            @role('CITY VETERINARY OFFICE')
-                            <div class="mb-10">
-                                <label class="form-label required">Order</label>
-                                <input type="text" class="form-control" wire:model="order">
-                                @error('order')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -195,17 +258,17 @@
             </div>
         </div>
     </div>
-    <!--end::Modal - Accomplishment Category-->
+    <!--end::Modal - Accomplishment Subcategory-->
 </div>
 
 @script
 <script>
-    $wire.on('hide-accomplishment-category-modal', () => {
-        $('#accomplishmentCategoryModal').modal('hide');
+    $wire.on('hide-accomplishment-subcategory-modal', () => {
+        $('#accomplishmentSubcategoryModal').modal('hide');
     });
 
-    $wire.on('show-accomplishment-category-modal', () => {
-        $('#accomplishmentCategoryModal').modal('show');
+    $wire.on('show-accomplishment-subcategory-modal', () => {
+        $('#accomplishmentSubcategoryModal').modal('show');
     });
 </script>
 @endscript

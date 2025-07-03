@@ -20,7 +20,8 @@ class AccomplishmentCategory extends Component
     public $accomplishmentCategoryId;
     # Properties Form
     public $accomplishment_category_name,
-        $office_id;
+        $office_id,
+        $order; // Sort order of Accomplishment Category for CVO
 
     public function rules()
     {
@@ -39,6 +40,10 @@ class AccomplishmentCategory extends Component
 
         if (auth()->user()->hasRole('Super Admin')) {
             $rules['office_id'] = 'required';
+        }
+
+        if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
+            $rules['order'] = 'required';
         }
 
         return $rules;
@@ -110,7 +115,7 @@ class AccomplishmentCategory extends Component
             $this->dispatch('hide-accomplishment-category-modal');
             $this->dispatch('success', message: 'Accomplishment Category successfully created.');
         } catch (\Throwable $th) {
-            throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -124,6 +129,10 @@ class AccomplishmentCategory extends Component
 
             if (auth()->user()->hasRole('Super Admin')) {
                 $this->office_id = $accomplishment_category->office_id;
+            }
+
+            if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
+                $this->order = $accomplishment_category->order;
             }
 
             $this->editMode = true;
@@ -141,9 +150,15 @@ class AccomplishmentCategory extends Component
         try {
             DB::transaction(function () {
                 $accomplishment_category = RefAccomplishmentCategory::findOrFail($this->accomplishmentCategoryId);
+
                 if (auth()->user()->hasRole('Super Admin')) {
                     $accomplishment_category->office_id = $this->office_id;
                 }
+
+                if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
+                    $accomplishment_category->order = $this->order;
+                }
+
                 $accomplishment_category->accomplishment_category_name = $this->accomplishment_category_name;
                 $accomplishment_category->save();
 

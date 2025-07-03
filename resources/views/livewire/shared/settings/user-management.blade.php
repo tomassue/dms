@@ -707,6 +707,34 @@
                                             </div>
                                         </div>
 
+                                        <!-- References -->
+                                        <li class="d-flex align-items-center py-2">
+                                            <span class="bullet me-5"></span> References
+                                        </li>
+
+                                        <!-- References.Accomplishment Sub-category -->
+                                        <li class="d-flex align-items-center py-2 ms-8">
+                                            <span class="bullet me-5"></span> Accomplishment Sub-category
+                                        </li>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="reference.accomplishmentSubCategory.create" id="accomplishmentSubCategoryCreate" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentSubCategoryCreate"> Create </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="reference.accomplishmentSubCategory.read" id="accomplishmentSubCategoryRead" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentSubCategoryRead"> Read </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="reference.accomplishmentSubCategory.update" id="accomplishmentSubCategoryUpdate" wire:model="permissions" />
+                                                <label class="form-check-label" for="accomplishmentSubCategoryUpdate"> Update </label>
+                                            </div>
+                                        </div>
+
                                         <div class="separator my-10">City Veterinary</div>
                                     </div>
 
