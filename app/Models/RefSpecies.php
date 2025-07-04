@@ -16,7 +16,14 @@ class RefSpecies extends Model
     protected $fillable = [
         'species_name',
         'ref_accomplishment_sub_category_id',
+        'office_id'
     ];
+
+    //* Relationships
+    public function accomplishmentSubcategory()
+    {
+        return $this->belongsTo(RefAccomplishmentSubcategory::class, 'ref_accomplishment_sub_category_id', 'id');
+    }
 
     //* Activity Log
     public function getActivitylogOptions(): LogOptions

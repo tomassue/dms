@@ -4,6 +4,7 @@ namespace App\Livewire\Shared\Settings;
 
 use App\Models\RefAccomplishmentCategory;
 use App\Models\RefAccomplishmentSubcategory;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -25,6 +26,7 @@ class AccomplishmentSubcategory extends Component
         $order,
         $office_id;
 
+    public $parent_sub_category_id = null; // NEW: Property for the parent sub-category
     public $speciesInputs = []; // Property for dynamic species inputs
 
     public function rules()
@@ -38,7 +40,11 @@ class AccomplishmentSubcategory extends Component
                 'required',
                 'string',
                 Rule::unique('ref_accomplishment_sub_categories')
-                    ->where('office_id', $officeId)
+                    ->where(function ($query) use ($officeId) {
+                        $query->where('office_id', $officeId)
+                            ->where('ref_accomplishment_category_id', $this->ref_accomplishment_category_id)
+                            ->where('parent_id', $this->parent_sub_category_id); // <--- THIS IS THE KEY PART FOR HIERARCHICAL UNIQUENESS
+                    })
                     ->ignore($this->accomplishmentSubcategoryId)
             ],
         ];
@@ -49,7 +55,6 @@ class AccomplishmentSubcategory extends Component
 
         if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
             $rules['order'] = 'required';
-            $rules['speciesInputs.*.species_name'] = 'required';
         }
 
         return $rules;
@@ -61,7 +66,7 @@ class AccomplishmentSubcategory extends Component
         // Initialize with one empty species input if adding a new subcategory
         // or load existing species if editing
         if (!$this->editMode) {
-            $this->addSpeciesInput(); // Start with one empty field for new entries
+            // $this->addSpeciesInput(); // Start with one empty field for new entries
         }
     }
 
@@ -80,6 +85,13 @@ class AccomplishmentSubcategory extends Component
         $this->speciesInputs = array_values($this->speciesInputs); // Re-index the array
     }
 
+    // Gets the latest order and assign it to the property
+    public function getLatestOrder()
+    {
+        $latestOrder = RefAccomplishmentSubcategory::max('order');
+        $this->order = $latestOrder + 1;
+    }
+
     public function clear()
     {
         $this->reset();
@@ -96,31 +108,54 @@ class AccomplishmentSubcategory extends Component
         $this->validate();
 
         try {
-            $data = [
+            $subCategoryData = [
                 'ref_accomplishment_category_id' => $this->ref_accomplishment_category_id,
                 'accomplishment_sub_category_name' => $this->accomplishment_sub_category_name,
+                'parent_id' => $this->parent_sub_category_id, // <--- THIS SAVES THE PARENT RELATIONSHIP
             ];
 
             if (auth()->user()->hasRole('Super Admin')) {
-                $data['office_id'] = $this->office_id;
+                $subCategoryData['office_id'] = $this->office_id;
             } else {
-                $data['office_id'] = auth()->user()->roles()->first()->id;
+                $subCategoryData['office_id'] = auth()->user()->roles()->first()->id;
             }
 
             if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
-                $data['order'] = $this->order;
+                $subCategoryData['order'] = $this->order;
             }
 
-            RefAccomplishmentSubcategory::updateOrCreate(
-                ['id' => $this->accomplishmentSubcategoryId],
-                $data
-            );
+            DB::transaction(function () use ($subCategoryData) {
+                $subCategory = RefAccomplishmentSubcategory::updateOrCreate(
+                    ['id' => $this->accomplishmentSubcategoryId],
+                    $subCategoryData
+                );
+
+                if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
+                    $this->accomplishmentSubcategoryId = $subCategory->id;
+
+                    $currentSpeciesIdsInForm = [];
+
+                    foreach ($this->speciesInputs as $speciesData) {
+                        $species = $subCategory->species()->updateOrCreate(
+                            ['id' => $speciesData['id']],
+                            [
+                                'species_name' => $speciesData['species_name'],
+                                'office_id' => auth()->user()->hasRole('Super Admin') ? $this->office_id : auth()->user()->roles()->first()->id
+                            ]
+                        );
+
+                        $currentSpeciesIdsInForm[] = $species->id;
+                    }
+
+                    $subCategory->species()->whereNotIn('id', $currentSpeciesIdsInForm)->forceDelete();
+                }
+            });
 
             $this->clear();
             $this->dispatch('hide-accomplishment-subcategory-modal');
             $this->dispatch('success', message: 'Accomplishment Sub-category saved successfully.');
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -131,6 +166,7 @@ class AccomplishmentSubcategory extends Component
         $this->accomplishmentSubcategoryId = $accomplishment_subcategory->id;
 
         $this->ref_accomplishment_category_id = $accomplishment_subcategory->ref_accomplishment_category_id;
+        $this->parent_sub_category_id = $accomplishment_subcategory->parent_id; // <--- THIS LOADS THE PARENT RELATIONSHIP FOR EDITING
         $this->accomplishment_sub_category_name = $accomplishment_subcategory->accomplishment_sub_category_name;
 
         if (auth()->user()->hasRole('Super Admin')) {
@@ -139,9 +175,55 @@ class AccomplishmentSubcategory extends Component
 
         if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
             $this->order = $accomplishment_subcategory->order;
+
+            $this->speciesInputs = $accomplishment_subcategory->species->map(function ($species) {
+                return ['id' => $species->id, 'species_name' => $species->species_name];
+            })->toArray();
+
+            // if (empty($this->speciesInputs)) {
+            //     $this->addSpeciesInput();
+            // }
         }
 
         $this->dispatch('show-accomplishment-subcategory-modal');
+    }
+
+    // NEW: Load subcategories that can be selected as parents
+    public function loadParentSubcategories()
+    {
+        if (!$this->ref_accomplishment_category_id) {
+            return collect(); //
+        }
+
+        $query = RefAccomplishmentSubcategory::where('ref_accomplishment_category_id', $this->ref_accomplishment_category_id)
+            ->where('parent_id', null);
+
+        // Prevent a sub-category from being its own parent or a descendant of itself
+        if ($this->editMode && $this->accomplishmentSubcategoryId) {
+            $query->where('id', '!=', $this->accomplishmentSubcategoryId);
+            $descendants = $this->getDescendants($this->accomplishmentSubcategoryId);
+            $query->whereNotIn('id', $descendants);
+        }
+
+        if (!auth()->user()->hasRole('Super Admin')) {
+            $query->where('office_id', auth()->user()->roles()->first()->id);
+        }
+
+        return $query->get();
+    }
+
+    // Helper method to recursively get all descendants of a category to prevent circular relationships
+    private function getDescendants($categoryId)
+    {
+        $descendants = collect();
+        $children = RefAccomplishmentSubcategory::where('parent_id', $categoryId)->pluck('id');
+
+        foreach ($children as $childId) {
+            $descendants->push($childId);
+            $descendants = $descendants->merge($this->getDescendants($childId));
+        }
+
+        return $descendants->unique()->toArray();
     }
 
     public function loadAccomplishmentSubcategories()
@@ -156,8 +238,7 @@ class AccomplishmentSubcategory extends Component
 
     public function loadAccomplishmentCategories()
     {
-        $accomplishment_categories = RefAccomplishmentCategory::orderBy('accomplishment_category_name', 'asc')
-            ->get();
+        $accomplishment_categories = RefAccomplishmentCategory::all();
 
         return $accomplishment_categories;
     }
@@ -177,6 +258,7 @@ class AccomplishmentSubcategory extends Component
             'livewire.shared.settings.accomplishment-subcategory',
             [
                 'accomplishment_subcategories' => $this->loadAccomplishmentSubcategories(),
+                'parent_sub_categories' => $this->loadParentSubcategories(), // NEW: Pass to view
                 'accomplishment_categories' => $this->loadAccomplishmentCategories(), // Accomplishment Category dropdown
                 'offices' => $this->loadOffices(), // Office dropdown
             ]

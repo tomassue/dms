@@ -23,6 +23,7 @@ class RefAccomplishmentSubcategory extends Model
         'accomplishment_sub_category_name',
         'ref_accomplishment_category_id',
         'order',
+        'parent_id',
         'office_id'
     ];
 
@@ -53,6 +54,21 @@ class RefAccomplishmentSubcategory extends Model
     public function office()
     {
         return $this->belongsTo(Role::class, 'office_id', 'id');
+    }
+
+    public function species()
+    {
+        return $this->hasMany(RefSpecies::class, 'ref_accomplishment_sub_category_id', 'id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(RefAccomplishmentSubcategory::class, 'parent_id', 'id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(RefAccomplishmentSubcategory::class, 'parent_id', 'id');
     }
 
     //* Activity Log

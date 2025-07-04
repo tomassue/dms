@@ -16,7 +16,7 @@
                         <div class="card-toolbar">
                             @can('reference.accomplishmentSubCategory.create')
                             <!--begin::Menu-->
-                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentSubcategoryModal"><i class="bi bi-plus-circle"></i></a>
+                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentSubcategoryModal" wire:click="getLatestOrder"><i class="bi bi-plus-circle"></i></a>
                             <!--end::Menu-->
                             @endcan
                         </div>
@@ -54,8 +54,22 @@
                                         @role('Super Admin')
                                         <td>{{ $item->office->name ?? 'System' }}</td>
                                         @endrole
-                                        <td>{{ $item->category->accomplishment_category_name }}</td>
-                                        <td>{{ $item->accomplishment_sub_category_name }}</td>
+                                        <td>
+                                            <div class="d-flex justify-content-start flex-column">
+                                                <span class="text-gray-800 fw-bold mb-1 fs-6">{{ $item->category->accomplishment_category_name }}</span>
+                                                <span class="text-gray-500 fw-semibold d-block fs-7">
+                                                    {{ $item->species()->pluck('species_name')->implode(', ') }}
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex justify-content-start flex-column">
+                                                <span class="text-gray-800 fw-bold mb-1 fs-6">{{ $item->parent->accomplishment_sub_category_name ?? '' }}</span>
+                                                <span class="text-gray-500 fw-semibold d-block fs-7">
+                                                    {{ $item->accomplishment_sub_category_name }}
+                                                </span>
+                                            </div>
+                                        </td>
                                         <td>
                                             @if(!$item->deleted_at)
                                             <span class="badge badge-light-success">Active</span>
@@ -154,10 +168,12 @@
                     @endif
                     <form wire:submit="saveAccomplishmentSubcategory">
                         <div class="p-2">
+                            {{-- Category Dropdown --}}
                             <div class="mb-10">
                                 <label class="form-label required">Category</label>
-                                <select class="form-select" aria-label="Select example" wire:model="ref_accomplishment_category_id">
-                                    <option>Open this select menu</option>
+                                {{-- Use wire:model.live to update options for parent_sub_category_id dynamically --}}
+                                <select class="form-select" aria-label="Select Category" wire:model.live="ref_accomplishment_category_id">
+                                    <option value="">Open this select menu</option>
                                     @foreach($accomplishment_categories as $item)
                                     <option value="{{ $item->id }}">{{ $item->accomplishment_category_name }}</option>
                                     @endforeach
@@ -166,6 +182,25 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+
+                            {{-- NEW: Parent Sub-category Dropdown --}}
+                            {{-- Show this dropdown only if a main category is selected --}}
+                            @if($ref_accomplishment_category_id)
+                            <div class="mb-10">
+                                <label class="form-label">Parent Sub-category (Optional)</label>
+                                <select class="form-select" aria-label="Select Parent Sub-category" wire:model="parent_sub_category_id">
+                                    <option value="">No Parent (Top-level Sub-category)</option>
+                                    @foreach($parent_sub_categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->accomplishment_sub_category_name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('parent_sub_category_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            @endif
+
+                            {{-- Sub-category Name --}}
                             <div class="mb-10">
                                 <label class="form-label required">Name</label>
                                 <input type="text" class="form-control" wire:model="accomplishment_sub_category_name">
@@ -173,37 +208,26 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+
                             @role('CITY VETERINARY OFFICE')
+                            {{-- Order --}}
                             <div class="mb-10">
                                 <label class="form-label required">Order</label>
-                                <input type="text" class="form-control" wire:model="order">
+                                <input type="text" class="form-control" oninput="this.value = this.value.replace(/[^0-9]/g, '')" wire:model="order">
                                 @error('order')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
 
+                            {{-- Species Inputs --}}
                             <div class="mb-10">
                                 <label class="form-label d-flex justify-content-between align-items-center">
                                     <span>Species</span>
-                                    <button type="button" class="btn btn-sm btn-light-primary" wire:click="addSpeciesInput">
-                                        <div wire:loading.remove wire:target="addSpeciesInput">
-                                            Add Species
-                                        </div>
-                                        <div wire:loading wire:target="addSpeciesInput">
-                                            <div class="spinner-border spinner-border-sm" role="status">
-                                                <span class="visually-hidden">Loading...</span>
-                                            </div>
-                                        </div>
-                                    </button>
                                 </label>
-                                @error('species_name')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-
+                                {{-- Loop through dynamic species input fields --}}
                                 @forelse ($speciesInputs as $index => $speciesInput)
                                 <div class="input-group mb-3" wire:key="species-{{ $index }}">
-                                    <input type="text" class="form-control" placeholder="Species Name" wire:model="speciesInputs.{{ $index }}.species_name">
-                                    @if (count($speciesInputs) > 1) {{-- Don't allow removing the last one --}}
+                                    <input type="text" class="form-control" placeholder="Species Name" wire:model.live="speciesInputs.{{ $index }}.species_name">
                                     <button type="button" class="btn btn-icon btn-danger" wire:click="removeSpeciesInput({{ $index }})">
                                         <div wire:loading.remove wire:target="removeSpeciesInput({{ $index }})">
                                             <i class="bi bi-x"></i>
@@ -214,22 +238,33 @@
                                             </div>
                                         </div>
                                     </button>
-                                    @endif
-                                    @error('speciesInputs.' . $index . 'species_name')
-                                    <span class="text-danger mt-1">{{ $message }}</span>
+                                    @error('speciesInputs.' . $index . '.species_name') {{-- Correct path for dynamic input validation --}}
+                                    <span class="text-danger mt-1 d-block">{{ $message }}</span>
                                     @enderror
                                 </div>
                                 @empty
                                 <p class="text-muted">Click "Add Species" to add the first species.</p>
                                 @endforelse
+
+                                <button type="button" class="btn btn-sm btn-light-primary" wire:click="addSpeciesInput">
+                                    <div wire:loading.remove wire:target="addSpeciesInput">
+                                        Add Species
+                                    </div>
+                                    <div wire:loading wire:target="addSpeciesInput">
+                                        <div class="spinner-border spinner-border-sm" role="status">
+                                            <span class="visually-hidden">Loading...</span>
+                                        </div>
+                                    </div>
+                                </button>
                             </div>
                             @endrole
 
                             @role('Super Admin')
+                            {{-- Office Dropdown --}}
                             <div class="mb-10">
                                 <label class="form-label required">Office</label>
-                                <select class="form-select" aria-label="Select example" wire:model="office_id">
-                                    <option>Open this select menu</option>
+                                <select class="form-select" aria-label="Select Office" wire:model="office_id">
+                                    <option value="">Open this select menu</option>
                                     @foreach($offices as $item)
                                     <option value="{{ $item->id }}">{{ $item->name }}</option>
                                     @endforeach
