@@ -360,7 +360,7 @@ class Documents extends Component
                 ->where('fileable_id', $id)
                 ->pluck('id');
 
-            // Step 2: Fetch IncomingDocument activity
+            // Step 2: Fetch IncomingDocument activity FOR APOO
             $apoIds = ApoIncomingDocument::where('incoming_document_id', $id)->pluck('id'); // Get related ApoIncomingDocument IDs
 
             // Step 2: Fetch IncomingDocument & ApoIncomingDocument activities

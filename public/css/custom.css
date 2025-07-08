@@ -353,3 +353,21 @@
     word-wrap: break-word;
     background-color: white !important;
 }
+
+/* This will ensure your header background is solid when sticky */
+.sticky-table-header {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    /* Inherit the background colors from the trs */
+    /* If issues persist, uncomment the line below and pick a solid color */
+    /* background-color: #f8f9fa; /* Or a solid color that matches your design */
+}
+
+/* To ensure the background shows, especially if the <tr> have their own backgrounds */
+.sticky-table-header tr {
+    background-color: inherit; /* Ensure inner rows inherit from thead or a specific color */
+}
+
+/* If using TailwindCSS bg-secondary/bg-light, ensure they are applied effectively */
+/* You might need to add them to the .sticky-table-header itself, or ensure the z-index is correct. */

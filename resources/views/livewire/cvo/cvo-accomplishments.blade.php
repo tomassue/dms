@@ -1,6 +1,7 @@
 <div>
+    @if (!$showMonthlyAccomplishmentAndMonitoringReport)
     <!--begin::Mixed Widget 5-->
-    <div class="card card-xxl-stretch" style="display: {{ $showMonthlyAccomplishmentAndMonitoringReport ? 'none' : '' }}">
+    <div class="card card-xxl-stretch">
         <!--begin::Header-->
         <div class="card-header border-0 py-5">
             <h3 class="card-title align-items-start flex-column">
@@ -106,6 +107,8 @@
     </div>
     <!--end::Mixed Widget 5-->
 
+    @include('livewire.shared.modals.activity-log-modal')
+
     <!--begin::Modal - Accomplishments-->
     <div class="modal fade" tabindex="-1" id="accomplishmentModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
@@ -118,16 +121,16 @@
                     </div>
                     <!--end::Close-->
                 </div>
-                @if ($errors->any())
-                <div class="alert alert-danger">
-                    <ul>
-                        @foreach ($errors->all() as $error)
-                        <li>{{ $error }}</li>
-                        @endforeach
-                    </ul>
-                </div>
-                @endif
                 <div class="modal-body">
+                    @if ($errors->any())
+                    <div class="alert alert-danger">
+                        <ul>
+                            @foreach ($errors->all() as $error)
+                            <li>{{ $error }}</li>
+                            @endforeach
+                        </ul>
+                    </div>
+                    @endif
                     <form wire:submit="saveAccomplishment">
                         <div class="p-2">
                             <div class="mb-3">
@@ -163,10 +166,11 @@
         </div>
     </div>
     <!--end::Modal - Accomplishments-->
+    @endif
 
-    <div style="display: {{ $showMonthlyAccomplishmentAndMonitoringReport ? '' : 'none' }}">
-        <livewire:components.cvo.cvo-monthly-accomplishment-and-monitoring-report :accomplishmentId="$accomplishmentId" />
-    </div>
+    @if ($showMonthlyAccomplishmentAndMonitoringReport)
+    <livewire:components.cvo.cvo-monthly-accomplishment-and-monitoring-report :accomplishmentId="$accomplishmentId" />
+    @endif
 
 </div>
 

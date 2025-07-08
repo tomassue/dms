@@ -49,4 +49,19 @@ class CvoAccomplishment extends Model
 
         return $halfYearPeriod; // Fallback if half is not H1 or H2
     }
+
+    public function getAccomplishmentToDateAttribute()
+    {
+        $halfYearPeriod = $this->getFormattedHalfYearPeriodAttribute();
+
+        // Find the position of the 'to' character
+        $position = strrpos($halfYearPeriod, 'to');
+
+        if ($position !== false) {
+            // Return the substring after the 'to' character
+            return substr($halfYearPeriod, $position + 3);
+        }
+
+        return $halfYearPeriod; // Returns the original value if 'to' is not found
+    }
 }

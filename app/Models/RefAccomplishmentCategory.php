@@ -40,6 +40,11 @@ class RefAccomplishmentCategory extends Model
         return $this->belongsTo(Role::class, 'office_id', 'id');
     }
 
+    public function sub_category()
+    {
+        return $this->hasMany(RefAccomplishmentSubcategory::class, 'ref_accomplishment_category_id', 'id');
+    }
+
     //* Activity Log
     public function getActivitylogOptions(): LogOptions
     {

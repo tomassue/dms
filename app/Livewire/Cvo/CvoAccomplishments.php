@@ -5,8 +5,10 @@ namespace App\Livewire\Cvo;
 use App\Models\CvoAccomplishment;
 use App\Models\RefAccomplishmentCategory;
 use App\Models\RefAccomplishmentSubcategory;
+use Carbon\Carbon;
 use Livewire\Attributes\On;
 use Livewire\Component;
+use Spatie\Activitylog\Models\Activity;
 
 class CvoAccomplishments extends Component
 {
@@ -15,6 +17,7 @@ class CvoAccomplishments extends Component
     public $search;
     public $accomplishmentId;
     public $target, $office_id, $ref_division_id;
+    public $activity_log = [];
 
     public function rules()
     {
@@ -52,13 +55,67 @@ class CvoAccomplishments extends Component
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
-    //TODO: Continue
+
     public function editAccomplishment(CvoAccomplishment $accomplishment)
     {
         try {
-            //code...
+            $this->editMode = true;
+            $this->accomplishmentId = $accomplishment->id;
+
+            $this->target = $accomplishment->target;
+
+            $this->dispatch('show-accomplishment-modal');
         } catch (\Throwable $th) {
             //throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    public function activityLog($id)
+    {
+        try {
+            $this->activity_log = Activity::where(function ($query) use ($id) {
+                $query->where('subject_type', CvoAccomplishment::class)
+                    ->where('subject_id', $id);
+            })
+                ->with(['causer.user_metadata.division'])
+                ->get()
+                ->map(function ($activity) {
+                    return [
+                        'id' => $activity->id,
+                        'causer' => $activity->causer?->name ?? 'System',
+                        'division' => $activity->causer?->user_metadata?->division?->name ? '[' . $activity->causer?->user_metadata?->division?->name . ']' : '',
+                        'created_at' => Carbon::parse($activity->created_at)->format('M d, Y h:i A'),
+                        'changes' => collect($activity->properties['attributes'] ?? [])
+                            ->except(['id', 'office_id', 'ref_division_id', 'created_at', 'updated_at', 'deleted_at'])
+                            ->map(function ($newValue, $key) use ($activity) {
+                                $oldValue = $activity->properties['old'][$key] ?? 'N/A';
+
+                                $fieldName = match ($key) {
+                                    'target' => 'Target',
+                                    default => ucfirst(str_replace('_', ' ', $key))
+                                };
+
+                                if ($key === 'target') {
+                                    $oldValue = $activity->properties['old']['target'] ?? 'N/A';
+                                    $newValue = $activity->properties['attributes']['target'] ?? 'N/A';
+                                }
+
+                                return [
+                                    'field' => $fieldName,
+                                    'old' => $oldValue,
+                                    'new' => $newValue,
+                                ];
+                            })
+                            ->values()
+                            ->toArray()
+                    ];
+                });
+
+            $this->dispatch('show-activity-log-modal');
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
         }
     }
 
