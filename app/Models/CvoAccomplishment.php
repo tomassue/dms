@@ -21,6 +21,17 @@ class CvoAccomplishment extends Model
         'ref_division_id',
     ];
 
+    // Relationship
+    public function speciesTargets()
+    {
+        return $this->hasMany(CvoSpeciesTarget::class, 'cvo_accomplishment_id', 'id');
+    }
+
+    public function monthlySpeciesAccomplishments()
+    {
+        return $this->hasMany(CvoSpeciesMonthlyAccomplishment::class, 'cvo_accomplishment_id', 'id');
+    }
+
     //* Activity Log
     public function getActivitylogOptions(): LogOptions
     {

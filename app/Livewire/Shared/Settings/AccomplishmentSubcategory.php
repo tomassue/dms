@@ -23,6 +23,7 @@ class AccomplishmentSubcategory extends Component
     # FORM
     public $ref_accomplishment_category_id,
         $accomplishment_sub_category_name,
+        $is_inputtable, // If NULL, it will automatically save 'N'.
         $order,
         $office_id;
 
@@ -122,6 +123,7 @@ class AccomplishmentSubcategory extends Component
 
             if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
                 $subCategoryData['order'] = $this->order;
+                $subCategoryData['is_inputtable'] = $this->is_inputtable ? 'Y' : 'N';
             }
 
             DB::transaction(function () use ($subCategoryData) {
@@ -175,6 +177,7 @@ class AccomplishmentSubcategory extends Component
 
         if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
             $this->order = $accomplishment_subcategory->order;
+            $this->is_inputtable = $accomplishment_subcategory->is_inputtable === 'Y' ? true : false;
 
             $this->speciesInputs = $accomplishment_subcategory->species->map(function ($species) {
                 return ['id' => $species->id, 'species_name' => $species->species_name];
@@ -192,7 +195,7 @@ class AccomplishmentSubcategory extends Component
     public function loadParentSubcategories()
     {
         if (!$this->ref_accomplishment_category_id) {
-            return collect(); //
+            return collect(); // Return an empty collection
         }
 
         $query = RefAccomplishmentSubcategory::where('ref_accomplishment_category_id', $this->ref_accomplishment_category_id)

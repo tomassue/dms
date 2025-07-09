@@ -57,9 +57,6 @@
                                         <td>
                                             <div class="d-flex justify-content-start flex-column">
                                                 <span class="text-gray-800 fw-bold mb-1 fs-6">{{ $item->category->accomplishment_category_name }}</span>
-                                                <span class="text-gray-500 fw-semibold d-block fs-7">
-                                                    {{ $item->species()->pluck('species_name')->implode(', ') }}
-                                                </span>
                                             </div>
                                         </td>
                                         <td>
@@ -67,6 +64,9 @@
                                                 <span class="text-gray-800 fw-bold mb-1 fs-6">{{ $item->parent->accomplishment_sub_category_name ?? '' }}</span>
                                                 <span class="text-gray-500 fw-semibold d-block fs-7">
                                                     {{ $item->accomplishment_sub_category_name }}
+                                                </span>
+                                                <span class="text-gray-500 fw-semibold d-block fs-8">
+                                                    {{ $item->species()->pluck('species_name')->implode(', ') }}
                                                 </span>
                                             </div>
                                         </td>
@@ -202,9 +202,24 @@
 
                             {{-- Sub-category Name --}}
                             <div class="mb-10">
-                                <label class="form-label required">Name</label>
+                                <label class="form-label required">Subcategory Name</label>
                                 <input type="text" class="form-control" wire:model="accomplishment_sub_category_name">
                                 @error('accomplishment_sub_category_name')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            {{-- Is inputtable --}}
+                            <div class="mb-10">
+                                <!-- <label class="form-label required">Is inputtable</label>
+                                <input type="text" class="form-control" wire:model="accomplishment_sub_category_name"> -->
+                                <div class="form-check form-switch form-check-custom form-check-solid">
+                                    <input class="form-check-input" type="checkbox" id="is_inputtable_switch" wire:model="is_inputtable" />
+                                    <label class="form-check-label" for="is_inputtable_switch">
+                                        Make this sub-category inputtable
+                                    </label>
+                                </div>
+                                @error('is_inputtable')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -222,12 +237,12 @@
                             {{-- Species Inputs --}}
                             <div class="mb-10">
                                 <label class="form-label d-flex justify-content-between align-items-center">
-                                    <span>Species</span>
+                                    <span>Species/Items</span>
                                 </label>
                                 {{-- Loop through dynamic species input fields --}}
                                 @forelse ($speciesInputs as $index => $speciesInput)
                                 <div class="input-group mb-3" wire:key="species-{{ $index }}">
-                                    <input type="text" class="form-control" placeholder="Species Name" wire:model.live="speciesInputs.{{ $index }}.species_name">
+                                    <input type="text" class="form-control" placeholder="Species/Item Name" wire:model.live="speciesInputs.{{ $index }}.species_name">
                                     <button type="button" class="btn btn-icon btn-danger" wire:click="removeSpeciesInput({{ $index }})">
                                         <div wire:loading.remove wire:target="removeSpeciesInput({{ $index }})">
                                             <i class="bi bi-x"></i>
@@ -243,7 +258,7 @@
                                     @enderror
                                 </div>
                                 @empty
-                                <p class="text-muted">Click "Add Species" to add the first species.</p>
+                                <p class="text-muted">Click "Add Species/Items" to add the first species.</p>
                                 @endforelse
 
                                 <button type="button" class="btn btn-sm btn-light-primary" wire:click="addSpeciesInput">

@@ -113,18 +113,22 @@
                                 @forelse($categories as $categoryIndex => $category)
                                 {{-- Category Row --}}
                                 <tr>
-                                    <td class="fw-bold bg-light" colspan="6">{{ \App\Helpers\RomanNumeralConverter::convertToRoman($categoryIndex + 1) }}. {{ $category['accomplishment_category_name'] }}</td>
+                                    <td class="fw-bold bg-light" colspan="6">
+                                        {{ \App\Helpers\RomanNumeralConverter::convertToRoman($categoryIndex + 1) }}. {{ $category['accomplishment_category_name'] }}
+                                    </td>
                                 </tr>
 
                                 @forelse($category['sub_categories'] as $subCategoryIndex => $subCategory)
                                 {{-- Direct Sub-category Row --}}
                                 <tr>
-                                    <td class="bg-light" style="padding-left: 20px;">{{ chr(65 + $subCategoryIndex) }}. {{ $subCategory['accomplishment_sub_category_name'] }}</td> {{-- Adjusted to use sub_category_name --}}
-                                    <td class="bg-light"></td> {{-- Target (empty for sub-category row) --}}
-                                    <td class="bg-light"></td> {{-- Accomplishment Month (empty) --}}
-                                    <td class="bg-light"></td> {{-- Accomplishment To Date (empty) --}}
-                                    <td class="bg-light"></td> {{-- Percentage (empty) --}}
-                                    <td class="bg-light"></td> {{-- Remarks (empty) --}}
+                                    <td class="bg-light" style="padding-left: 20px;">
+                                        {{ chr(65 + $subCategoryIndex) }}. {{ $subCategory['accomplishment_sub_category_name'] }} wew
+                                    </td> {{-- Adjusted to use sub_category_name --}}
+                                    <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}"><input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"></td> {{-- Target (empty for sub-category row) --}}
+                                    <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}"><input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"></td> {{-- Accomplishment Month (empty) --}}
+                                    <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}"><input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"></td> {{-- Accomplishment To Date (empty) --}}
+                                    <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}"></td> {{-- Percentage (empty) --}}
+                                    <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}"><input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"></td> {{-- Remarks (empty) --}}
                                 </tr>
 
                                 @if ($subCategory['parent_id'] === null && !empty($subCategory['species']))
@@ -148,7 +152,7 @@
                                 @foreach ($subCategory['children'] as $childSubCategoryIndex => $childSubCategory)
                                 <tr>
                                     <td class="bg-light" style="padding-left: 40px;">
-                                        {{ \App\Helpers\RomanNumeralConverter::convertToRoman($childSubCategoryIndex + 1, true) }}. {{ $childSubCategory['accomplishment_sub_category_name'] }} {{-- Adjusted to use sub_category_name --}}
+                                        {{ \App\Helpers\RomanNumeralConverter::convertToRoman($childSubCategoryIndex + 1, true) }}. {{ $childSubCategory['accomplishment_sub_category_name'] }}
                                     </td>
                                     <td class="bg-light"></td> {{-- Target (empty for parent sub-category row) --}}
                                     <td class="bg-light"></td> {{-- Accomplishment Month (empty) --}}

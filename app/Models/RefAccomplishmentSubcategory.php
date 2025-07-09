@@ -21,6 +21,7 @@ class RefAccomplishmentSubcategory extends Model
 
     protected $fillable = [
         'accomplishment_sub_category_name',
+        'is_inputtable',
         'ref_accomplishment_category_id',
         'order',
         'parent_id',

@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->integer('order')->nullable()->comment('For sorting purposes');
             $table->string('accomplishment_sub_category_name');
+            $table->enum('is_inputtable', ['Y', 'N'])->nullable(); // Give provision for other offices that doesn't require this field.
+            $table->integer('parent_id')->nullable();
             $table->foreignId('ref_accomplishment_category_id');
             $table->foreignId('office_id')->comment('a.k.a role_id from roles or offices');
             $table->softDeletes();
