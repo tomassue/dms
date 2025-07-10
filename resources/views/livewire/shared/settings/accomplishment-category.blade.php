@@ -16,7 +16,7 @@
                         <div class="card-toolbar">
                             @can('reference.accomplishmentCategory.create')
                             <!--begin::Menu-->
-                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentCategoryModal"><i class="bi bi-plus-circle"></i></a>
+                            <a href="#" class="btn btn-icon btn-secondary" data-bs-toggle="modal" data-bs-target="#accomplishmentCategoryModal" wire:click="getLatestOrder"><i class="bi bi-plus-circle"></i></a>
                             <!--end::Menu-->
                             @endcan
                         </div>
@@ -168,6 +168,21 @@
                             </div>
                             @endrole
                             @role('CITY VETERINARY OFFICE')
+                            {{-- Is inputtable --}}
+                            <div class="mb-10">
+                                <!-- <label class="form-label required">Is inputtable</label>
+                                <input type="text" class="form-control" wire:model="accomplishment_sub_category_name"> -->
+                                <div class="form-check form-switch form-check-custom form-check-solid">
+                                    <input class="form-check-input" type="checkbox" id="is_inputtable_switch" wire:model="is_inputtable" />
+                                    <label class="form-check-label" for="is_inputtable_switch">
+                                        Make this category inputtable
+                                    </label>
+                                </div>
+                                @error('is_inputtable')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
                             <div class="mb-10">
                                 <label class="form-label required">Order</label>
                                 <input type="text" class="form-control" wire:model="order">

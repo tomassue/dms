@@ -25,6 +25,17 @@ class RefSpecies extends Model
         return $this->belongsTo(RefAccomplishmentSubcategory::class, 'ref_accomplishment_sub_category_id', 'id');
     }
 
+    // Polymorphic relations
+    public function targets()
+    {
+        return $this->morphMany(CvoPeriodTarget::class, 'targetable');
+    }
+
+    public function monthlyAccomplishments()
+    {
+        return $this->morphMany(CvoMonthlyAccomplishment::class, 'accomplishable');
+    }
+
     //* Activity Log
     public function getActivitylogOptions(): LogOptions
     {

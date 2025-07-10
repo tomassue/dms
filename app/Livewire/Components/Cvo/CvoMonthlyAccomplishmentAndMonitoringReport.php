@@ -16,16 +16,28 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     public $ref_accomplishment_category_id;
     public $ref_accomplishment_subcategory_id;
 
+    //! NOTHING
     public $speciesMonthlyInputs = [];
     public $calculatedAccomplishmentToDate = [];
     public $calculatedPercentages = [];
     public $selectedAccomplishmentMonth;
     public $speciesTargets = [];
+    //! NOTHING
+
+    public $entityTargetsInput = [];
+    public $periodTargets = [];
 
     public function mount($accomplishmentId)
     {
         $this->accomplishmentId = $accomplishmentId;
         $this->accomplishment = CvoAccomplishment::with(['monthlySpeciesAccomplishments', 'speciesTargets'])->find($accomplishmentId);
+    }
+
+    public function updatedEntityTargetsInput($value, $key)
+    {
+        // $value will be the new value that was set
+        // $key will be the full path of the property that changed, e.g., "category.1" or "species.5"
+        dd($this->entityTargetsInput, $key, $value);
     }
 
     public function getCategorySelect()
@@ -52,50 +64,6 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 
     public function getCategories()
     {
-        // $categories = RefAccomplishmentCategory::with(['sub_category' => function ($query) {
-        //     $query->with(['children', 'species']); // Eager load children and species for direct subcategories
-        // }])
-        //     ->get()
-        //     ->map(function ($category) {
-        //         return [
-        //             'id' => $category->id,
-        //             'order' => $category->order,
-        //             'accomplishment_category_name' => $category->accomplishment_category_name,
-        //             'sub_categories' => $category->sub_category->map(function ($subCategory) {
-        //                 return [
-        //                     'id' => $subCategory->id,
-        //                     'accomplishment_sub_category_name' => $subCategory->accomplishment_sub_category_name, // Assuming you have this field
-        //                     'is_inputtable' => $subCategory->is_inputtable, // Indicates whether the subcategory is inputtable
-        //                     'parent_id' => $subCategory->parent_id,
-        //                     'species' => $subCategory->species->map(function ($species) {
-        //                         return [
-        //                             'id' => $species->id,
-        //                             'species_name' => $species->species_name, // Assuming you have this field
-        //                             // Add any other species attributes you need
-        //                         ];
-        //                     })->toArray(),
-        //                     'children' => $subCategory->children->map(function ($childSubCategory) {
-        //                         return [
-        //                             'id' => $childSubCategory->id,
-        //                             'accomplishment_sub_category_name' => $childSubCategory->accomplishment_sub_category_name, // Assuming you have this field
-        //                             'parent_id' => $childSubCategory->parent_id,
-        //                             'species' => $childSubCategory->species->map(function ($species) {
-        //                                 return [
-        //                                     'id' => $species->id,
-        //                                     'species_name' => $species->species_name,
-        //                                 ];
-        //                             })->toArray(),
-        //                             // You can nest further if you have more levels of children
-        //                         ];
-        //                     })->toArray(),
-        //                 ];
-        //             })->toArray(),
-        //         ];
-        //     })
-        //     ->toArray();
-
-        // return $categories;
-
         // Eager load only direct sub-categories (parent_id is null) for each category.
         // Ensure that these direct sub-categories also eager load their own species and their children (which also eager load species).
         $categories = RefAccomplishmentCategory::with(['sub_category' => function ($query) {
@@ -109,6 +77,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                     'id' => $category->id,
                     'order' => $category->order,
                     'accomplishment_category_name' => $category->accomplishment_category_name,
+                    'is_inputtable' => $category->is_inputtable,
                     'sub_categories' => $category->sub_category->map(function ($subCategory) {
                         return [
                             'id' => $subCategory->id,

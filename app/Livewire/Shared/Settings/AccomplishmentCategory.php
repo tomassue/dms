@@ -20,6 +20,7 @@ class AccomplishmentCategory extends Component
     public $accomplishmentCategoryId;
     # Properties Form
     public $accomplishment_category_name,
+        $is_inputtable,
         $office_id,
         $order; // Sort order of Accomplishment Category for CVO
 
@@ -95,6 +96,13 @@ class AccomplishmentCategory extends Component
             ->get();
     }
 
+    // Gets the latest order and assign it to the property
+    public function getLatestOrder()
+    {
+        $latestOrder = RefAccomplishmentCategory::max('order');
+        $this->order = $latestOrder + 1;
+    }
+
     public function createAccomplishmentCategory()
     {
         $this->validate();
@@ -107,6 +115,12 @@ class AccomplishmentCategory extends Component
                 } else {
                     $accomplishment_category->office_id = auth()->user()->roles()->first()->id;
                 }
+
+                if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
+                    $accomplishment_category->order = $this->order;
+                    $accomplishment_category->is_inputtable = $this->is_inputtable ? 'Y' : 'N';
+                }
+
                 $accomplishment_category->accomplishment_category_name = $this->accomplishment_category_name;
                 $accomplishment_category->save();
             });
@@ -133,6 +147,7 @@ class AccomplishmentCategory extends Component
 
             if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
                 $this->order = $accomplishment_category->order;
+                $this->is_inputtable = $accomplishment_category->is_inputtable == 'Y' ? true : false;
             }
 
             $this->editMode = true;
@@ -157,6 +172,7 @@ class AccomplishmentCategory extends Component
 
                 if (auth()->user()->hasRole('CITY VETERINARY OFFICE')) {
                     $accomplishment_category->order = $this->order;
+                    $accomplishment_category->is_inputtable = $this->is_inputtable ? 'Y' : 'N';
                 }
 
                 $accomplishment_category->accomplishment_category_name = $this->accomplishment_category_name;

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->integer('order')->nullable()->comment('For sorting purposes');
             $table->string('accomplishment_category_name');
+            $table->enum('is_inputable', ['Y', 'N'])->default('N')->comment('A function for CVO');
             $table->foreignId('office_id')->comment('a.k.a role_id from roles or offices');
             $table->softDeletes();
             $table->timestamps();

@@ -72,6 +72,17 @@ class RefAccomplishmentSubcategory extends Model
         return $this->hasMany(RefAccomplishmentSubcategory::class, 'parent_id', 'id');
     }
 
+    // Polymorphic relations
+    public function targets()
+    {
+        return $this->morphMany(CvoPeriodTarget::class, 'targetable');
+    }
+
+    public function monthlyAccomplishments()
+    {
+        return $this->morphMany(CvoMonthlyAccomplishment::class, 'accomplishable');
+    }
+
     //* Activity Log
     public function getActivitylogOptions(): LogOptions
     {

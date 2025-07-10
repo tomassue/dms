@@ -113,9 +113,24 @@
                                 @forelse($categories as $categoryIndex => $category)
                                 {{-- Category Row --}}
                                 <tr>
-                                    <td class="fw-bold bg-light" colspan="6">
+                                    <td class="fw-bold bg-light">
                                         {{ \App\Helpers\RomanNumeralConverter::convertToRoman($categoryIndex + 1) }}. {{ $category['accomplishment_category_name'] }}
                                     </td>
+                                    <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                        <input type="text" class="form-control" style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};" wire:model.live="entityTargetsInput.category.{{ $category['id'] }}.target_value" placeholder="Input Target">
+                                    </td> {{-- Target (empty for sub-category row) --}}
+                                    <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                        <input type="text" class="form-control" style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};">
+                                    </td> {{-- Accomplishment Month (empty) --}}
+                                    <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                        <input type="text" class="form-control" style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};">
+                                    </td> {{-- Accomplishment To Date (empty) --}}
+                                    <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                        {{-- Percentage (empty) --}}
+                                    </td>
+                                    <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                        <input type="text" class="form-control" style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};">
+                                    </td> {{-- Remarks (empty) --}}
                                 </tr>
 
                                 @forelse($category['sub_categories'] as $subCategoryIndex => $subCategory)

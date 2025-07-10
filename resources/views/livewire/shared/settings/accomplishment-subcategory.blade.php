@@ -183,6 +183,7 @@
                                 @enderror
                             </div>
 
+                            @role('CITY VETERINARY OFFICE')
                             {{-- NEW: Parent Sub-category Dropdown --}}
                             {{-- Show this dropdown only if a main category is selected --}}
                             @if($ref_accomplishment_category_id)
@@ -199,6 +200,7 @@
                                 @enderror
                             </div>
                             @endif
+                            @endrole
 
                             {{-- Sub-category Name --}}
                             <div class="mb-10">
@@ -209,6 +211,7 @@
                                 @enderror
                             </div>
 
+                            @role('CITY VETERINARY OFFICE')
                             {{-- Is inputtable --}}
                             <div class="mb-10">
                                 <!-- <label class="form-label required">Is inputtable</label>
@@ -223,6 +226,7 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            @endrole
 
                             @role('CITY VETERINARY OFFICE')
                             {{-- Order --}}

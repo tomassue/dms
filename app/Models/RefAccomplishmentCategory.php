@@ -21,6 +21,7 @@ class RefAccomplishmentCategory extends Model
 
     protected $fillable = [
         'accomplishment_category_name',
+        'is_inputtable',
         'order',
         'office_id'
     ];
@@ -43,6 +44,17 @@ class RefAccomplishmentCategory extends Model
     public function sub_category()
     {
         return $this->hasMany(RefAccomplishmentSubcategory::class, 'ref_accomplishment_category_id', 'id');
+    }
+
+    // Polymorphic relations
+    public function targets()
+    {
+        return $this->morphMany(CvoPeriodTarget::class, 'targetable');
+    }
+
+    public function monthlyAccomplishments()
+    {
+        return $this->morphMany(CvoMonthlyAccomplishment::class, 'accomplishable');
     }
 
     //* Activity Log
