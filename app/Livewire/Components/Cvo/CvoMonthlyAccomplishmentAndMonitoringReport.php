@@ -25,7 +25,20 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     //! NOTHING
 
     public $entityTargetsInput = [];
+    public $entityMonthlyInput = [];
+    public $entityRemarksInput = [];
     public $periodTargets = [];
+
+    public function rules()
+    {
+        $rules = [
+            'entityTargetsInput.*.*' => 'nullable|numeric|min:0',
+            'entityMonthlyInput.*.*' => 'nullable|numeric|min:0',
+            'entityRemarksInput.*.*' => 'nullable|string',
+        ];
+
+        return $rules;
+    }
 
     public function mount($accomplishmentId)
     {
@@ -37,7 +50,35 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     {
         // $value will be the new value that was set
         // $key will be the full path of the property that changed, e.g., "category.1" or "species.5"
-        dd($this->entityTargetsInput, $key, $value);
+        $this->validateOnly("entityTargetsInput.{$key}");
+        $this->savePeriodTargetsLogic($key);
+        $this->dispatch('success', message: 'Target successfully saved.');
+    }
+
+    private function savePeriodTargetsLogic($changedKey = null)
+    {
+        try {
+            $targets_to_save = $this->entityTargetsInput;
+        } catch (\Throwable $th) {
+            dd($th);
+        }
+    }
+
+    public function updatedEntityMonthlyInput($value, $key)
+    {
+        $this->validateOnly("entityMonthlyInput.{$key}");
+        $this->savePeriodMonthlyInputsLogic($key);
+        $this->dispatch('success', message: 'Monthly accomplishment successfully saved.');
+    }
+
+    public function savePeriodMonthlyInputsLogic($changedKey = null)
+    {
+        try {
+            $monthly_accomplishment_to_save = $this->entityMonthlyInput;
+            dd($monthly_accomplishment_to_save);
+        } catch (\Throwable $th) {
+            dd($th);
+        }
     }
 
     public function getCategorySelect()
