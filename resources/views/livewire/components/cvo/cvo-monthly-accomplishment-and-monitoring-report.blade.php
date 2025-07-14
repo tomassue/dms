@@ -82,7 +82,7 @@
                                 <tr class="fw-bold fs-6 text-gray-800 bg-light text-center">
                                     <th class="align-middle">{{ $accomplishment->formatted_half_year_period }}</th>
                                     <th class="align-middle">
-                                        <select class="form-select" aria-label="Month">
+                                        <select class="form-select" aria-label="Month" wire:model.live="accomplishment_month">
                                             <option value="">-Select-</option>
                                             @php
                                             list($year, $half) = explode('-', $accomplishment->target ?? '2025-H1'); // Added null coalescing for safety 2025-H1 is just to avoid error messages to pop up.
@@ -105,6 +105,9 @@
                                                 </option>
                                                 @endfor
                                         </select>
+                                        @error('selectedAccomplishmentMonth')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </th>
                                     <th class="align-middle">{{ $accomplishment->accomplishment_to_date }}</th>
                                 </tr>
@@ -117,10 +120,24 @@
                                         {{ \App\Helpers\RomanNumeralConverter::convertToRoman($categoryIndex + 1) }}. {{ $category['accomplishment_category_name'] }}
                                     </td>
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-                                        <input type="text" class="form-control" style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};" wire:model.live="entityTargetsInput.category.{{ $category['id'] }}.target_value" placeholder="Input target">
+                                        <input type="text"
+                                            class="form-control @error('entityTargetsInput.category.' . $category['id'] . '.target_value') is-invalid @enderror"
+                                            style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
+                                            wire:model.live.debounce.500ms="entityTargetsInput.category.{{ $category['id'] }}.target_value"
+                                            placeholder="Enter target">
+                                        @error('entityTargetsInput.category.' . $category['id'] . '.target_value')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </td> {{-- Target (empty for sub-category row) --}}
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-                                        <input type="text" class="form-control" style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};" wire:model.live="entityMonthlyInput.monthly.{{ $category['id'] }}.accomplishment_by_month" placeholder="Input month accomplishment">
+                                        <input type="text"
+                                            class="form-control"
+                                            style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
+                                            wire:model.live.debounce.500ms="entityMonthlyInput.monthly.{{ $category['id'] }}.accomplishment_by_month"
+                                            placeholder="Enter month accomplishment">
+                                        @error('entityMonthlyInput.monthly' . $category['id'] . '.accomplishment_by_month')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </td> {{-- Accomplishment Month (empty) --}}
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                         <span style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};">TOTAL #</span>
@@ -129,7 +146,14 @@
                                         {{-- Percentage (empty) --}}
                                     </td>
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-                                        <input type="text" class="form-control" style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};" wire:model.live="entityMonthlyInput.remarks.{{ $category['id'] }}.remarks" placeholder="Input remarks">
+                                        <input type="text"
+                                            class="form-control"
+                                            style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
+                                            wire:model.live.debounce.500ms="entityMonthlyInput.remarks.{{ $category['id'] }}.remarks"
+                                            placeholder="Enter remarks">
+                                        @error('entityMonthlyInput.monthly' . $category['id'] . '.remarks')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
                                     </td> {{-- Remarks (empty) --}}
                                 </tr>
 
@@ -149,7 +173,6 @@
                                         <input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">
                                     </td> {{-- Accomplishment To Date (empty) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-
                                     </td> {{-- Percentage (empty) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                         <input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">

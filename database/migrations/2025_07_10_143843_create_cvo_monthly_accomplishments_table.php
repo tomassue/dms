@@ -19,7 +19,7 @@ return new class extends Migration
             $table->index(['accomplishable_type', 'accomplishable_id'], 'cvo_m_a_poly_idx'); // Shorter, custom name
 
             $table->tinyInteger('month'); // 1-12 for January-December
-            $table->decimal('accomplished_value', 10, 2)->nullable(); // Can be null if not yet entered
+            $table->integer('accomplished_value')->nullable(); // Can be null if not yet entered
             $table->text('remarks')->nullable();
 
             $table->timestamps();

@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('targetable_type');
             $table->unsignedBigInteger('targetable_id');
             $table->index(['targetable_type', 'targetable_id'], 'cvo_p_t_poly_idx'); // Shorter, custom name
-            $table->decimal('target_value', 10, 2)->default(0.00);
+            $table->integer('target_value')->default(0);
 
             $table->timestamps();
 

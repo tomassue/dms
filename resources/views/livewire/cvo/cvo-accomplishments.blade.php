@@ -122,15 +122,6 @@
                     <!--end::Close-->
                 </div>
                 <div class="modal-body">
-                    @if ($errors->any())
-                    <div class="alert alert-danger">
-                        <ul>
-                            @foreach ($errors->all() as $error)
-                            <li>{{ $error }}</li>
-                            @endforeach
-                        </ul>
-                    </div>
-                    @endif
                     <form wire:submit="saveAccomplishment">
                         <div class="p-2">
                             <div class="mb-3">
@@ -159,7 +150,16 @@
 
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                    <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                    <button type="submit" class="btn btn-primary">
+                        <div wire:loading.remove wire:target="saveAccomplishment">
+                            {{ $editMode ? 'Update' : 'Create' }}
+                        </div>
+                        <div wire:loading wire:target="saveAccomplishment">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </button>
                     </form>
                 </div>
             </div>

@@ -24,7 +24,7 @@ return new class extends Migration
                 ->name('cvo_sm_species_fk'); // Shorter name
 
             $table->integer('month'); // Month number (1-12)
-            $table->decimal('accomplished_value', 10, 2)->nullable();
+            $table->integer('accomplished_value')->nullable();
             $table->text('remarks')->nullable();
 
             // Shorter unique constraint name

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('cvo_accomplishment_id')->constrained('cvo_accomplishments')->onDelete('cascade');
             $table->foreignId('ref_species_id')->constrained('ref_species')->onDelete('cascade');
-            $table->decimal('target_value', 10, 2)->nullable();
+            $table->integer('target_value')->nullable();
 
             $table->unique(['cvo_accomplishment_id', 'ref_species_id']);
             $table->timestamps();
