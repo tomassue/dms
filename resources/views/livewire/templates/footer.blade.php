@@ -1,6 +1,6 @@
 <div>
     <!--begin::Footer-->
-    <div class="footer py-4 d-flex flex-lg-column" id="kt_footer">
+    <div class="footer d-flex flex-lg-column" id="kt_footer">
         <!--begin::Mixed Widget 5-->
         <div class="card card-xxl-stretch">
             <!--begin::Beader-->

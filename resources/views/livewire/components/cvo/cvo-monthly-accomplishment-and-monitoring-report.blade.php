@@ -1,6 +1,6 @@
 <div>
     <!--begin::Mixed Widget 5-->
-    <div class="card card-xxl-stretch">
+    <div class="card card-xxl-stretch" wire:loading.class="opacity-50 pe-none">
         <!--begin::Header-->
         <div class="card-header border-0 py-5">
             <h3 class="card-title align-items-start flex-column">
@@ -82,7 +82,7 @@
                                 <tr class="fw-bold fs-6 text-gray-800 bg-light text-center">
                                     <th class="align-middle">{{ $accomplishment->formatted_half_year_period }}</th>
                                     <th class="align-middle">
-                                        <select class="form-select" aria-label="Month" wire:model.live="accomplishment_month">
+                                        <select class="form-select" aria-label="Month" wire:model.live="selectedAccomplishmentMonth">
                                             <option value="">-Select-</option>
                                             @php
                                             list($year, $half) = explode('-', $accomplishment->target ?? '2025-H1'); // Added null coalescing for safety 2025-H1 is just to avoid error messages to pop up.
@@ -106,7 +106,10 @@
                                                 @endfor
                                         </select>
                                         @error('selectedAccomplishmentMonth')
-                                        <span class="text-danger">{{ $message }}</span>
+                                        <div class="text-start">
+                                            <span class="text-danger">{{ $message }}</span>
+                                        </div>
+
                                         @enderror
                                     </th>
                                     <th class="align-middle">{{ $accomplishment->accomplishment_to_date }}</th>
@@ -123,7 +126,7 @@
                                         <input type="text"
                                             class="form-control @error('entityTargetsInput.category.' . $category['id'] . '.target_value') is-invalid @enderror"
                                             style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
-                                            wire:model.live.debounce.500ms="entityTargetsInput.category.{{ $category['id'] }}.target_value"
+                                            wire:model.blur="entityTargetsInput.category.{{ $category['id'] }}.target_value"
                                             placeholder="Enter target">
                                         @error('entityTargetsInput.category.' . $category['id'] . '.target_value')
                                         <span class="text-danger">{{ $message }}</span>
@@ -133,9 +136,9 @@
                                         <input type="text"
                                             class="form-control"
                                             style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
-                                            wire:model.live.debounce.500ms="entityMonthlyInput.monthly.{{ $category['id'] }}.accomplishment_by_month"
+                                            wire:model.live="entityMonthlyInputs.monthly.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
                                             placeholder="Enter month accomplishment">
-                                        @error('entityMonthlyInput.monthly' . $category['id'] . '.accomplishment_by_month')
+                                        @error('entityMonthlyInputs.monthly' . $category['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
                                     </td> {{-- Accomplishment Month (empty) --}}
@@ -149,9 +152,9 @@
                                         <input type="text"
                                             class="form-control"
                                             style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
-                                            wire:model.live.debounce.500ms="entityMonthlyInput.remarks.{{ $category['id'] }}.remarks"
+                                            wire:model.live="entityMonthlyInputs.monthly.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
                                             placeholder="Enter remarks">
-                                        @error('entityMonthlyInput.monthly' . $category['id'] . '.remarks')
+                                        @error('entityMonthlyInputs.monthly' . $category['id'] . $selectedAccomplishmentMonth . '.remarks_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
                                     </td> {{-- Remarks (empty) --}}
@@ -161,10 +164,14 @@
                                 {{-- Direct Sub-category Row --}}
                                 <tr>
                                     <td class="bg-light" style="padding-left: 20px;">
-                                        {{ chr(65 + $subCategoryIndex) }}. {{ $subCategory['accomplishment_sub_category_name'] }} wew
+                                        {{ chr(65 + $subCategoryIndex) }}. {{ $subCategory['accomplishment_sub_category_name'] }}
                                     </td> {{-- Adjusted to use sub_category_name --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-                                        <input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">
+                                        <input type="text"
+                                            class="form-control"
+                                            style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"
+                                            wire:model.blur="entityTargetsInput.subCategory.{{ $subCategory['id'] }}.target_value"
+                                            placeholder="Enter target">
                                     </td> {{-- Target (empty for sub-category row) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                         <input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">
@@ -186,7 +193,12 @@
                                     <td class="bg-light" style="padding-left: 40px;">
                                         {{ ($speciesIndex + 1) }}. {{ $species['species_name'] }}
                                     </td>
-                                    <td><input type="text" class="form-control"></td> {{-- Target - This can be dynamic data later --}}
+                                    <td>
+                                        <input type="text"
+                                            class="form-control"
+                                            wire:model.blur="entityTargetsInput.species.{{ $species['id'] }}.target_value"
+                                            placeholder="Enter target">
+                                    </td> {{-- Target - This can be dynamic data later --}}
                                     <td><input type="text" class="form-control"></td> {{-- Accomplishment Month --}}
                                     <td><input type="text" class="form-control"></td> {{-- Accomplishment To Date --}}
                                     <td></td> {{-- Percentage (calculated or empty) --}}
@@ -216,7 +228,13 @@
                                     <td class="bg-light" style="padding-left: 60px;">
                                         &ndash; {{ $nestedSpecies['species_name'] }}
                                     </td>
-                                    <td><input type="text" class="form-control"></td> {{-- Target - This can be dynamic data later --}}
+                                    <td>
+                                        <input
+                                            type="text"
+                                            class="form-control"
+                                            wire:model.blur="entityTargetsInput.species.{{ $nestedSpecies['id'] }}.target_value"
+                                            placeholder="Enter target">
+                                    </td> {{-- Target - This can be dynamic data later --}}
                                     <td><input type="text" class="form-control"></td> {{-- Accomplishment Month --}}
                                     <td><input type="text" class="form-control"></td> {{-- Accomplishment To Date --}}
                                     <td></td> {{-- Percentage (calculated or empty) --}}
@@ -261,3 +279,13 @@
     </div>
     <!--end::Mixed Widget 5-->
 </div>
+
+@script
+<script>
+    window.addEventListener('save-target', event => {
+        Livewire.dispatch('triggerSaveTarget', {
+            key: event.detail.key
+        });
+    });
+</script>
+@endscript

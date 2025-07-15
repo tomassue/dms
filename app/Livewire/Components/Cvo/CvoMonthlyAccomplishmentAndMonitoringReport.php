@@ -8,8 +8,10 @@ use App\Models\RefAccomplishmentCategory;
 use App\Models\RefAccomplishmentSubcategory;
 use App\Models\RefSpecies;
 use Illuminate\Support\Facades\DB;
+use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
+use Livewire\Livewire;
 
 class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 {
@@ -29,7 +31,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 
     public $entityTargetsInput = [];
     public $selectedAccomplishmentMonth;
-    public $entityMonthlyInput = [];
+    public $entityMonthlyInputs = [];
     public $entityRemarksInput = [];
     public $periodTargets = [];
     // Property to control autosave status messages
@@ -45,7 +47,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             // Monthly Accomplishments
             'selectedAccomplishmentMonth' => 'required', // ADDED: Rule for selected month
             'entityMonthlyInputs.*.*.*.accomplished_value' => 'nullable|numeric|min:0', // For monthly accomplishments: entityMonthlyInputs.type.id.month.accomplished_value
-            'entityMonthlyInputs.*.*.*.remarks' => 'nullable|string|max:500', // For monthly remarks: entityMonthlyInputs.type.id.month.remark. Added max:500 from previous suggestions
+            'entityMonthlyInputs.*.*.*.remarks_value' => 'nullable|string|max:500', // For monthly remarks: entityMonthlyInputs.type.id.month.remark. Added max:500 from previous suggestions
         ];
     }
 
@@ -60,8 +62,8 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             'selectedAccomplishmentMonth.required' => 'Please select a month before entering data.', // ADDED: Custom message
             'entityMonthlyInputs.*.*.*.accomplished_value.numeric' => 'The accomplishment value must be a number.',
             'entityMonthlyInputs.*.*.*.accomplished_value.min' => 'The accomplishment value must be at least 0.',
-            'entityMonthlyInputs.*.*.*.remarks.string' => 'The remarks must be text.',
-            'entityMonthlyInputs.*.*.*.remarks.max' => 'The remarks cannot be more than 500 characters.',
+            'entityMonthlyInputs.*.*.*.remarks_value.string' => 'The remarks must be text.',
+            'entityMonthlyInputs.*.*.*.remarks_value.max' => 'The remarks cannot be more than 500 characters.',
         ];
     }
 
@@ -87,36 +89,42 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             ];
         }
 
+        // dd($this->entityTargetsInput);
+
         // ... (rest of the code)
     }
 
-    public function updatedEntityTargetsInput($value, $key)
+    public function updated($propertyName)
     {
-        // $value will be the new value that was set
-        // Same logic as above. The $key already holds the path after 'entityTargetsInput.'
-        $this->validateOnly('entityTargetsInput.*.*.target_value'); // Use the wildcard rule path
-        $this->savePeriodTargetsLogic($key);
+        if (str_starts_with($propertyName, 'entityTargetsInput')) {
+            $this->validateOnly($propertyName);
+
+            $key = str_replace('entityTargetsInput.', '', $propertyName);
+
+            // Delay saving until after DOM update
+            $this->dispatch('save-target', ['key' => $key]);
+        }
     }
 
-    //TODO
+
     //! ERROR
-    public function updatedEntityMonthlyInput($value, $key)
+    public function updatedEntityMonthlyInputs($value, $key)
     {
-        // $value will be the new value that was set
-        // Same logic as above. The $key already holds the path after 'entityMonthlyInput.'
+        // Determine the specific rule path based on the updated field
+        $parts = explode('.', $key);
+        $fieldName = end($parts); // 'accomplished_value' or 'remarks'
 
-        // First, validate that a month is selected
-        $this->validateOnly('selectedAccomplishmentMonth');
-
-        // Then, validate the specific monthly input that changed
-        // $key for monthly inputs is like "category.1.7.accomplished_value" or "category.1.7.remarks"
-        $this->validateOnly('entityMonthlyInputs.' . $key);
-
-        // If validation passes, proceed with saving
-        $this->savePeriodMonthlyInputsLogic($key);
+        if ($fieldName === 'accomplished_value') {
+            $this->validateOnly('entityMonthlyInputs.*.*.*.accomplished_value');
+            $this->savePeriodMonthlyInputsLogic($key);
+        } elseif ($fieldName === 'remarks') {
+            $this->validateOnly('entityMonthlyInputs.*.*.*.remarks_value');
+            $this->savePeriodMonthlyInputsLogic($key);
+        }
     }
 
-    private function savePeriodTargetsLogic($changedKey = null)
+    #[On('triggerSaveTarget')]
+    public function savePeriodTargetsLogic($changedKey = null)
     {
         if (!$this->accomplishmentId) {
             throw new \Exception('No accomplishment period selected to save targets.');
@@ -151,10 +159,23 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                 }
 
                 foreach ($targetsDataForType as $entityId => $nestedData) {
-                    // Extract the actual numeric value from the nested array
                     $targetValue = $nestedData['target_value'] ?? null;
 
+                    // Check if a record already exists
+                    $hasExistingRecord = CvoPeriodTarget::where('cvo_accomplishment_id', $this->accomplishmentId)
+                        ->where('targetable_type', $modelClass)
+                        ->where('targetable_id', $entityId)
+                        ->exists();
+
+                    // Avoid saving empty values unless there’s something to delete
+                    if (!is_numeric($targetValue) && !$hasExistingRecord) {
+                        // \Log::debug("⏭️ Skipping: $entityType $entityId is empty and no existing record.");
+                        continue;
+                    }
+
                     if (is_numeric($targetValue)) {
+                        // \Log::debug("✅ Saving: $entityType $entityId = $targetValue");
+
                         CvoPeriodTarget::updateOrCreate(
                             [
                                 'cvo_accomplishment_id' => $this->accomplishmentId,
@@ -166,7 +187,8 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                             ]
                         );
                     } else {
-                        // If the input is empty or non-numeric, delete the existing record.
+                        // \Log::debug("🗑️ Deleting: $entityType $entityId (input cleared)");
+
                         CvoPeriodTarget::where('cvo_accomplishment_id', $this->accomplishmentId)
                             ->where('targetable_type', $modelClass)
                             ->where('targetable_id', $entityId)
@@ -179,24 +201,70 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         });
     }
 
+    //! ERROR
     public function savePeriodMonthlyInputsLogic($changedKey = null)
     {
-        try {
-            if (!$this->accomplishmentId) {
-                throw new \Exception('No accomplishment period selected to save targets.');
+        if (!$this->accomplishmentId) {
+            throw new \Exception('No accomplishment period selected to save monthly accomplishments.');
+        }
+        list($year, $half) = explode('-', $this->accomplishment->target);
+        $year = (int) $year;
+        $monthToSave = $this->selectedAccomplishmentMonth;
+        dd($changedKey);
+        DB::transaction(function () use ($year, $monthToSave, $changedKey) {
+            $parts = explode('.', $changedKey);
+            $entityType = $parts[0];
+            $entityId = $parts[1];
+            $monthInKey = (int)$parts[2];
+            $fieldName = $parts[3];
+
+            if ($monthInKey !== (int)$monthToSave) {
+                return;
             }
 
-            $monthly_accomplishment_to_save = $this->entityMonthlyInput;
-        } catch (\Throwable $th) {
-            dd($th);
-        }
+            $modelClass = $this->getModelClassFromType($entityType);
+            if (!$modelClass) {
+                return;
+            }
+
+            $monthlyData = $this->entityMonthlyInputs[$entityType][$entityId][$monthToSave] ?? [
+                'accomplished_value' => null,
+                'remarks' => null,
+            ];
+
+            $accomplishedValue = $monthlyData['accomplished_value'] ?? null;
+            $remarks = $monthlyData['remarks'] ?? null;
+
+            if (is_numeric($accomplishedValue) || (!empty($remarks) && $remarks !== '')) {
+                CvoMonthlyAccomplishment::updateOrCreate(
+                    [
+                        'cvo_accomplishment_id' => $this->accomplishmentId,
+                        'accomplishable_type' => $modelClass,
+                        'accomplishable_id' => $entityId,
+                        'month' => $monthToSave,
+                        'year' => $year,
+                    ],
+                    [
+                        'accomplished_value' => is_numeric($accomplishedValue) ? (float)$accomplishedValue : null,
+                        'remarks' => $remarks,
+                    ]
+                );
+            } else {
+                CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+                    ->where('accomplishable_type', $modelClass)
+                    ->where('accomplishable_id', $entityId)
+                    ->where('month', $monthToSave)
+                    ->where('year', $year)
+                    ->delete();
+            }
+        });
     }
 
     private function getModelClassFromType(string $type): ?string
     {
         return match ($type) {
             'category' => RefAccomplishmentCategory::class,
-            'sub_category' => RefAccomplishmentSubcategory::class,
+            'subCategory' => RefAccomplishmentSubcategory::class,
             'species' => RefSpecies::class,
             default => null,
         };
@@ -206,7 +274,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     {
         return match ($type) {
             RefAccomplishmentCategory::class => 'category',
-            RefAccomplishmentSubcategory::class => 'sub_category',
+            RefAccomplishmentSubcategory::class => 'subCategory',
             RefSpecies::class => 'species',
             default => null,
         };
