@@ -3,6 +3,7 @@
 namespace App\Livewire\Components\Cvo;
 
 use App\Models\CvoAccomplishment;
+use App\Models\CvoMonthlyAccomplishment;
 use App\Models\CvoPeriodTarget;
 use App\Models\RefAccomplishmentCategory;
 use App\Models\RefAccomplishmentSubcategory;
@@ -76,9 +77,6 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 
     public function loadAccomplishmentData()
     {
-        // ... (previous code)
-
-        // Load Period Targets - IMPORTANT: Load into the correct nested structure
         $targets = CvoPeriodTarget::where('cvo_accomplishment_id', $this->accomplishmentId)->get();
         $this->entityTargetsInput = []; // Reset to ensure fresh load
         foreach ($targets as $target) {
@@ -89,39 +87,41 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             ];
         }
 
-        // dd($this->entityTargetsInput);
-
-        // ... (rest of the code)
+        $accomplishments = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)->get();
+        $this->entityMonthlyInputs = []; // Reset to ensure fresh load
+        foreach ($accomplishments as $accomplishment) {
+            $type = $this->getTypeFromModelClass($accomplishment->accomplishable_type);
+            $this->entityMonthlyInputs[$type] ??= []; // Ensure the type array exists
+            $this->entityMonthlyInputs[$type][$accomplishment->accomplishable_id][$accomplishment->month] = [
+                'accomplished_value' => $accomplishment->accomplished_value,
+                'remarks_value' => $accomplishment->remarks,
+            ];
+            $this->selectedAccomplishmentMonth = $accomplishment->month;
+        }
     }
 
     public function updated($propertyName)
     {
         if (str_starts_with($propertyName, 'entityTargetsInput')) {
             $this->validateOnly($propertyName);
-
             $key = str_replace('entityTargetsInput.', '', $propertyName);
+            $this->dispatch('save-target', ['key' => $key]); // Delay saving until after DOM update
+        }
 
-            // Delay saving until after DOM update
-            $this->dispatch('save-target', ['key' => $key]);
+        if (str_starts_with($propertyName, 'entityMonthlyInputs')) {
+            $this->validateOnly('selectedAccomplishmentMonth');
+            $this->validateOnly($propertyName);
+            $key = str_replace('entityMonthlyInputs.', '', $propertyName);
+            $this->dispatch('save-monthly-accomplishment', ['key' => $key]); // Delay saving until after DOM update;
         }
     }
 
-
-    //! ERROR
-    public function updatedEntityMonthlyInputs($value, $key)
+    public function updatedSelectedAccomplishmentMonth()
     {
-        // Determine the specific rule path based on the updated field
-        $parts = explode('.', $key);
-        $fieldName = end($parts); // 'accomplished_value' or 'remarks'
-
-        if ($fieldName === 'accomplished_value') {
-            $this->validateOnly('entityMonthlyInputs.*.*.*.accomplished_value');
-            $this->savePeriodMonthlyInputsLogic($key);
-        } elseif ($fieldName === 'remarks') {
-            $this->validateOnly('entityMonthlyInputs.*.*.*.remarks_value');
-            $this->savePeriodMonthlyInputsLogic($key);
-        }
+        $this->entityMonthlyInputs = [];
+        $this->loadMonthlyAccomplishmentsForSelectedMonth();
     }
+
 
     #[On('triggerSaveTarget')]
     public function savePeriodTargetsLogic($changedKey = null)
@@ -154,7 +154,9 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 
             foreach ($targetsToSave as $entityType => $targetsDataForType) {
                 $modelClass = $this->getModelClassFromType($entityType);
+
                 if (!$modelClass) {
+                    $this->dispatch('error', message: "Invalid entity type: $entityType");
                     continue;
                 }
 
@@ -201,62 +203,89 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         });
     }
 
-    //! ERROR
+    #[On('triggerSaveMonthlyAccomplishment')]
     public function savePeriodMonthlyInputsLogic($changedKey = null)
     {
+        // changedKey is a string like: entityMonthlyInputs.monthly.123.7.accomplished_value
+
         if (!$this->accomplishmentId) {
-            throw new \Exception('No accomplishment period selected to save monthly accomplishments.');
+            throw new \Exception('No accomplishment period selected to save monthly inputs.');
         }
-        list($year, $half) = explode('-', $this->accomplishment->target);
-        $year = (int) $year;
-        $monthToSave = $this->selectedAccomplishmentMonth;
-        dd($changedKey);
-        DB::transaction(function () use ($year, $monthToSave, $changedKey) {
-            $parts = explode('.', $changedKey);
-            $entityType = $parts[0];
-            $entityId = $parts[1];
-            $monthInKey = (int)$parts[2];
-            $fieldName = $parts[3];
 
-            if ($monthInKey !== (int)$monthToSave) {
-                return;
+        DB::transaction(function () use ($changedKey) {
+            $inputsToSave = [];
+
+            if ($changedKey && str_contains($changedKey, '.')) {
+                // E.g., entityMonthlyInputs.category.123.7.accomplished_value
+                $parts = explode('.', $changedKey);
+                $entityType = $parts[1]; // monthly
+                $entityId = $parts[2];
+                $month = $parts[3];
+                $fieldName = $parts[4];
+
+                $value = $this->entityMonthlyInputs[$entityType][$entityId][$month][$fieldName] ?? null;
+
+                $inputsToSave[$entityType][$entityId][$month][$fieldName] = $value;
+            } else {
+                $inputsToSave = $this->entityMonthlyInputs;
             }
 
-            $modelClass = $this->getModelClassFromType($entityType);
-            if (!$modelClass) {
-                return;
-            }
+            $selectedMonth = $this->selectedAccomplishmentMonth;
 
-            $monthlyData = $this->entityMonthlyInputs[$entityType][$entityId][$monthToSave] ?? [
-                'accomplished_value' => null,
-                'remarks' => null,
-            ];
+            foreach ($inputsToSave as $entityType => $entities) {
+                $modelClass = $this->getModelClassFromType($entityType);
 
-            $accomplishedValue = $monthlyData['accomplished_value'] ?? null;
-            $remarks = $monthlyData['remarks'] ?? null;
+                if (!$modelClass) {
+                    $this->dispatch('error', message: "Invalid entity type: $entityType");
+                    continue;
+                }
 
-            if (is_numeric($accomplishedValue) || (!empty($remarks) && $remarks !== '')) {
-                CvoMonthlyAccomplishment::updateOrCreate(
-                    [
+                foreach ($entities as $entityId => $months) {
+                    if (!isset($months[$selectedMonth])) continue;
+
+                    $values = $months[$selectedMonth];
+
+                    $accomplishedValue = $values['accomplished_value'] ?? null;
+                    $remarksValue = $values['remarks_value'] ?? null;
+
+                    $queryConditions = [
                         'cvo_accomplishment_id' => $this->accomplishmentId,
                         'accomplishable_type' => $modelClass,
                         'accomplishable_id' => $entityId,
-                        'month' => $monthToSave,
-                        'year' => $year,
-                    ],
-                    [
-                        'accomplished_value' => is_numeric($accomplishedValue) ? (float)$accomplishedValue : null,
-                        'remarks' => $remarks,
-                    ]
-                );
-            } else {
-                CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
-                    ->where('accomplishable_type', $modelClass)
-                    ->where('accomplishable_id', $entityId)
-                    ->where('month', $monthToSave)
-                    ->where('year', $year)
-                    ->delete();
+                        'month' => $selectedMonth,
+                    ];
+
+                    $accomplishedValue = trim($accomplishedValue ?? '');
+                    $remarksValue = trim($remarksValue ?? '');
+
+                    if ($accomplishedValue === '' && $remarksValue === '') {
+                        CvoMonthlyAccomplishment::where($queryConditions)->delete();
+                    } else {
+                        CvoMonthlyAccomplishment::updateOrCreate(
+                            $queryConditions,
+                            [
+                                'accomplished_value' => is_numeric($accomplishedValue) ? (float) $accomplishedValue : null,
+                                'remarks' => $remarksValue !== '' ? $remarksValue : null,
+                            ]
+                        );
+                    }
+
+                    // CvoMonthlyAccomplishment::updateOrCreate(
+                    //     [
+                    //         'cvo_accomplishment_id' => $this->accomplishmentId,
+                    //         'accomplishable_type' => $modelClass,
+                    //         'accomplishable_id' => $entityId,
+                    //         'month' => $selectedMonth,
+                    //     ],
+                    //     [
+                    //         'accomplished_value' => is_numeric($accomplishedValue) ? (float) $accomplishedValue : null,
+                    //         'remarks' => $remarksValue,
+                    //     ]
+                    // );
+                }
             }
+
+            $this->dispatch('success', message: 'Monthly accomplishments saved successfully.');
         });
     }
 
@@ -279,6 +308,29 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             default => null,
         };
     }
+
+    public function loadMonthlyAccomplishmentsForSelectedMonth()
+    {
+        if (!$this->selectedAccomplishmentMonth) {
+            return;
+        }
+
+        $month = $this->selectedAccomplishmentMonth;
+        $this->entityMonthlyInputs = [];
+
+        $records = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+            ->where('month', $month)
+            ->get();
+
+        foreach ($records as $accomplishment) {
+            $type = $this->getTypeFromModelClass($accomplishment->accomplishable_type);
+            $this->entityMonthlyInputs[$type][$accomplishment->accomplishable_id][$month] = [
+                'accomplished_value' => $accomplishment->accomplished_value,
+                'remarks_value' => $accomplishment->remarks,
+            ];
+        }
+    }
+
 
     public function getCategorySelect()
     {

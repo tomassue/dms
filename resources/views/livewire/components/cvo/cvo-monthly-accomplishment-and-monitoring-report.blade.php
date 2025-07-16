@@ -133,14 +133,16 @@
                                         @enderror
                                     </td> {{-- Target (empty for sub-category row) --}}
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                        @if ($selectedAccomplishmentMonth)
                                         <input type="text"
                                             class="form-control"
                                             style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
-                                            wire:model.live="entityMonthlyInputs.monthly.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
+                                            wire:model.blur="entityMonthlyInputs.category.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
                                             placeholder="Enter month accomplishment">
-                                        @error('entityMonthlyInputs.monthly' . $category['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
+                                        @error('entityMonthlyInputs.category' . $category['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
+                                        @endif
                                     </td> {{-- Accomplishment Month (empty) --}}
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                         <span style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};">TOTAL #</span>
@@ -149,14 +151,16 @@
                                         {{-- Percentage (empty) --}}
                                     </td>
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                        @if ($selectedAccomplishmentMonth)
                                         <input type="text"
                                             class="form-control"
                                             style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
-                                            wire:model.live="entityMonthlyInputs.monthly.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
+                                            wire:model.blur="entityMonthlyInputs.category.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
                                             placeholder="Enter remarks">
-                                        @error('entityMonthlyInputs.monthly' . $category['id'] . $selectedAccomplishmentMonth . '.remarks_value')
+                                        @error('entityMonthlyInputs.category' . $category['id'] . $selectedAccomplishmentMonth . '.remarks_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
+                                        @endif
                                     </td> {{-- Remarks (empty) --}}
                                 </tr>
 
@@ -282,9 +286,21 @@
 
 @script
 <script>
-    window.addEventListener('save-target', event => {
-        Livewire.dispatch('triggerSaveTarget', {
-            key: event.detail.key
+    // window.addEventListener('save-target', event => {
+    //     Livewire.dispatch('triggerSaveTarget', {
+    //         key: event.detail.key
+    //     });
+    // });
+
+    $wire.on('save-target', (key) => {
+        $wire.dispatch('triggerSaveTarget', {
+            key: key
+        });
+    });
+
+    $wire.on('save-monthly-accomplishment', (key) => {
+        $wire.dispatch('triggerSaveMonthlyAccomplishment', {
+            key: key
         });
     });
 </script>
