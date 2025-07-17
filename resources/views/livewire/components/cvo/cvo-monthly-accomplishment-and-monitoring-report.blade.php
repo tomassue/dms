@@ -67,7 +67,9 @@
                     </div>
                 </div>
 
-                <div class="overflow-auto" style="max-height: 500px;">
+                @dump($entityMonthlyInputs)
+
+                <div class="overflow-auto" style="max-height: 700px;">
                     <div class="mt-5">
                         <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                             <thead class="sticky-table-header">
@@ -145,7 +147,9 @@
                                         @endif
                                     </td> {{-- Accomplishment Month (empty) --}}
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-                                        <span style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};">TOTAL #</span>
+                                        <span style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};">
+                                            {{ $this->accomplishmentToDateTotals['category'][$category['id']] ?? 0 }}
+                                        </span>
                                     </td> {{-- Accomplishment To Date (empty) --}}
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                         {{-- Percentage (empty) --}}
@@ -178,15 +182,35 @@
                                             placeholder="Enter target">
                                     </td> {{-- Target (empty for sub-category row) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-                                        <input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">
+                                        @if ($selectedAccomplishmentMonth)
+                                        <input type="text"
+                                            class="form-control"
+                                            style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"
+                                            wire:model.blur="entityMonthlyInputs.subCategory.{{ $subCategory['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
+                                            placeholder="Enter month accomplishment">
+                                        @error('entityMonthlyInputs.subCategory' . $subCategory['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                        @endif
                                     </td> {{-- Accomplishment Month (empty) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-                                        <input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">
+                                        <span style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">
+                                            TOTAL #
+                                        </span>
                                     </td> {{-- Accomplishment To Date (empty) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                     </td> {{-- Percentage (empty) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-                                        <input type="text" class="form-control" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">
+                                        @if ($selectedAccomplishmentMonth)
+                                        <input type="text"
+                                            class="form-control"
+                                            style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"
+                                            wire:model.blur="entityMonthlyInputs.subCategory.{{ $subCategory['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
+                                            placeholder="Enter remarks">
+                                        @error('entityMonthlyInputs.subCategory' . $subCategory['id'] . $selectedAccomplishmentMonth . '.remarks_value')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                        @endif
                                     </td> {{-- Remarks (empty) --}}
                                 </tr>
 
@@ -203,8 +227,20 @@
                                             wire:model.blur="entityTargetsInput.species.{{ $species['id'] }}.target_value"
                                             placeholder="Enter target">
                                     </td> {{-- Target - This can be dynamic data later --}}
-                                    <td><input type="text" class="form-control"></td> {{-- Accomplishment Month --}}
-                                    <td><input type="text" class="form-control"></td> {{-- Accomplishment To Date --}}
+                                    <td>
+                                        @if ($selectedAccomplishmentMonth)
+                                        <input type="text"
+                                            class="form-control"
+                                            wire:model.blur="entityMonthlyInputs.species.{{ $species['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
+                                            placeholder="Enter month accomplishment">
+                                        @error('entityMonthlyInputs.species' . $species['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                        @endif
+                                    </td> {{-- Accomplishment Month --}}
+                                    <td>
+                                        <span>TOTAL #</span>
+                                    </td> {{-- Accomplishment To Date --}}
                                     <td></td> {{-- Percentage (calculated or empty) --}}
                                     <td><input type="text" class="form-control"></td> {{-- Remarks --}}
                                 </tr>
@@ -239,10 +275,32 @@
                                             wire:model.blur="entityTargetsInput.species.{{ $nestedSpecies['id'] }}.target_value"
                                             placeholder="Enter target">
                                     </td> {{-- Target - This can be dynamic data later --}}
-                                    <td><input type="text" class="form-control"></td> {{-- Accomplishment Month --}}
-                                    <td><input type="text" class="form-control"></td> {{-- Accomplishment To Date --}}
+                                    <td>
+                                        @if ($selectedAccomplishmentMonth)
+                                        <input type="text"
+                                            class="form-control"
+                                            wire:model.blur="entityMonthlyInputs.species.{{ $nestedSpecies['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
+                                            placeholder="Enter month accomplishment">
+                                        @error('entityMonthlyInputs.species' . $nestedSpecies['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                        @endif
+                                    </td> {{-- Accomplishment Month --}}
+                                    <td>
+                                        <span>TOTAL #</span>
+                                    </td> {{-- Accomplishment To Date --}}
                                     <td></td> {{-- Percentage (calculated or empty) --}}
-                                    <td><input type="text" class="form-control"></td> {{-- Remarks --}}
+                                    <td>
+                                        @if ($selectedAccomplishmentMonth)
+                                        <input type="text"
+                                            class="form-control"
+                                            wire:model.blur="entityMonthlyInputs..species.{{ $nestedSpecies['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
+                                            placeholder="Enter remarks">
+                                        @error('entityMonthlyInputs..species' . $nestedSpecies['id'] . $selectedAccomplishmentMonth . '.remarks_value')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                        @endif
+                                    </td> {{-- Remarks --}}
                                 </tr>
                                 @endforeach
                                 @endif

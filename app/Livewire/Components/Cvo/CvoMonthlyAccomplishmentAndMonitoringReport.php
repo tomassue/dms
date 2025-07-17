@@ -26,10 +26,10 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     public $speciesMonthlyInputs = [];
     public $calculatedAccomplishmentToDate = [];
     public $calculatedPercentages = [];
-
     public $speciesTargets = [];
     //! NOTHING
 
+    public $totalMonthlyPeriodAccomplishments = [];
     public $entityTargetsInput = [];
     public $selectedAccomplishmentMonth;
     public $entityMonthlyInputs = [];
@@ -71,8 +71,34 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     public function mount($accomplishmentId)
     {
         $this->accomplishmentId = $accomplishmentId;
-        $this->accomplishment = CvoAccomplishment::with(['monthlySpeciesAccomplishments', 'speciesTargets'])->find($accomplishmentId);
+        $this->accomplishment = CvoAccomplishment::find($accomplishmentId);
         $this->loadAccomplishmentData();
+    }
+
+    #TODO: acomplismentToDateTotals refreshes as entityMonthlyInputs refreshes
+    public function getAccomplishmentToDateTotalsProperty()
+    {
+        $totals = [];
+
+        // Loop through entityMonthlyInputs which already contains data
+        foreach ($this->entityMonthlyInputs as $type => $entities) {
+            foreach ($entities as $entityId => $monthlyData) {
+                $sum = 0;
+
+                foreach ($monthlyData as $month => $values) {
+                    if (
+                        ($this->accomplishment->target === '2025-H1' && in_array($month, ['1', '2', '3', '4', '5', '6'])) ||
+                        ($this->accomplishment->target === '2025-H2' && in_array($month, ['7', '8', '9', '10', '11', '12']))
+                    ) {
+                        $sum += (int) ($values['accomplished_value'] ?? 0);
+                    }
+                }
+
+                $totals[$type][$entityId] = $sum;
+            }
+        }
+
+        return $totals;
     }
 
     public function loadAccomplishmentData()
@@ -269,19 +295,6 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                             ]
                         );
                     }
-
-                    // CvoMonthlyAccomplishment::updateOrCreate(
-                    //     [
-                    //         'cvo_accomplishment_id' => $this->accomplishmentId,
-                    //         'accomplishable_type' => $modelClass,
-                    //         'accomplishable_id' => $entityId,
-                    //         'month' => $selectedMonth,
-                    //     ],
-                    //     [
-                    //         'accomplished_value' => is_numeric($accomplishedValue) ? (float) $accomplishedValue : null,
-                    //         'remarks' => $remarksValue,
-                    //     ]
-                    // );
                 }
             }
 

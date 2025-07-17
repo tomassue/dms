@@ -20,6 +20,7 @@ class CvoMonthlyAccomplishment extends Model
         'remarks'
     ];
 
+    // Relationship
     public function cvoAccomplishment()
     {
         return $this->belongsTo(CvoAccomplishment::class);
