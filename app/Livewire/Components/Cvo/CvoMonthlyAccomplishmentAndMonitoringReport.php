@@ -101,7 +101,35 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         return $totals;
     }
 
-    public function getAccomplishmentToDatePercentagesProperty() {}
+    public function getAccomplishmentToDatePercentagesProperty()
+    {
+        $percentages = [];
+
+        // $target = $this->accomplishment->target; // Example: '2025-H1'
+        // [$year, $half] = explode('-', $target);
+
+        // Get all targets for the same accomplishment and half
+        $targets = CvoPeriodTarget::where('cvo_accomplishment_id', $this->accomplishmentId)
+            ->get();
+
+        // Get totals
+        $totals = $this->accomplishmentToDateTotals;
+
+        foreach ($targets as $targetRecord) {
+            $type = $this->getTypeFromModelClass($targetRecord->targetable_type);
+            $id = $targetRecord->targetable_id;
+
+            $totalAccomplished = $totals[$type][$id] ?? 0;
+            $targetValue = (int) $targetRecord->target_value;
+
+            // Avoid division by zero
+            $percent = $targetValue > 0 ? ($totalAccomplished / $targetValue) * 100 : 0;
+
+            $percentages[$type][$id] = round($percent, 2); // Optional: round to 2 decimal places
+        }
+
+        return $percentages;
+    }
 
     public function loadAccomplishmentData()
     {

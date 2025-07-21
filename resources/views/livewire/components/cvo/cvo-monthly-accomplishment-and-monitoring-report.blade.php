@@ -144,13 +144,20 @@
                                         @enderror
                                         @endif
                                     </td> {{-- Accomplishment Month (empty) --}}
-                                    <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                    <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }} text-center">
                                         <span style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};">
                                             {{ $this->accomplishmentToDateTotals['category'][$category['id']] ?? 0 }}
                                         </span>
                                     </td> {{-- Accomplishment To Date (empty) --}}
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
-                                        {{-- Percentage (empty) --}}
+                                        <div class="d-flex flex-column w-100 me-2">
+                                            <div class="d-flex flex-stack mb-2">
+                                                <span class="text-muted me-2 fs-7 fw-bold" style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};">{{ $this->accomplishmentToDatePercentages['category'][$category['id']] ?? 0 }}%</span>
+                                            </div>
+                                            <div class="progress h-6px w-100">
+                                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ $this->accomplishmentToDatePercentages['category'][$category['id']] ?? 0 }}%" aria-valuenow="{{ $this->accomplishmentToDatePercentages['category'][$category['id']] ?? 0  }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
                                     </td>
                                     <td class="{{ $category['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                         @if ($selectedAccomplishmentMonth)
@@ -191,12 +198,20 @@
                                         @enderror
                                         @endif
                                     </td> {{-- Accomplishment Month (empty) --}}
-                                    <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                    <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }} text-center">
                                         <span style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">
                                             {{ $this->accomplishmentToDateTotals['subCategory'][$subCategory['id']] ?? 0 }}
                                         </span>
                                     </td> {{-- Accomplishment To Date (empty) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
+                                        <div class="d-flex flex-column w-100 me-2">
+                                            <div class="d-flex flex-stack mb-2">
+                                                <span class="text-muted me-2 fs-7 fw-bold" style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">{{ $this->accomplishmentToDatePercentages['subCategory'][$subCategory['id']] ?? 0 }}%</span>
+                                            </div>
+                                            <div class="progress h-6px w-100">
+                                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ $this->accomplishmentToDatePercentages['subCategory'][$subCategory['id']] ?? 0 }}%" aria-valuenow="{{ $this->accomplishmentToDatePercentages['subCategory'][$subCategory['id']] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
                                     </td> {{-- Percentage (empty) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                         @if ($selectedAccomplishmentMonth)
@@ -236,12 +251,21 @@
                                         @enderror
                                         @endif
                                     </td> {{-- Accomplishment Month --}}
-                                    <td>
+                                    <td class="text-center">
                                         <span>
                                             {{ $this->accomplishmentToDateTotals['species'][$species['id']] ?? 0 }}
                                         </span>
                                     </td> {{-- Accomplishment To Date --}}
-                                    <td></td> {{-- Percentage (calculated or empty) --}}
+                                    <td>
+                                        <div class="d-flex flex-column w-100 me-2">
+                                            <div class="d-flex flex-stack mb-2">
+                                                <span class="text-muted me-2 fs-7 fw-bold">{{ $this->accomplishmentToDatePercentages['species'][$species['id']] ?? 0 }}%</span>
+                                            </div>
+                                            <div class="progress h-6px w-100">
+                                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ $this->accomplishmentToDatePercentages['species'][$species['id']] ?? 0 }}%" aria-valuenow="{{ $this->accomplishmentToDatePercentages['species'][$species['id']] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </td> {{-- Percentage (calculated or empty) --}}
                                     <td><input type="text" class="form-control"></td> {{-- Remarks --}}
                                 </tr>
                                 @endforeach
@@ -286,12 +310,21 @@
                                         @enderror
                                         @endif
                                     </td> {{-- Accomplishment Month --}}
-                                    <td>
+                                    <td class="text-center">
                                         <span>
                                             {{ $this->accomplishmentToDateTotals['species'][$nestedSpecies['id']] ?? 0 }}
                                         </span>
                                     </td> {{-- Accomplishment To Date --}}
-                                    <td></td> {{-- Percentage (calculated or empty) --}}
+                                    <td>
+                                        <div class="d-flex flex-column w-100 me-2">
+                                            <div class="d-flex flex-stack mb-2">
+                                                <span class="text-muted me-2 fs-7 fw-bold">{{ $this->accomplishmentToDatePercentages['species'][$nestedSpecies['id']] ?? 0 }}%</span>
+                                            </div>
+                                            <div class="progress h-6px w-100">
+                                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ $this->accomplishmentToDatePercentages['species'][$nestedSpecies['id']] ?? 0 }}%" aria-valuenow="{{ $this->accomplishmentToDatePercentages['species'][$nestedSpecies['id']] ?? 0 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                        </div>
+                                    </td> {{-- Percentage (calculated or empty) --}}
                                     <td>
                                         @if ($selectedAccomplishmentMonth)
                                         <input type="text"
