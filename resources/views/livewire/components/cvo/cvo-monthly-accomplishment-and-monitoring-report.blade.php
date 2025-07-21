@@ -67,8 +67,6 @@
                     </div>
                 </div>
 
-                @dump($entityMonthlyInputs)
-
                 <div class="overflow-auto" style="max-height: 700px;">
                     <div class="mt-5">
                         <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
@@ -195,7 +193,7 @@
                                     </td> {{-- Accomplishment Month (empty) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                         <span style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};">
-                                            TOTAL #
+                                            {{ $this->accomplishmentToDateTotals['subCategory'][$subCategory['id']] ?? 0 }}
                                         </span>
                                     </td> {{-- Accomplishment To Date (empty) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
@@ -239,7 +237,9 @@
                                         @endif
                                     </td> {{-- Accomplishment Month --}}
                                     <td>
-                                        <span>TOTAL #</span>
+                                        <span>
+                                            {{ $this->accomplishmentToDateTotals['species'][$species['id']] ?? 0 }}
+                                        </span>
                                     </td> {{-- Accomplishment To Date --}}
                                     <td></td> {{-- Percentage (calculated or empty) --}}
                                     <td><input type="text" class="form-control"></td> {{-- Remarks --}}
@@ -287,7 +287,9 @@
                                         @endif
                                     </td> {{-- Accomplishment Month --}}
                                     <td>
-                                        <span>TOTAL #</span>
+                                        <span>
+                                            {{ $this->accomplishmentToDateTotals['species'][$nestedSpecies['id']] ?? 0 }}
+                                        </span>
                                     </td> {{-- Accomplishment To Date --}}
                                     <td></td> {{-- Percentage (calculated or empty) --}}
                                     <td>

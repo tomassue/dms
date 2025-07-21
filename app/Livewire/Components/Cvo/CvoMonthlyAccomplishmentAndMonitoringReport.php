@@ -75,31 +75,33 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         $this->loadAccomplishmentData();
     }
 
-    #TODO: acomplismentToDateTotals refreshes as entityMonthlyInputs refreshes
     public function getAccomplishmentToDateTotalsProperty()
     {
         $totals = [];
 
-        // Loop through entityMonthlyInputs which already contains data
-        foreach ($this->entityMonthlyInputs as $type => $entities) {
-            foreach ($entities as $entityId => $monthlyData) {
-                $sum = 0;
+        $target = $this->accomplishment->target; // Example: '2025-H1'
+        [$year, $half] = explode('-', $target);
+        $months = match ($half) {
+            'H1' => range(1, 6),
+            'H2' => range(7, 12),
+            default => [],
+        };
 
-                foreach ($monthlyData as $month => $values) {
-                    if (
-                        ($this->accomplishment->target === '2025-H1' && in_array($month, ['1', '2', '3', '4', '5', '6'])) ||
-                        ($this->accomplishment->target === '2025-H2' && in_array($month, ['7', '8', '9', '10', '11', '12']))
-                    ) {
-                        $sum += (int) ($values['accomplished_value'] ?? 0);
-                    }
-                }
+        // Fetch all monthly accomplishments within relevant months
+        $accomplishments = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+            ->whereIn('month', $months)
+            ->get();
 
-                $totals[$type][$entityId] = $sum;
-            }
+        foreach ($accomplishments as $accomplishment) {
+            $type = $this->getTypeFromModelClass($accomplishment->accomplishable_type);
+            $totals[$type][$accomplishment->accomplishable_id] ??= 0;
+            $totals[$type][$accomplishment->accomplishable_id] += (int) $accomplishment->accomplished_value;
         }
 
         return $totals;
     }
+
+    public function getAccomplishmentToDatePercentagesProperty() {}
 
     public function loadAccomplishmentData()
     {
