@@ -5,8 +5,8 @@
         <!--begin::Header-->
         <div class="card-header border-0 py-5">
             <h3 class="card-title align-items-start flex-column">
-                <span class="card-label fw-bolder fs-3 mb-1">Monthly Accomplishment and Monitoring Report</span>
-                <span class="text-muted fw-bold fs-7">Over --count-- accomplishments</span>
+                <span class="card-label fw-bolder fs-3 mb-1">Periodical Accomplishment and Monitoring Report</span>
+                <span class="text-muted fw-bold fs-7">Over --count-- accomplishments and monitoring report</span>
             </h3>
             <div class="card-toolbar">
                 <div class="d-flex align-items-center gap-2">
@@ -35,9 +35,7 @@
                     <thead>
                         <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
                             <th>Date</th>
-                            @can('accomplishments.update')
                             <th class="text-center">Actions</th>
-                            @endcan
                         </tr>
                     </thead>
                     <tbody>
@@ -45,9 +43,10 @@
                         <tr>
                             <td>{{ $item->formatted_half_year_period }}</td>
                             <td class="text-center" wire:loading.class="pe-none">
-                                @can('accomplishments.update')
+
                                 <div class="btn-group" role="group" aria-label="Actions">
-                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="viewMonthlyAccomplishmentAndMonitoringReport({{ $item->id }})" @click.stop>
+                                    @can('monthly-reporting.read')
+                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="View" wire:click="viewMonthlyAccomplishmentAndMonitoringReport({{ $item->id }})" @click.stop>
                                         <div wire:loading.remove wire:target="viewMonthlyAccomplishmentAndMonitoringReport({{ $item->id }})">
                                             <i class="bi bi-eye"></i>
                                         </div>
@@ -57,6 +56,8 @@
                                             </div>
                                         </div>
                                     </button>
+                                    @endcan
+                                    @can('accomplishments.update')
                                     <button type="button" class="btn btn-icon btn-sm btn-warning" title="Edit" wire:click="editAccomplishment({{ $item->id }})" @click.stop>
                                         <div wire:loading.remove wire:target="editAccomplishment({{ $item->id }})">
                                             <i class="bi bi-pencil"></i>
@@ -67,6 +68,7 @@
                                             </div>
                                         </div>
                                     </button>
+                                    @endcan
                                     <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
                                         <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
                                             <i class="bi bi-clock-history"></i>
@@ -78,7 +80,7 @@
                                         </div>
                                     </button>
                                 </div>
-                                @endcan
+
                             </td>
                         </tr>
                         @empty

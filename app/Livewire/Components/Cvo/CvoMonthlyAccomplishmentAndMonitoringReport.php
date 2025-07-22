@@ -159,16 +159,26 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     public function updated($propertyName)
     {
         if (str_starts_with($propertyName, 'entityTargetsInput')) {
-            $this->validateOnly($propertyName);
-            $key = str_replace('entityTargetsInput.', '', $propertyName);
-            $this->dispatch('save-target', ['key' => $key]); // Delay saving until after DOM update
+            if (auth()->user()->can('monthly-reporting.input-target-period')) {
+                $this->validateOnly($propertyName);
+                $key = str_replace('entityTargetsInput.', '', $propertyName);
+                $this->dispatch('save-target', ['key' => $key]); // Delay saving until after DOM update
+            } else {
+                $this->loadAccomplishmentData();
+                $this->dispatch('error', message: 'You do not have permission to save targets.');
+            }
         }
 
         if (str_starts_with($propertyName, 'entityMonthlyInputs')) {
-            $this->validateOnly('selectedAccomplishmentMonth');
-            $this->validateOnly($propertyName);
-            $key = str_replace('entityMonthlyInputs.', '', $propertyName);
-            $this->dispatch('save-monthly-accomplishment', ['key' => $key]); // Delay saving until after DOM update;
+            if (auth()->user()->can('monthly-reporting.input-accomplishment-by-month')) {
+                $this->validateOnly('selectedAccomplishmentMonth');
+                $this->validateOnly($propertyName);
+                $key = str_replace('entityMonthlyInputs.', '', $propertyName);
+                $this->dispatch('save-monthly-accomplishment', ['key' => $key]); // Delay saving until after DOM update;
+            } else {
+                $this->loadAccomplishmentData();
+                $this->dispatch('error', message: 'You do not have permission to save accomplishments.');
+            }
         }
     }
 

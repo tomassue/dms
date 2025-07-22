@@ -29,30 +29,24 @@ Auth::routes();
 
 Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMISID|CITY ADMIN']], function () {
 
-    // Routes accessible only by admin of team 1
-    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
-
     # Account Settings
     Route::get('/account-settings', AccountSettings::class)->name('account-settings');
 
     Route::middleware(['auth', 'check_password_if_updated'])->group(function () {
 
         /* ------------------------------ SHARED ROUTES ----------------------------- */
+        # Home
+        Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
         # Dashboard
         Route::get('/dashboard', Dashboard::class)->name('dashboard')->middleware('permission:dashboard.read');
-
         # Incoming.Requests
         Route::get('/incoming/requests', Requests::class)->name('incoming-requests')->middleware('permission:incoming.requests.read');
-
         # Incoming.Documents
         Route::get('/incoming/documents', Documents::class)->name('incoming-documents')->middleware('permission:incoming.documents.read');
-
         # Outgoing
         Route::get('/outgoing', Outgoing::class)->name('outgoing')->middleware('permission:outgoing.read');
-
         # Calendar
         Route::get('/calendar', Calendar::class)->name('calendar')->middleware('permission:calendar.read');
-
         # Accomplishments
         Route::get('/accomplishments', Accomplishments::class)->name('accomplishments')->middleware('permission:accomplishments.read');
 

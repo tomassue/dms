@@ -130,7 +130,7 @@ class AccountSettings extends Component
                 ]);
 
                 $this->dispatch('success', message: 'Password updated successfully!');
-                return redirect()->route('dashboard');
+                return redirect()->route('home');
             });
         } catch (\Throwable $th) {
             $this->reset(['current_password', 'new_password', 'confirm_password']);

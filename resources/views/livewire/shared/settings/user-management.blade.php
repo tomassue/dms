@@ -706,6 +706,33 @@
                                                 <label class="form-check-label" for="accomplishmentsUpdate"> Update </label>
                                             </div>
                                         </div>
+                                        <li class="d-flex align-items-center py-2 ms-8">
+                                            <span class="bullet me-5"></span> Monthly Accomplishment and Monitoring Report
+                                        </li>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="monthly-reporting.read" id="monthlyReportingRead" wire:model="permissions" />
+                                                <label class="form-check-label" for="monthlyReportingRead"> Read </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="monthly-reporting.input-target-period" id="monthlyReportingInputTarget" wire:model="permissions" />
+                                                <label class="form-check-label" for="monthlyReportingInputTarget"> Input Target Period </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="monthly-reporting.input-accomplishment-by-month" id="monthlyReportingInputAccomplishmentByMonth" wire:model="permissions" />
+                                                <label class="form-check-label" for="monthlyReportingInputAccomplishmentByMonth"> Input Accomplishment by Month </label>
+                                            </div>
+                                        </div>
+                                        <div class="row py-2 ms-16">
+                                            <div class="form-check form-check-custom form-check-solid">
+                                                <input class="form-check-input" type="checkbox" value="monthly-reporting.input-remarks" id="monthlyReportingInputRemarks" wire:model="permissions" />
+                                                <label class="form-check-label" for="monthlyReportingInputRemarks"> Input Remarks </label>
+                                            </div>
+                                        </div>
 
                                         <!-- References -->
                                         <li class="d-flex align-items-center py-2">

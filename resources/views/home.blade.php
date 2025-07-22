@@ -18,7 +18,7 @@
         </div>
         <!--end::Message-->
         <!--begin::Action-->
-        <div class="text-center">
+        <div class="text-center" style="display: none;">
             <a href="{{ route('dashboard') }}" class="btn btn-lg fw-bolder" style="background-color: #0e4a84; color: #ffffff">Go to dashboard</a>
         </div>
         <!--end::Action-->

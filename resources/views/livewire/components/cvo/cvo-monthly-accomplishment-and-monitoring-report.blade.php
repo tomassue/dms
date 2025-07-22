@@ -4,7 +4,7 @@
         <!--begin::Header-->
         <div class="card-header border-0 py-5">
             <h3 class="card-title align-items-start flex-column">
-                <span class="card-label fw-bolder fs-3 mb-1">View Monthly Accomplishment and Monitoring Report (ADMIN VIEW)</span>
+                <span class="card-label fw-bolder fs-3 mb-1">View Monthly Accomplishment and Monitoring Report</span>
                 <span class="text-muted fw-bold fs-7"></span>
             </h3>
             <div class="card-toolbar" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover" title="" data-bs-original-title="Go Back">
@@ -25,48 +25,6 @@
         <!--begin::Body-->
         <div class="card-body d-flex flex-column" style="position: relative; padding-top: unset;">
             <div class="collapse show">
-                <div class="row justify-content-between">
-                    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text" id="basic-addon1">Date</span>
-                            <input type="text" class="form-control" placeholder="Date range here" aria-label="Username" aria-describedby="basic-addon1">
-                        </div>
-                    </div>
-                    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text" id="basic-addon1">Category</span>
-                            <select class="form-select" aria-label="Default select example" wire:model.live="ref_accomplishment_category_id">
-                                <option value=" ">-Select-</option>
-                                @foreach ($category_select as $item)
-                                <option value="{{ $item->id }}">{{ $item->accomplishment_category_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-                <div class="row justify-content-between">
-                    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4">
-                        <div class="input-group mb-3">
-                            @php
-                            //TODO based on the user (technician)
-                            @endphp
-                            <span class="input-group-text" id="basic-addon1">Technician</span>
-                            <input type="text" class="form-control" placeholder="Select" aria-label="Username" aria-describedby="basic-addon1">
-                        </div>
-                    </div>
-                    <div class="col-sm-12 col-md-6 col-lg-6 col-xl-4">
-                        <div class="input-group mb-3">
-                            <span class="input-group-text" id="basic-addon1">Sub-category</span>
-                            <select class="form-select" aria-label="Default select example" wire:model.live="ref_accomplishment_sub_category_id">
-                                <option value=" ">-Select-</option>
-                                @foreach ($sub_category_select as $item)
-                                <option value="{{ $item->id }}">{{ $item->accomplishment_sub_category_name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
                 <div class="overflow-auto" style="max-height: 700px;">
                     <div class="mt-5">
                         <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
@@ -127,7 +85,8 @@
                                             class="form-control @error('entityTargetsInput.category.' . $category['id'] . '.target_value') is-invalid @enderror"
                                             style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
                                             wire:model.blur="entityTargetsInput.category.{{ $category['id'] }}.target_value"
-                                            placeholder="Enter target">
+                                            placeholder="Enter target"
+                                            {{ auth()->user()->can('monthly-reporting.input-target-period') ? '' : 'disabled' }}>
                                         @error('entityTargetsInput.category.' . $category['id'] . '.target_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
