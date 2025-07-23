@@ -105,9 +105,6 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     {
         $percentages = [];
 
-        // $target = $this->accomplishment->target; // Example: '2025-H1'
-        // [$year, $half] = explode('-', $target);
-
         // Get all targets for the same accomplishment and half
         $targets = CvoPeriodTarget::where('cvo_accomplishment_id', $this->accomplishmentId)
             ->get();
@@ -143,7 +140,9 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             ];
         }
 
-        $accomplishments = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)->get();
+        $accomplishments = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+            ->orderBy('month', 'asc')
+            ->get();
         $this->entityMonthlyInputs = []; // Reset to ensure fresh load
         foreach ($accomplishments as $accomplishment) {
             $type = $this->getTypeFromModelClass($accomplishment->accomplishable_type);
@@ -155,7 +154,8 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             $this->selectedAccomplishmentMonth = $accomplishment->month;
         }
     }
-
+    //TODO: 
+    //! BUG FOUND: Inputting remarks, resets monthly input (row level).
     public function updated($propertyName)
     {
         if (str_starts_with($propertyName, 'entityTargetsInput')) {
@@ -383,7 +383,6 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             ];
         }
     }
-
 
     public function getCategorySelect()
     {

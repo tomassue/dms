@@ -21,7 +21,7 @@
             </div>
         </div>
         <!--end::Header-->
-
+        @dump($entityMonthlyInputs)
         <!--begin::Body-->
         <div class="card-body d-flex flex-column" style="position: relative; padding-top: unset;">
             <div class="collapse show">
@@ -97,7 +97,8 @@
                                             class="form-control"
                                             style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
                                             wire:model.blur="entityMonthlyInputs.category.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
-                                            placeholder="Enter month accomplishment">
+                                            placeholder="Enter month accomplishment"
+                                            {{ auth()->user()->can('monthly-reporting.input-accomplishment-by-month') ? '' : 'disabled' }}>
                                         @error('entityMonthlyInputs.category' . $category['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
@@ -124,7 +125,8 @@
                                             class="form-control"
                                             style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
                                             wire:model.blur="entityMonthlyInputs.category.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
-                                            placeholder="Enter remarks">
+                                            placeholder="Enter remarks"
+                                            {{ auth()->user()->can('monthly-reporting.input-remarks') ? '' : 'disabled' }}>
                                         @error('entityMonthlyInputs.category' . $category['id'] . $selectedAccomplishmentMonth . '.remarks_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
@@ -143,7 +145,8 @@
                                             class="form-control"
                                             style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"
                                             wire:model.blur="entityTargetsInput.subCategory.{{ $subCategory['id'] }}.target_value"
-                                            placeholder="Enter target">
+                                            placeholder="Enter target"
+                                            {{ auth()->user()->can('monthly-reporting.input-target-period') ? '' : 'disabled' }}>
                                     </td> {{-- Target (empty for sub-category row) --}}
                                     <td class="{{ $subCategory['is_inputtable'] === 'Y' ? '' : 'bg-light' }}">
                                         @if ($selectedAccomplishmentMonth)
@@ -151,7 +154,8 @@
                                             class="form-control"
                                             style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"
                                             wire:model.blur="entityMonthlyInputs.subCategory.{{ $subCategory['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
-                                            placeholder="Enter month accomplishment">
+                                            placeholder="Enter month accomplishment"
+                                            {{ auth()->user()->can('monthly-reporting.input-accomplishment-by-month') ? '' : 'disabled' }}>
                                         @error('entityMonthlyInputs.subCategory' . $subCategory['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
@@ -178,7 +182,8 @@
                                             class="form-control"
                                             style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"
                                             wire:model.blur="entityMonthlyInputs.subCategory.{{ $subCategory['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
-                                            placeholder="Enter remarks">
+                                            placeholder="Enter remarks"
+                                            {{ auth()->user()->can('monthly-reporting.input-remarks') ? '' : 'disabled' }}>
                                         @error('entityMonthlyInputs.subCategory' . $subCategory['id'] . $selectedAccomplishmentMonth . '.remarks_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
@@ -197,14 +202,16 @@
                                         <input type="text"
                                             class="form-control"
                                             wire:model.blur="entityTargetsInput.species.{{ $species['id'] }}.target_value"
-                                            placeholder="Enter target">
+                                            placeholder="Enter target"
+                                            {{ auth()->user()->can('monthly-reporting.input-target-period') ? '' : 'disabled' }}>
                                     </td> {{-- Target - This can be dynamic data later --}}
                                     <td>
                                         @if ($selectedAccomplishmentMonth)
                                         <input type="text"
                                             class="form-control"
                                             wire:model.blur="entityMonthlyInputs.species.{{ $species['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
-                                            placeholder="Enter month accomplishment">
+                                            placeholder="Enter month accomplishment"
+                                            {{ auth()->user()->can('monthly-reporting.input-accomplishment-by-month') ? '' : 'disabled' }}>
                                         @error('entityMonthlyInputs.species' . $species['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
@@ -225,7 +232,18 @@
                                             </div>
                                         </div>
                                     </td> {{-- Percentage (calculated or empty) --}}
-                                    <td><input type="text" class="form-control"></td> {{-- Remarks --}}
+                                    <td>
+                                        @if ($selectedAccomplishmentMonth)
+                                        <input type="text"
+                                            class="form-control"
+                                            wire:model.blur="entityMonthlyInputs.species.{{ $species['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
+                                            placeholder="Enter remarks"
+                                            {{ auth()->user()->can('monthly-reporting.input-remarks') ? '' : 'disabled' }}>
+                                        @error('entityMonthlyInputs.species' . $species['id'] . $selectedAccomplishmentMonth . '.remarks_value')
+                                        <span class="text-danger">{{ $message }}</span>
+                                        @enderror
+                                        @endif
+                                    </td> {{-- Remarks --}}
                                 </tr>
                                 @endforeach
                                 @endif
@@ -256,14 +274,16 @@
                                             type="text"
                                             class="form-control"
                                             wire:model.blur="entityTargetsInput.species.{{ $nestedSpecies['id'] }}.target_value"
-                                            placeholder="Enter target">
+                                            placeholder="Enter target"
+                                            {{ auth()->user()->can('monthly-reporting.input-target-period') ? '' : 'disabled' }}>
                                     </td> {{-- Target - This can be dynamic data later --}}
                                     <td>
                                         @if ($selectedAccomplishmentMonth)
                                         <input type="text"
                                             class="form-control"
                                             wire:model.blur="entityMonthlyInputs.species.{{ $nestedSpecies['id'] }}.{{ $selectedAccomplishmentMonth }}.accomplished_value"
-                                            placeholder="Enter month accomplishment">
+                                            placeholder="Enter month accomplishment"
+                                            {{ auth()->user()->can('monthly-reporting.input-accomplishment-by-month') ? '' : 'disabled' }}>
                                         @error('entityMonthlyInputs.species' . $nestedSpecies['id'] . $selectedAccomplishmentMonth . '.accomplished_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
@@ -289,7 +309,8 @@
                                         <input type="text"
                                             class="form-control"
                                             wire:model.blur="entityMonthlyInputs..species.{{ $nestedSpecies['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
-                                            placeholder="Enter remarks">
+                                            placeholder="Enter remarks"
+                                            {{ auth()->user()->can('monthly-reporting.input-remarks') ? '' : 'disabled' }}>
                                         @error('entityMonthlyInputs..species' . $nestedSpecies['id'] . $selectedAccomplishmentMonth . '.remarks_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
