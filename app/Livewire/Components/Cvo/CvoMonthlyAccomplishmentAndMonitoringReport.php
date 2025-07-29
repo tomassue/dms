@@ -33,7 +33,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     public $entityTargetsInput = [];
     public $selectedAccomplishmentMonth;
     public $entityMonthlyInputs = [];
-    public $entityRemarksInput = [];
+    public $entityRemarksInputs = [];
     public $periodTargets = [];
     // Property to control autosave status messages
     public $autosaveMessage = '';
@@ -149,7 +149,10 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             $this->entityMonthlyInputs[$type] ??= []; // Ensure the type array exists
             $this->entityMonthlyInputs[$type][$accomplishment->accomplishable_id][$accomplishment->month] = [
                 'accomplished_value' => $accomplishment->accomplished_value,
-                'remarks_value' => $accomplishment->remarks,
+                // 'remarks_value' => $accomplishment->remarks,
+            ];
+            $this->entityRemarksInputs[$type][$accomplishment->accomplishable_id][$accomplishment->month] = [
+                'remarks_value' => $accomplishment->remarks
             ];
             $this->selectedAccomplishmentMonth = $accomplishment->month;
         }
@@ -178,6 +181,15 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             } else {
                 $this->loadAccomplishmentData();
                 $this->dispatch('error', message: 'You do not have permission to save accomplishments.');
+            }
+        }
+
+        if (str_starts_with($propertyName, 'entityRemarksInputs')) {
+            if (auth()->user()->can('monthly-reporting.input-accomplishment-by-month')) {
+                $this->validateOnly('selectedAccomplishmentMonth');
+                $this->validateOnly($propertyName);
+                $key = str_replace('entityRemarksInputs.', '', $propertyName);
+                $this->dispatch('save-remarks', ['key' => $key]); // Delay saving until after DOM update;
             }
         }
     }
@@ -284,7 +296,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             if ($changedKey && str_contains($changedKey, '.')) {
                 // E.g., entityMonthlyInputs.category.123.7.accomplished_value
                 $parts = explode('.', $changedKey);
-                $entityType = $parts[1]; // monthly
+                $entityType = $parts[1]; // category, subCategory, etc.
                 $entityId = $parts[2];
                 $month = $parts[3];
                 $fieldName = $parts[4];
@@ -331,6 +343,77 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                             $queryConditions,
                             [
                                 'accomplished_value' => is_numeric($accomplishedValue) ? (float) $accomplishedValue : null,
+                                // 'remarks' => $remarksValue !== '' ? $remarksValue : null,
+                            ]
+                        );
+                    }
+                }
+            }
+
+            $this->dispatch('success', message: 'Monthly accomplishments saved successfully.');
+        });
+    }
+
+    #[On('triggerSaveRemarks')]
+    public function saveRemarksLogic($changedKey = null)
+    {
+        // changedKey is a string like: entityMonthlyInputs.monthly.123.7.accomplished_value
+
+        if (!$this->accomplishmentId) {
+            throw new \Exception('No accomplishment period selected to save monthly inputs.');
+        }
+
+        DB::transaction(function () use ($changedKey) {
+            $inputsToSave = [];
+
+            if ($changedKey && str_contains($changedKey, '.')) {
+                // E.g., entityMonthlyInputs.category.123.7.accomplished_value
+                $parts = explode('.', $changedKey);
+                $entityType = $parts[1]; // category, subCategory, etc.
+                $entityId = $parts[2];
+                $month = $parts[3];
+                $fieldName = $parts[4];
+
+                $value = $this->entityRemarksInputs[$entityType][$entityId][$month][$fieldName] ?? null;
+
+                $inputsToSave[$entityType][$entityId][$month][$fieldName] = $value;
+            } else {
+                $inputsToSave = $this->entityRemarksInputs;
+            }
+
+            $selectedMonth = $this->selectedAccomplishmentMonth;
+
+            foreach ($inputsToSave as $entityType => $entities) {
+                $modelClass = $this->getModelClassFromType($entityType);
+
+                if (!$modelClass) {
+                    $this->dispatch('error', message: "Invalid entity type: $entityType");
+                    continue;
+                }
+
+                foreach ($entities as $entityId => $months) {
+                    if (!isset($months[$selectedMonth])) continue;
+
+                    $values = $months[$selectedMonth];
+
+                    $remarksValue = $values['remarks_value'] ?? null;
+
+                    $queryConditions = [
+                        'cvo_accomplishment_id' => $this->accomplishmentId,
+                        'accomplishable_type' => $modelClass,
+                        'accomplishable_id' => $entityId,
+                        'month' => $selectedMonth,
+                    ];
+
+                    $remarksValue = trim($remarksValue ?? '');
+
+                    if ($remarksValue === '') {
+                        CvoMonthlyAccomplishment::where($queryConditions)->delete();
+                    } else {
+                        CvoMonthlyAccomplishment::updateOrCreate(
+                            $queryConditions,
+                            [
+                                // 'accomplished_value' => null,
                                 'remarks' => $remarksValue !== '' ? $remarksValue : null,
                             ]
                         );

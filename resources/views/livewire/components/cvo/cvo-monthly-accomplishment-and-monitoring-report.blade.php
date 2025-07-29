@@ -21,7 +21,6 @@
             </div>
         </div>
         <!--end::Header-->
-        @dump($entityMonthlyInputs)
         <!--begin::Body-->
         <div class="card-body d-flex flex-column" style="position: relative; padding-top: unset;">
             <div class="collapse show">
@@ -124,10 +123,10 @@
                                         <input type="text"
                                             class="form-control"
                                             style="display: {{ $category['is_inputtable'] === 'Y' ? '' : 'none' }};"
-                                            wire:model.blur="entityMonthlyInputs.category.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
+                                            wire:model.blur="entityRemarksInputs.category.{{ $category['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
                                             placeholder="Enter remarks"
                                             {{ auth()->user()->can('monthly-reporting.input-remarks') ? '' : 'disabled' }}>
-                                        @error('entityMonthlyInputs.category' . $category['id'] . $selectedAccomplishmentMonth . '.remarks_value')
+                                        @error('entityRemarksInputs.category' . $category['id'] . $selectedAccomplishmentMonth . '.remarks_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
                                         @endif
@@ -181,10 +180,10 @@
                                         <input type="text"
                                             class="form-control"
                                             style="display: {{ $subCategory['is_inputtable'] === 'Y' ? '' : 'none' }};"
-                                            wire:model.blur="entityMonthlyInputs.subCategory.{{ $subCategory['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
+                                            wire:model.blur="entityRemarksInputs.subCategory.{{ $subCategory['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
                                             placeholder="Enter remarks"
                                             {{ auth()->user()->can('monthly-reporting.input-remarks') ? '' : 'disabled' }}>
-                                        @error('entityMonthlyInputs.subCategory' . $subCategory['id'] . $selectedAccomplishmentMonth . '.remarks_value')
+                                        @error('entityRemarksInputs.subCategory' . $subCategory['id'] . $selectedAccomplishmentMonth . '.remarks_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
                                         @endif
@@ -236,10 +235,10 @@
                                         @if ($selectedAccomplishmentMonth)
                                         <input type="text"
                                             class="form-control"
-                                            wire:model.blur="entityMonthlyInputs.species.{{ $species['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
+                                            wire:model.blur="entityRemarksInputs.species.{{ $species['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
                                             placeholder="Enter remarks"
                                             {{ auth()->user()->can('monthly-reporting.input-remarks') ? '' : 'disabled' }}>
-                                        @error('entityMonthlyInputs.species' . $species['id'] . $selectedAccomplishmentMonth . '.remarks_value')
+                                        @error('entityRemarksInputs.species' . $species['id'] . $selectedAccomplishmentMonth . '.remarks_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
                                         @endif
@@ -308,10 +307,10 @@
                                         @if ($selectedAccomplishmentMonth)
                                         <input type="text"
                                             class="form-control"
-                                            wire:model.blur="entityMonthlyInputs..species.{{ $nestedSpecies['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
+                                            wire:model.blur="entityRemarksInputs..species.{{ $nestedSpecies['id'] }}.{{ $selectedAccomplishmentMonth }}.remarks_value"
                                             placeholder="Enter remarks"
                                             {{ auth()->user()->can('monthly-reporting.input-remarks') ? '' : 'disabled' }}>
-                                        @error('entityMonthlyInputs..species' . $nestedSpecies['id'] . $selectedAccomplishmentMonth . '.remarks_value')
+                                        @error('entityRemarksInputs..species' . $nestedSpecies['id'] . $selectedAccomplishmentMonth . '.remarks_value')
                                         <span class="text-danger">{{ $message }}</span>
                                         @enderror
                                         @endif
@@ -373,6 +372,12 @@
 
     $wire.on('save-monthly-accomplishment', (key) => {
         $wire.dispatch('triggerSaveMonthlyAccomplishment', {
+            key: key
+        });
+    });
+
+    $wire.on('save-remarks', (key) => {
+        $wire.dispatch('triggerSaveRemarks', {
             key: key
         });
     });
