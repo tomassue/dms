@@ -17,11 +17,12 @@ return new class extends Migration
             $table->string('accomplishable_type'); // 'App\Models\RefAccomplishmentCategory', 'App\Models\RefAccomplishmentSubcategory', 'App\Models\RefSpecies'
             $table->unsignedBigInteger('accomplishable_id');
             $table->index(['accomplishable_type', 'accomplishable_id'], 'cvo_m_a_poly_idx'); // Shorter, custom name
-
             $table->tinyInteger('month'); // 1-12 for January-December
             $table->integer('accomplished_value')->nullable(); // Can be null if not yet entered
             $table->text('remarks')->nullable();
-
+            $table->integer('office_id')->comment('a.k.a role_id from roles or offices');
+            $table->integer('ref_division_id')->comment('a.k.a division_id from divisions');
+            $table->integer('user_id')->comment('a.k.a user_id from users');
             $table->timestamps();
 
             // Add a unique constraint to prevent duplicate monthly records for the same entity in the same month/period

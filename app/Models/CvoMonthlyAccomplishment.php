@@ -17,7 +17,10 @@ class CvoMonthlyAccomplishment extends Model
         'accomplishable_id',
         'month',
         'accomplished_value',
-        'remarks'
+        'remarks',
+        'office_id',
+        'ref_division_id',
+        'user_id',
     ];
 
     // Relationship

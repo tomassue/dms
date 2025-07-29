@@ -21,12 +21,13 @@
             </div>
         </div>
         <!--end::Header-->
+
         <!--begin::Body-->
         <div class="card-body d-flex flex-column" style="position: relative; padding-top: unset;">
             <div class="collapse show">
                 <div class="overflow-auto" style="max-height: 700px;">
                     <div class="mt-5">
-                        <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
+                        <table class="table align-middle table-hover table-row-bordered border gy-7 gs-7">
                             <thead class="sticky-table-header">
                                 <tr class="fw-bold fs-6 text-gray-800 bg-secondary text-center">
                                     <th class="align-middle" rowspan="2">ACTIVITIES/PROJECTS</th>

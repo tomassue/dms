@@ -15,7 +15,10 @@ class CvoPeriodTarget extends Model
         'cvo_accomplishment_id',
         'targetable_type',
         'targetable_id',
-        'target_value'
+        'target_value',
+        'office_id',
+        'ref_division_id',
+        'user_id',
     ];
 
     public function cvoAccomplishment()

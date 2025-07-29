@@ -13,6 +13,7 @@ use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
 use Livewire\Livewire;
+use Spatie\Activitylog\Models\Activity;
 
 class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 {
@@ -157,8 +158,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             $this->selectedAccomplishmentMonth = $accomplishment->month;
         }
     }
-    //TODO: 
-    //! BUG FOUND: Inputting remarks, resets monthly input (row level).
+
     public function updated($propertyName)
     {
         if (str_starts_with($propertyName, 'entityTargetsInput')) {
@@ -227,7 +227,46 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                 // This branch would only be hit if savePeriodTargetsLogic was called without a $changedKey,
                 // implying a mass save, which isn't the autosave use case.
                 // We will assume that if changedKey is null, we iterate the whole array (e.g. initial load)
-                $targetsToSave = $this->entityTargetsInput;
+                //// $targetsToSave = $this->entityTargetsInput;
+
+                // If $changedKey is null (mass save), only include rows that changed
+                $targetsToSave = [];
+
+                foreach ($this->entityTargetsInput as $entityType => $targetsDataForType) {
+                    foreach ($targetsDataForType as $entityId => $nestedData) {
+                        $existingRecord = CvoPeriodTarget::where('cvo_accomplishment_id', $this->accomplishmentId)
+                            ->where('targetable_type', $this->getModelClassFromType($entityType))
+                            ->where('targetable_id', $entityId)
+                            ->first();
+
+                        $newValue = $nestedData['target_value'] ?? null;
+
+                        // ✅ Only include if:
+                        // 1. No existing record and numeric value provided (new entry)
+                        // 2. Existing record and value changed
+                        if (
+                            (is_numeric($newValue) && !$existingRecord) ||
+                            ($existingRecord && $existingRecord->target_value != $newValue)
+                        ) {
+                            $targetsToSave[$entityType][$entityId] = ['target_value' => $newValue];
+                        }
+                    }
+                }
+            }
+
+            // For logs
+            if ($entityType == 'category') {
+                $getFormattedEntityType = 'category';
+                $entity = RefAccomplishmentCategory::find($entityId);
+                $entityName = $entity->accomplishment_category_name;
+            } elseif ($entityType == 'subCategory') {
+                $getFormattedEntityType = 'sub category';
+                $entity = RefAccomplishmentSubcategory::find($entityId);
+                $entityName = $entity->accomplishment_sub_category_name;
+            } elseif ($entityType == 'species') {
+                $getFormattedEntityType = 'species';
+                $entity = RefSpecies::find($entityId);
+                $entityName = $entity->species_name;
             }
 
             foreach ($targetsToSave as $entityType => $targetsDataForType) {
@@ -264,8 +303,24 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                             ],
                             [
                                 'target_value' => (float) $targetValue,
+                                'office_id' => auth()->user()->roles()->first()->id,
+                                'ref_division_id' => auth()->user()->user_metadata?->ref_division_id ?? 0,
+                                'user_id' => auth()->user()->id
                             ]
                         );
+
+                        activity()
+                            ->causedBy(auth()->user())
+                            ->performedOn($this->accomplishment)
+                            ->useLog('cvo_period_target')
+                            ->event('saved')
+                            ->tap(function (Activity $activity) {
+                                $activity->log_name = 'cvo_period_target';
+                                $activity->subject_id = $this->accomplishment->id;
+                            })
+                            ->log(
+                                auth()->user()->name . ' saved a target for a ' . $getFormattedEntityType . ' of ' . $entityName . ' with a value of ' . $targetValue
+                            );
                     } else {
                         // \Log::debug("🗑️ Deleting: $entityType $entityId (input cleared)");
 
@@ -273,6 +328,19 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                             ->where('targetable_type', $modelClass)
                             ->where('targetable_id', $entityId)
                             ->delete();
+
+                        activity()
+                            ->causedBy(auth()->user())
+                            ->performedOn($this->accomplishment)
+                            ->useLog('cvo_period_target')
+                            ->event('delete')
+                            ->tap(function (Activity $activity) {
+                                $activity->log_name = 'cvo_period_target';
+                                $activity->subject_id = $this->accomplishment->id;
+                            })
+                            ->log(
+                                auth()->user()->name . ' removed a target value for a ' . $getFormattedEntityType . ' of ' . $entityName
+                            );
                     }
                 }
             }
@@ -280,6 +348,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             $this->dispatch('success', message: 'Targets successfully saved.');
         });
     }
+
 
     #[On('triggerSaveMonthlyAccomplishment')]
     public function savePeriodMonthlyInputsLogic($changedKey = null)
@@ -306,7 +375,33 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                 $inputsToSave[$entityType][$entityId][$month][$fieldName] = $value;
             } else {
                 $inputsToSave = $this->entityMonthlyInputs;
+                //TODO: Apply the same what we did with targets so that we can apply the activity_log as well and the specific update.
+                // If $changedKey is null (mass save), only include rows that changed
+                // $inputsToSave = [];
+
+                // foreach ($this->entityMonthlyInputs as $entityType => $targetsDataForType) {
+                //     foreach ($targetsDataForType as $entityId => $nestedData) {
+                //         $existingRecord = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+                //             ->where('accomplishable_type', $this->getModelClassFromType($entityType))
+                //             ->where('accomplishable_id', $entityId)
+                //             ->first();
+
+                //         $newValue = $nestedData['accomplished_value'] ?? null;
+
+                //         // ✅ Only include if:
+                //         // 1. No existing record and numeric value provided (new entry)
+                //         // 2. Existing record and value changed
+                //         if (
+                //             (is_numeric($newValue) && !$existingRecord) ||
+                //             ($existingRecord && $existingRecord->accomplished_value != $newValue)
+                //         ) {
+                //             $inputsToSave[$entityType][$entityId] = ['accomplished_value' => $newValue];
+                //         }
+                //     }
+                // }
             }
+
+            // dd($inputsToSave);
 
             $selectedMonth = $this->selectedAccomplishmentMonth;
 
@@ -343,7 +438,9 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                             $queryConditions,
                             [
                                 'accomplished_value' => is_numeric($accomplishedValue) ? (float) $accomplishedValue : null,
-                                // 'remarks' => $remarksValue !== '' ? $remarksValue : null,
+                                'office_id' => auth()->user()->roles()->first()->id,
+                                'ref_division_id' => auth()->user()->user_metadata?->ref_division_id ?? 0,
+                                'user_id' => auth()->user()->id
                             ]
                         );
                     }

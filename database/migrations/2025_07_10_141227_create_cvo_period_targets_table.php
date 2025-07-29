@@ -18,6 +18,9 @@ return new class extends Migration
             $table->unsignedBigInteger('targetable_id');
             $table->index(['targetable_type', 'targetable_id'], 'cvo_p_t_poly_idx'); // Shorter, custom name
             $table->integer('target_value')->default(0);
+            $table->integer('office_id')->comment('a.k.a role_id from roles or offices');
+            $table->integer('ref_division_id')->comment('a.k.a division_id from divisions');
+            $table->integer('user_id')->comment('a.k.a user_id from users');
 
             $table->timestamps();
 
