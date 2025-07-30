@@ -8,6 +8,7 @@ use App\Models\CvoPeriodTarget;
 use App\Models\RefAccomplishmentCategory;
 use App\Models\RefAccomplishmentSubcategory;
 use App\Models\RefSpecies;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
@@ -171,16 +172,83 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 
         $records = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
             ->where('month', $month)
-            ->where('user_id', auth()->user()->user_id) // ✅ Filter by user
+            ->where('user_id', auth()->user()->id) // ✅ Filter by user
             ->get();
 
         foreach ($records as $accomplishment) {
             $type = $this->getTypeFromModelClass($accomplishment->accomplishable_type);
             $this->entityMonthlyInputs[$type][$accomplishment->accomplishable_id][$month] = [
                 'accomplished_value' => $accomplishment->accomplished_value,
-                'remarks_value' => $accomplishment->remarks,
+                // 'remarks_value' => $accomplishment->remarks,
+            ];
+            $this->entityRemarksInputs[$type][$accomplishment->accomplishable_id][$month] = [
+                'remarks_value' => $accomplishment->remarks
             ];
         }
+    }
+
+    // 📝 This is for users like the admin, where they can't update monthly accomplishment values and remarks but only view all user inputs like the technicians.
+    //* Not used
+    // public function getMonthlyAccomplishmentList($entityType, $entityId, $month)
+    // {
+    //     $modelClass = $this->getModelClassFromType($entityType);
+
+    //     if (!$modelClass) {
+    //         return collect();
+    //     }
+
+    //     return CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+    //         ->where('accomplishable_type', $modelClass)
+    //         ->where('accomplishable_id', $entityId)
+    //         ->where('month', $month)
+    //         ->with('user') // assuming you have a relation in the model
+    //         ->get()
+    //         ->map(function ($record) {
+    //             return [
+    //                 'user' => $record->user->name ?? 'Unknown',
+    //                 'accomplished_value' => $record->accomplished_value,
+    //                 'remarks' => $record->remarks_value,
+    //             ];
+    //         });
+    // }
+
+    // 📝 This is for users like the admin, where they can't update monthly accomplishment values and remarks but only view all user inputs like the technicians.
+    public function getTotalMonthlyAccomplishmentValues($entityType, $entityId, $month)
+    {
+        $modelClass = $this->getModelClassFromType($entityType);
+
+        if (!$modelClass) {
+            return collect();
+        }
+
+        return CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+            ->where('accomplishable_type', $modelClass)
+            ->where('accomplishable_id', $entityId)
+            ->where('month', $month)
+            ->sum('accomplished_value');
+    }
+
+    // 📝 This is for users like the admin, where they can't update monthly accomplishment values and remarks but only view all user inputs like the technicians.
+    public function getMonthlyAccomplishmentRemarksList($entityType, $entityId, $month)
+    {
+        $modelClass = $this->getModelClassFromType($entityType);
+
+        if (!$modelClass) {
+            return collect();
+        }
+
+        return CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+            ->where('accomplishable_type', $modelClass)
+            ->where('accomplishable_id', $entityId)
+            ->where('month', $month)
+            ->with('user') // assuming you have a relation in the model
+            ->get()
+            ->map(function ($record) {
+                return [
+                    // 'user' => $record->user->name ?? 'Unknown',
+                    'remarks' => $record->remarks,
+                ];
+            });
     }
 
     public function updated($propertyName)
@@ -431,13 +499,15 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                         if ($existingRecord) {
                             $existingRecord->delete();
 
+                            $monthName = Carbon::create()->month($selectedMonth)->format('M');
+
                             activity()
                                 ->causedBy($user)
                                 ->performedOn($this->accomplishment)
                                 ->useLog('cvo_monthly_accomplishment')
                                 ->event('delete')
                                 ->tap(fn(Activity $activity) => $activity->log_name = 'cvo_monthly_accomplishment')
-                                ->log("{$user->name} removed monthly accomplishment for {$formattedType} '{$entityName}' in month {$selectedMonth}");
+                                ->log("{$user->name} removed monthly accomplishment for {$formattedType} '{$entityName}' in month {$monthName}");
                         }
                     } else {
                         $updateData = [
@@ -457,13 +527,15 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                         // ✅ Create/update only when changed or new
                         CvoMonthlyAccomplishment::updateOrCreate($queryConditions, $updateData);
 
+                        $monthName = Carbon::create()->month((int) $selectedMonth)->format('M');
+
                         activity()
                             ->causedBy($user)
                             ->performedOn($this->accomplishment)
                             ->useLog('cvo_monthly_accomplishment')
                             ->event('saved')
                             ->tap(fn(Activity $activity) => $activity->log_name = 'cvo_monthly_accomplishment')
-                            ->log("{$user->name} saved monthly accomplishment for {$formattedType} '{$entityName}' with value {$accomplishedValue} and remarks '{$remarksValue}' for month {$selectedMonth}");
+                            ->log("{$user->name} saved monthly accomplishment for {$formattedType} '{$entityName}' with value {$accomplishedValue} and remarks '{$remarksValue}' for month {$monthName}");
                     }
                 }
             }
@@ -557,13 +629,15 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                         if ($existingRecord) {
                             $existingRecord->delete();
 
+                            $monthName = Carbon::create()->month($selectedMonth)->format('M');
+
                             activity()
                                 ->causedBy($user)
                                 ->performedOn($this->accomplishment)
                                 ->useLog('cvo_monthly_accomplishment')
                                 ->event('delete')
                                 ->tap(fn(Activity $activity) => $activity->log_name = 'cvo_monthly_accomplishment')
-                                ->log("{$user->name} removed remarks for {$formattedType} '{$entityName}' in month {$selectedMonth}");
+                                ->log("{$user->name} removed remarks for {$formattedType} '{$entityName}' in month {$monthName}");
                         }
                     } else {
                         $updateData = [
@@ -582,13 +656,15 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 
                         CvoMonthlyAccomplishment::updateOrCreate($queryConditions, $updateData);
 
+                        $monthName = Carbon::create()->month((int) $selectedMonth)->format('M');
+
                         activity()
                             ->causedBy($user)
                             ->performedOn($this->accomplishment)
                             ->useLog('cvo_monthly_accomplishment')
                             ->event('saved')
                             ->tap(fn(Activity $activity) => $activity->log_name = 'cvo_monthly_accomplishment')
-                            ->log("{$user->name} saved remarks for {$formattedType} '{$entityName}' with '{$remarksValue}' in month {$selectedMonth}");
+                            ->log("{$user->name} saved remarks for {$formattedType} '{$entityName}' with '{$remarksValue}' in month {$monthName}");
                     }
                 }
             }
