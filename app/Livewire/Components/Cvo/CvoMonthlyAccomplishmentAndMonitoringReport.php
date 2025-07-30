@@ -142,6 +142,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         }
 
         $accomplishments = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+            ->where('user_id', auth()->user()->id) // ✅ Filter by user
             ->orderBy('month', 'asc')
             ->get();
         $this->entityMonthlyInputs = []; // Reset to ensure fresh load
@@ -156,6 +157,29 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                 'remarks_value' => $accomplishment->remarks
             ];
             $this->selectedAccomplishmentMonth = $accomplishment->month;
+        }
+    }
+
+    public function loadMonthlyAccomplishmentsForSelectedMonth()
+    {
+        if (!$this->selectedAccomplishmentMonth) {
+            return;
+        }
+
+        $month = $this->selectedAccomplishmentMonth;
+        $this->entityMonthlyInputs = [];
+
+        $records = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+            ->where('month', $month)
+            ->where('user_id', auth()->user()->user_id) // ✅ Filter by user
+            ->get();
+
+        foreach ($records as $accomplishment) {
+            $type = $this->getTypeFromModelClass($accomplishment->accomplishable_type);
+            $this->entityMonthlyInputs[$type][$accomplishment->accomplishable_id][$month] = [
+                'accomplished_value' => $accomplishment->accomplished_value,
+                'remarks_value' => $accomplishment->remarks,
+            ];
         }
     }
 
@@ -326,6 +350,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         DB::transaction(function () use ($changedKey) {
             $inputsToSave = [];
 
+            // 🔑 CASE 1: Single changed field (autosave)
             if ($changedKey && str_contains($changedKey, '.')) {
                 $parts = explode('.', $changedKey);
                 $entityType = $parts[1];
@@ -336,14 +361,17 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                 $value = $this->entityMonthlyInputs[$entityType][$entityId][$month][$fieldName] ?? null;
                 $inputsToSave[$entityType][$entityId][$month][$fieldName] = $value;
             } else {
+                // 🔑 CASE 2: Mass save → only collect changed/new rows
                 foreach ($this->entityMonthlyInputs as $entityType => $entities) {
                     foreach ($entities as $entityId => $months) {
                         foreach ($months as $month => $fields) {
-                            $existingRecord = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
-                                ->where('accomplishable_type', $this->getModelClassFromType($entityType))
-                                ->where('accomplishable_id', $entityId)
-                                ->where('month', $month)
-                                ->first();
+                            $existingRecord = CvoMonthlyAccomplishment::where([
+                                'cvo_accomplishment_id' => $this->accomplishmentId,
+                                'accomplishable_type' => $this->getModelClassFromType($entityType),
+                                'accomplishable_id' => $entityId,
+                                'month' => $month,
+                                'user_id' => auth()->id(), // per user
+                            ])->first();
 
                             $newAccomplished = trim($fields['accomplished_value'] ?? '');
                             $newRemarks = trim($fields['remarks_value'] ?? '');
@@ -376,11 +404,6 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                     continue;
                 }
 
-                // Get entity name for logs
-                $details = $this->getEntityDetails($entityType, $entityId);
-                $formattedType = $details['formattedType'];
-                $entityName = $details['entityName'];
-
                 foreach ($entities as $entityId => $months) {
                     if (!isset($months[$selectedMonth])) continue;
 
@@ -393,21 +416,30 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                         'accomplishable_type' => $modelClass,
                         'accomplishable_id' => $entityId,
                         'month' => $selectedMonth,
+                        'user_id' => $userId,
                     ];
 
+                    $existingRecord = CvoMonthlyAccomplishment::where($queryConditions)->first();
+
+                    // Get entity details for activity logs
+                    $details = $this->getEntityDetails($entityType, $entityId);
+                    $formattedType = $details['formattedType'];
+                    $entityName = $details['entityName'];
+
                     if ($accomplishedValue === '' && $remarksValue === '') {
-                        CvoMonthlyAccomplishment::where($queryConditions)->delete();
+                        // ✅ Delete record (only if it exists)
+                        if ($existingRecord) {
+                            $existingRecord->delete();
 
-                        activity()
-                            ->causedBy($user)
-                            ->performedOn($this->accomplishment)
-                            ->useLog('cvo_monthly_accomplishment')
-                            ->event('delete')
-                            ->tap(fn(Activity $activity) => $activity->log_name = 'cvo_monthly_accomplishment')
-                            ->log("{$user->name} removed monthly accomplishment for {$formattedType} '{$entityName}' in month {$selectedMonth}");
+                            activity()
+                                ->causedBy($user)
+                                ->performedOn($this->accomplishment)
+                                ->useLog('cvo_monthly_accomplishment')
+                                ->event('delete')
+                                ->tap(fn(Activity $activity) => $activity->log_name = 'cvo_monthly_accomplishment')
+                                ->log("{$user->name} removed monthly accomplishment for {$formattedType} '{$entityName}' in month {$selectedMonth}");
+                        }
                     } else {
-                        $existingRecord = CvoMonthlyAccomplishment::where($queryConditions)->first();
-
                         $updateData = [
                             'accomplished_value' => is_numeric($accomplishedValue) ? (float) $accomplishedValue : null,
                             'remarks_value' => $remarksValue !== '' ? $remarksValue : null,
@@ -416,14 +448,13 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                         if (
                             !$existingRecord ||
                             $existingRecord->office_id != $officeId ||
-                            $existingRecord->ref_division_id != $refDivisionId ||
-                            $existingRecord->user_id != $userId
+                            $existingRecord->ref_division_id != $refDivisionId
                         ) {
                             $updateData['office_id'] = $officeId;
                             $updateData['ref_division_id'] = $refDivisionId;
-                            $updateData['user_id'] = $userId;
                         }
 
+                        // ✅ Create/update only when changed or new
                         CvoMonthlyAccomplishment::updateOrCreate($queryConditions, $updateData);
 
                         activity()
@@ -451,6 +482,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         DB::transaction(function () use ($changedKey) {
             $inputsToSave = [];
 
+            // 🔑 CASE 1: Single field autosave
             if ($changedKey && str_contains($changedKey, '.')) {
                 $parts = explode('.', $changedKey);
                 $entityType = $parts[1];
@@ -461,20 +493,23 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                 $value = $this->entityRemarksInputs[$entityType][$entityId][$month][$fieldName] ?? null;
                 $inputsToSave[$entityType][$entityId][$month][$fieldName] = $value;
             } else {
+                // 🔑 CASE 2: Mass save → only include changed/new remarks
                 foreach ($this->entityRemarksInputs as $entityType => $entities) {
                     foreach ($entities as $entityId => $months) {
                         foreach ($months as $month => $fields) {
-                            $existingRecord = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
-                                ->where('accomplishable_type', $this->getModelClassFromType($entityType))
-                                ->where('accomplishable_id', $entityId)
-                                ->where('month', $month)
-                                ->first();
+                            $existingRecord = CvoMonthlyAccomplishment::where([
+                                'cvo_accomplishment_id' => $this->accomplishmentId,
+                                'accomplishable_type' => $this->getModelClassFromType($entityType),
+                                'accomplishable_id' => $entityId,
+                                'month' => $month,
+                                'user_id' => auth()->id(),
+                            ])->first();
 
                             $newRemarks = trim($fields['remarks_value'] ?? '');
 
                             if (
                                 (!$existingRecord && $newRemarks !== '') ||
-                                ($existingRecord && $existingRecord->remarks != $newRemarks)
+                                ($existingRecord && $existingRecord->remarks_value != $newRemarks)
                             ) {
                                 $inputsToSave[$entityType][$entityId][$month]['remarks_value'] = $newRemarks;
                             }
@@ -497,11 +532,6 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                     continue;
                 }
 
-                // Get entity name for logs
-                $details = $this->getEntityDetails($entityType, $entityId);
-                $formattedType = $details['formattedType'];
-                $entityName = $details['entityName'];
-
                 foreach ($entities as $entityId => $months) {
                     if (!isset($months[$selectedMonth])) continue;
 
@@ -512,21 +542,30 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                         'accomplishable_type' => $modelClass,
                         'accomplishable_id' => $entityId,
                         'month' => $selectedMonth,
+                        'user_id' => $userId,
                     ];
 
+                    $existingRecord = CvoMonthlyAccomplishment::where($queryConditions)->first();
+
+                    // Entity details for logs
+                    $details = $this->getEntityDetails($entityType, $entityId);
+                    $formattedType = $details['formattedType'];
+                    $entityName = $details['entityName'];
+
                     if ($remarksValue === '') {
-                        CvoMonthlyAccomplishment::where($queryConditions)->delete();
+                        // ✅ Delete only if record exists
+                        if ($existingRecord) {
+                            $existingRecord->delete();
 
-                        activity()
-                            ->causedBy($user)
-                            ->performedOn($this->accomplishment)
-                            ->useLog('cvo_monthly_accomplishment')
-                            ->event('delete')
-                            ->tap(fn(Activity $activity) => $activity->log_name = 'cvo_monthly_accomplishment')
-                            ->log("{$user->name} removed remarks for {$formattedType} '{$entityName}' in month {$selectedMonth}");
+                            activity()
+                                ->causedBy($user)
+                                ->performedOn($this->accomplishment)
+                                ->useLog('cvo_monthly_accomplishment')
+                                ->event('delete')
+                                ->tap(fn(Activity $activity) => $activity->log_name = 'cvo_monthly_accomplishment')
+                                ->log("{$user->name} removed remarks for {$formattedType} '{$entityName}' in month {$selectedMonth}");
+                        }
                     } else {
-                        $existingRecord = CvoMonthlyAccomplishment::where($queryConditions)->first();
-
                         $updateData = [
                             'remarks' => $remarksValue,
                         ];
@@ -534,8 +573,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                         if (
                             !$existingRecord ||
                             $existingRecord->office_id != $officeId ||
-                            $existingRecord->ref_division_id != $refDivisionId ||
-                            $existingRecord->user_id != $userId
+                            $existingRecord->ref_division_id != $refDivisionId
                         ) {
                             $updateData['office_id'] = $officeId;
                             $updateData['ref_division_id'] = $refDivisionId;
@@ -599,28 +637,6 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
                 'entityName' => ''
             ]
         };
-    }
-
-    public function loadMonthlyAccomplishmentsForSelectedMonth()
-    {
-        if (!$this->selectedAccomplishmentMonth) {
-            return;
-        }
-
-        $month = $this->selectedAccomplishmentMonth;
-        $this->entityMonthlyInputs = [];
-
-        $records = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
-            ->where('month', $month)
-            ->get();
-
-        foreach ($records as $accomplishment) {
-            $type = $this->getTypeFromModelClass($accomplishment->accomplishable_type);
-            $this->entityMonthlyInputs[$type][$accomplishment->accomplishable_id][$month] = [
-                'accomplished_value' => $accomplishment->accomplished_value,
-                'remarks_value' => $accomplishment->remarks,
-            ];
-        }
     }
 
     public function getCategorySelect()

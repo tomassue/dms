@@ -24,9 +24,6 @@ return new class extends Migration
             $table->integer('ref_division_id')->comment('a.k.a division_id from divisions');
             $table->integer('user_id')->comment('a.k.a user_id from users');
             $table->timestamps();
-
-            // Add a unique constraint to prevent duplicate monthly records for the same entity in the same month/period
-            $table->unique(['cvo_accomplishment_id', 'accomplishable_type', 'accomplishable_id', 'month'], 'unique_monthly_accomplishment');
         });
     }
 
