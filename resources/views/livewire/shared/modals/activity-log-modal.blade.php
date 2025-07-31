@@ -23,14 +23,14 @@
                                 <td>{{ $history['causer'] . ' ' . $history['division'] }}</td>
                                 <td>
                                     <ul class="list-unstyled mb-0">
-                                        @if ($history['changes'])
+                                        @if (!empty($history['changes']))
                                         @foreach ($history['changes'] as $change)
                                         <li>
                                             <strong>{{ $change['field'] }}:</strong>
                                             <span class="text-info">{{ $change['new'] }}</span>
                                         </li>
                                         @endforeach
-                                        @elseif($history['file_log_description'])
+                                        @elseif(!empty($history['file_log_description']))
                                         {{ $history['file_log_description'] }}
                                         @endif
                                     </ul>

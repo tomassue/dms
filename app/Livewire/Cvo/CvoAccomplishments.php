@@ -71,6 +71,7 @@ class CvoAccomplishments extends Component
         }
     }
 
+    // 📝 Note that this is different from the other component on how we retrieve logs :)))
     public function activityLog($id)
     {
         try {
@@ -79,38 +80,59 @@ class CvoAccomplishments extends Component
                     ->where('subject_id', $id);
             })
                 ->with(['causer.user_metadata.division'])
+                ->latest()
                 ->get()
                 ->map(function ($activity) {
+                    $changes = collect($activity->properties['attributes'] ?? [])
+                        ->except(['id', 'office_id', 'ref_division_id', 'created_at', 'updated_at', 'deleted_at'])
+                        ->map(function ($newValue, $key) use ($activity) {
+                            $oldValue = $activity->properties['old'][$key] ?? 'N/A';
+
+                            $fieldName = match ($key) {
+                                'target' => 'Target',
+                                default => ucfirst(str_replace('_', ' ', $key))
+                            };
+
+                            if ($key === 'target') {
+                                $oldValue = $activity->properties['old']['target'] ?? 'N/A';
+                                $newValue = $activity->properties['attributes']['target'] ?? '';
+
+                                // ✅ If empty, fallback to description
+                                if (empty($newValue)) {
+                                    $newValue = $activity->description;
+                                }
+                            }
+
+                            return [
+                                'field' => $fieldName,
+                                'old' => $oldValue,
+                                'new' => $newValue ?: 'N/A',
+                            ];
+                        })
+                        ->values()
+                        ->toArray();
+
+                    // ✅ If no attribute changes, push description as a change
+                    if (empty($changes)) {
+                        $changes[] = [
+                            'field' => 'Info',
+                            'old' => 'N/A',
+                            'new' => $activity->description,
+                        ];
+                    }
+
                     return [
                         'id' => $activity->id,
                         'causer' => $activity->causer?->name ?? 'System',
-                        'division' => $activity->causer?->user_metadata?->division?->name ? '[' . $activity->causer?->user_metadata?->division?->name . ']' : '',
+                        'division' => $activity->causer?->user_metadata?->division?->name
+                            ? '[' . $activity->causer?->user_metadata?->division?->name . ']'
+                            : '',
                         'created_at' => Carbon::parse($activity->created_at)->format('M d, Y h:i A'),
-                        'changes' => collect($activity->properties['attributes'] ?? [])
-                            ->except(['id', 'office_id', 'ref_division_id', 'created_at', 'updated_at', 'deleted_at'])
-                            ->map(function ($newValue, $key) use ($activity) {
-                                $oldValue = $activity->properties['old'][$key] ?? 'N/A';
-
-                                $fieldName = match ($key) {
-                                    'target' => 'Target',
-                                    default => ucfirst(str_replace('_', ' ', $key))
-                                };
-
-                                if ($key === 'target') {
-                                    $oldValue = $activity->properties['old']['target'] ?? 'N/A';
-                                    $newValue = $activity->properties['attributes']['target'] ?? 'N/A';
-                                }
-
-                                return [
-                                    'field' => $fieldName,
-                                    'old' => $oldValue,
-                                    'new' => $newValue,
-                                ];
-                            })
-                            ->values()
-                            ->toArray()
+                        'changes' => $changes,
+                        'file_log_description' => null, // still included for shared modal compatibility
                     ];
                 });
+
 
             $this->dispatch('show-activity-log-modal');
         } catch (\Throwable $th) {
