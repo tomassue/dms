@@ -141,7 +141,23 @@ class AccountSettings extends Component
 
     public function loadActivityLogs()
     {
-        $activity = Activity::where('causer_type', User::class)
+        // $activity = Activity::where('causer_type', User::class)
+        //     ->where('causer_id', $this->user->id)
+        //     ->latest()
+        //     ->take(10)
+        //     ->get()
+        //     ->map(function ($activity) {
+        //         return [
+        //             'event' => $activity->event,
+        //             'log_name' => str_replace('_', ' ', $activity->log_name),
+        //             'subject_id' => $activity->subject_id,
+        //             'time' => Carbon::parse($activity->created_at)->format('g:i A'),
+        //             'date' => Carbon::parse($activity->created_at)->format('F d,Y')
+        //         ];
+        //     });
+
+        $activity = Activity::select('event', 'log_name', 'subject_id', 'created_at')
+            ->where('causer_type', User::class)
             ->where('causer_id', $this->user->id)
             ->latest()
             ->take(10)
@@ -151,10 +167,11 @@ class AccountSettings extends Component
                     'event' => $activity->event,
                     'log_name' => str_replace('_', ' ', $activity->log_name),
                     'subject_id' => $activity->subject_id,
-                    'time' => Carbon::parse($activity->created_at)->format('g:i A'),
-                    'date' => Carbon::parse($activity->created_at)->format('F d,Y')
+                    'time' => $activity->created_at->format('g:i A'),
+                    'date' => $activity->created_at->format('F d,Y')
                 ];
             });
+
 
         return $activity;
     }
