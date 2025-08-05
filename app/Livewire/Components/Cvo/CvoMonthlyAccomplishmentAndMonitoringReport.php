@@ -5,10 +5,13 @@ namespace App\Livewire\Components\Cvo;
 use App\Models\CvoAccomplishment;
 use App\Models\CvoMonthlyAccomplishment;
 use App\Models\CvoPeriodTarget;
+use App\Models\PdfAsset;
 use App\Models\RefAccomplishmentCategory;
 use App\Models\RefAccomplishmentSubcategory;
 use App\Models\RefSpecies;
 use Carbon\Carbon;
+use Dompdf\Dompdf;
+use Dompdf\Options;
 use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
@@ -23,6 +26,8 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     public $accomplishment;
     public $ref_accomplishment_category_id;
     public $ref_accomplishment_subcategory_id;
+    public $filter_selected_accomplishment_month;
+    public $pdf;
 
     //! NOTHING
     public $speciesMonthlyInputs = [];
@@ -226,6 +231,11 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             ->where('accomplishable_id', $entityId)
             ->where('month', $month)
             ->sum('accomplished_value');
+    }
+
+    public function clear()
+    {
+        $this->reset('pdf', 'filter_selected_accomplishment_month');
     }
 
     // 📝 This is for users like the admin, where they can't update monthly accomplishment values and remarks but only view all user inputs like the technicians.
@@ -718,11 +728,80 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     public function generateMonthlyAccomplishmentAndMonitoringReportPdf()
     {
         try {
-            //...
+            // Get all header assets
+            $pdf_asset_headers = PdfAsset::header()->get();
+            foreach ($pdf_asset_headers as $asset) {
+                // Ensure the base64 string has the proper data URI format
+                $data[$asset->title] = $this->formatBase64Image($asset->file);
+            }
+
+            $data = [
+                'cdofull' => 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('images/compressed_cdofull.png'))) ?? null,
+                'cvo_seal' => 'data:image/jpeg;base64,' . base64_encode(file_get_contents(public_path('images/cvo-logo.jpg'))) ?? null,
+                'rise' => $data['rise'] ?? null,
+
+                // Recycle Data
+                'categories' => $this->getCategories(),
+            ];
+
+            $htmlContent = view('livewire.cvo.reports.pdf.monthly-accomplishment-and-monitoring-report-pdf', $data)->render();
+
+            $options = new Options();
+            $options->set('isRemoteEnabled', true);
+            $options->set('isHtml5ParserEnabled', true); // Helps with complex HTML
+            $options->set('dpi', 300);
+
+            $dompdf = new Dompdf();
+            $dompdf->loadHtml($htmlContent);
+            $dompdf->setPaper('legal', 'portrait');
+            $dompdf->render();
+
+            $this->pdf = 'data:application/pdf;base64,' . base64_encode($dompdf->output());
+
+            $this->dispatch('show-monthly-accomplishment-and-monitoring-report-modal');
         } catch (\Throwable $th) {
-            //throw $th;
+            // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
+    }
+
+    /**
+     * Format base64 image string with proper data URI
+     */
+    protected function formatBase64Image($base64)
+    {
+        // If already formatted, return as-is
+        if (str_starts_with($base64, 'data:')) {
+            return $base64;
+        }
+
+        // Try to detect image type from the base64 content
+        $mime = $this->detectImageMimeType($base64);
+
+        return 'data:' . $mime . ';base64,' . $base64;
+    }
+
+    /**
+     * Detect image MIME type from base64 content
+     */
+    protected function detectImageMimeType($base64)
+    {
+        // Get the first few characters of the base64 string
+        $signature = substr($base64, 0, 20);
+
+        // Detect common image formats
+        if (str_starts_with($signature, '/9j/')) {
+            return 'image/jpeg';
+        } elseif (str_starts_with($signature, 'iVBORw')) {
+            return 'image/png';
+        } elseif (str_starts_with($signature, 'R0lGOD')) {
+            return 'image/gif';
+        } elseif (str_starts_with($signature, 'Qk2')) {
+            return 'image/bmp';
+        }
+
+        // Default to JPEG if unknown
+        return 'image/jpeg';
     }
 
     public function getCategorySelect()
