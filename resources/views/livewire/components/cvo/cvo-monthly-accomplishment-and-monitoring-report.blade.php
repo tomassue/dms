@@ -8,7 +8,7 @@
                 <span class="text-muted fw-bold fs-7"></span>
             </h3>
             <div class="card-toolbar" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-trigger="hover" title="" data-bs-original-title="Go Back">
-                <div class="btn-group me-2" role="group" aria-label="Basic example">
+                <div class="d-grid gap-2 d-sm-block">
                     <button class="btn btn-sm btn-warning" wire:click="$dispatch('show-monthly-accomplishment-and-monitoring-report-modal')">
                         <div wire:loading.remove wire:target="generateMonthlyAccomplishmentAndMonitoringReportPdf">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-filetype-pdf" viewBox="0 0 16 16">

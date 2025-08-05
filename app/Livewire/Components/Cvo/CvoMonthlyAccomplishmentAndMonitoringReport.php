@@ -715,6 +715,16 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         };
     }
 
+    public function generateMonthlyAccomplishmentAndMonitoringReportPdf()
+    {
+        try {
+            //...
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
     public function getCategorySelect()
     {
         $categories = RefAccomplishmentCategory::all();
