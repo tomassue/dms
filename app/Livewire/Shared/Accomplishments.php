@@ -184,7 +184,7 @@ class Accomplishments extends Component
                     });
                 });
             })
-            ->orderBy('created_at', 'desc')
+            ->orderBy('created_at', 'asc')
             ->paginate(10);
     }
 
