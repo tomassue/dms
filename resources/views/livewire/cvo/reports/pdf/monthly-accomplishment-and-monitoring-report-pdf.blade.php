@@ -165,12 +165,17 @@
         <table>
             <thead>
                 <tr>
-                    <th>ACTIVITIES/PROJECTS</th>
+                    <th rowspan="2">ACTIVITIES/PROJECTS</th>
                     <th>TARGET</th>
                     <th>ACCOMPLISHMENT MONTH</th>
                     <th>ACCOMPLISHMENT TO DATE</th>
-                    <th>PERCENTAGE</th>
-                    <th>REMARKS</th>
+                    <th rowspan="2">PERCENTAGE</th>
+                    <th rowspan="2">REMARKS</th>
+                </tr>
+                <tr>
+                    <th>[Month Period]</th>
+                    <th>[Selected Month]</th>
+                    <th>[End Period]</th>
                 </tr>
             </thead>
             <tbody>
@@ -182,8 +187,8 @@
                     </td>
 
                     @if ($category['is_inputtable'] === 'Y')
-                    <td>Target</td>
-                    <td>Accomplishment</td>
+                    <td>{{ $entityTargetsInput['category'][$category['id']]['target_value'] ?? '' }}</td>
+                    <td>{{ $entityMonthlyInputs['category'][$category['id']][$selectedAccomplishmentMonth]['accomplished_value'] ?? '' }}</td>
                     <td>Accomplishment to Date</td>
                     <td>Percentage</td>
                     <td>Remarks</td>
@@ -197,7 +202,7 @@
                     </td>
 
                     @if ($subCategory['is_inputtable'] === 'Y')
-                    <td>target</td>
+                    <td>{{ $entityTargetsInput['subCategory'][$subCategory['id']]['target_value'] ?? '' }}</td>
                     <td>accomplishment</td>
                     <td>accomplishment to date</td>
                     <td>percentage</td>
@@ -211,7 +216,9 @@
                     <td>
                         {{ ($speciesIndex + 1) }}. {{ $species['species_name'] }}
                     </td>
-                    <td>target</td>
+                    <td>
+                        {{ $entityTargetsInput['species'][$species['id']]['target_value'] ?? '' }}
+                    </td>
                     <td>accomplishment</td>
                     <td>accomplishment to date</td>
                     <td>percentage</td>
@@ -239,7 +246,9 @@
                     <td>
                         &ndash; {{ $nestedSpecies['species_name'] }}
                     </td>
-                    <td>target</td>
+                    <td>
+                        {{ $entityTargetsInput['species'][$nestedSpecies['id']]['target_value'] ?? '' }}
+                    </td>
                     <td>accomplishment</td>
                     <td>accomplishment to date</td>
                     <td>percentage</td>

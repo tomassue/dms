@@ -174,6 +174,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 
         $month = $this->selectedAccomplishmentMonth;
         $this->entityMonthlyInputs = [];
+        $this->entityRemarksInputs = []; // New
 
         $records = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
             ->where('month', $month)
@@ -725,39 +726,54 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         };
     }
 
+    //! FIX FIX FIX
+    //TODO: Monthly Inputs and Remarks remains NULL.
     public function generateMonthlyAccomplishmentAndMonitoringReportPdf()
     {
         try {
-            // Get all header assets
-            $pdf_asset_headers = PdfAsset::header()->get();
-            foreach ($pdf_asset_headers as $asset) {
-                // Ensure the base64 string has the proper data URI format
-                $data[$asset->title] = $this->formatBase64Image($asset->file);
+            // ✅ Ensure data is loaded
+            if (empty($this->entityTargetsInput)) {
+                $this->loadTargets();
+            }
+            // ✅ Ensure entityMonthlyInputs and entityRemarksInputs are populated
+            if (empty($this->entityMonthlyInputs) && empty($this->entityRemarksInputs)) {
+                // $this->loadAccomplishmentData();
+                $this->loadMonthlyAccomplishmentsForSelectedMonth();
             }
 
+            // 🔑 Header assets
+            $pdf_asset_headers = PdfAsset::header()->get();
+            $headerImages = [];
+            foreach ($pdf_asset_headers as $asset) {
+                $headerImages[$asset->title] = $this->formatBase64Image($asset->file);
+            }
+
+            // ✅ Merge data directly from component
             $data = [
                 'cdofull' => 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('images/compressed_cdofull.png'))) ?? null,
                 'cvo_seal' => 'data:image/jpeg;base64,' . base64_encode(file_get_contents(public_path('images/cvo-logo.jpg'))) ?? null,
-                'rise' => $data['rise'] ?? null,
-
-                // Recycle Data
+                'rise' => $headerImages['rise'] ?? null,
                 'categories' => $this->getCategories(),
+                'entityTargetsInput' => $this->entityTargetsInput,
+                'entityMonthlyInputs' => $this->entityMonthlyInputs,
+                'entityRemarksInputs' => $this->entityRemarksInputs,
+                'selectedAccomplishmentMonth' => $this->selectedAccomplishmentMonth,
+                'accomplishment' => $this->accomplishment,
             ];
 
+            // ✅ Generate HTML
             $htmlContent = view('livewire.cvo.reports.pdf.monthly-accomplishment-and-monitoring-report-pdf', $data)->render();
 
             $options = new Options();
             $options->set('isRemoteEnabled', true);
-            $options->set('isHtml5ParserEnabled', true); // Helps with complex HTML
-            $options->set('dpi', 300);
+            $options->set('isHtml5ParserEnabled', true);
 
-            $dompdf = new Dompdf();
+            $dompdf = new Dompdf($options);
             $dompdf->loadHtml($htmlContent);
             $dompdf->setPaper('legal', 'portrait');
             $dompdf->render();
 
             $this->pdf = 'data:application/pdf;base64,' . base64_encode($dompdf->output());
-
             $this->dispatch('show-monthly-accomplishment-and-monitoring-report-modal');
         } catch (\Throwable $th) {
             // throw $th;
