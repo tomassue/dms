@@ -69,7 +69,6 @@
         td {
             padding: 8px;
             text-align: left;
-            border: 1px solid black;
         }
 
         th {
@@ -150,7 +149,7 @@
         </tr>
         <tr>
             <td colspan="4" style="text-align: center; font-size: 14px;">
-                As of [MONTH] [YEAR]
+                As of <strong>{{ $selectedMonth }}</strong>
             </td>
         </tr>
     </table>
@@ -162,20 +161,20 @@
 
     <!-- Main Content -->
     <div class="content">
-        <table>
+        <table class="bordered">
             <thead>
                 <tr>
-                    <th rowspan="2">ACTIVITIES/PROJECTS</th>
-                    <th>TARGET</th>
-                    <th>ACCOMPLISHMENT MONTH</th>
-                    <th>ACCOMPLISHMENT TO DATE</th>
-                    <th rowspan="2">PERCENTAGE</th>
-                    <th rowspan="2">REMARKS</th>
+                    <th rowspan="2" style="text-align: center;">ACTIVITIES/PROJECTS</th>
+                    <th style="text-align: center;">TARGET</th>
+                    <th style="text-align: center;">ACCOMPLISHMENT MONTH</th>
+                    <th style="text-align: center;">ACCOMPLISHMENT TO DATE</th>
+                    <th rowspan="2" style="text-align: center;">PERCENTAGE</th>
+                    <th rowspan="2" style="text-align: center;">REMARKS</th>
                 </tr>
                 <tr>
-                    <th>[Month Period]</th>
-                    <th>[Selected Month]</th>
-                    <th>[End Period]</th>
+                    <th style="text-align: center;">{{ $monthPeriod }}</th>
+                    <th style="text-align: center;">{{ $selectedMonth }}</th>
+                    <th style="text-align: center;">{{ $accomplishmentToDate }}</th>
                 </tr>
             </thead>
             <tbody>
@@ -187,11 +186,27 @@
                     </td>
 
                     @if ($category['is_inputtable'] === 'Y')
-                    <td>{{ $entityTargetsInput['category'][$category['id']]['target_value'] ?? '' }}</td>
-                    <td>{{ $entityMonthlyInputs['category'][$category['id']][$selectedAccomplishmentMonth]['accomplished_value'] ?? '' }}</td>
-                    <td>Accomplishment to Date</td>
-                    <td>Percentage</td>
-                    <td>Remarks</td>
+                    <td style="text-align: center;">
+                        {{ $entityTargetsInput['category'][$category['id']]['target_value'] ?? '' }}
+                    </td>
+                    <td style="text-align: center;">
+                        <strong>
+                            {{ $totals['category'][$category['id']] ?? 0 }}
+                        </strong>
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $totalsToDate['category'][$category['id']] ?? 0 }}
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $percentagesToDate['category'][$category['id']] ?? 0 }}%
+                    </td>
+                    <td style="text-align: start;">
+                        <div class="mt-2">
+                            @foreach ($remarksList['category'][$category['id']] ?? [] as $item)
+                            {{ $item['remarks'] ?? '' }} <br>
+                            @endforeach
+                        </div>
+                    </td>
                     @endif
                 </tr>
 
@@ -202,11 +217,25 @@
                     </td>
 
                     @if ($subCategory['is_inputtable'] === 'Y')
-                    <td>{{ $entityTargetsInput['subCategory'][$subCategory['id']]['target_value'] ?? '' }}</td>
-                    <td>accomplishment</td>
-                    <td>accomplishment to date</td>
-                    <td>percentage</td>
-                    <td>remarks</td>
+                    <td style="text-align: center;">{{ $entityTargetsInput['subCategory'][$subCategory['id']]['target_value'] ?? '' }}</td>
+                    <td style="text-align: center;">
+                        <strong>
+                            {{ $totals['subCategory'][$subCategory['id']] ?? 0 }}
+                        </strong>
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $totalsToDate['subCategory'][$subCategory['id']] ?? 0 }}
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $percentagesToDate['subCategory'][$subCategory['id']] ?? 0 }}%
+                    </td>
+                    <td style="text-align: start;">
+                        <div class="mt-2">
+                            @foreach ($remarksList['subCategory'][$subCategory['id']] ?? [] as $item)
+                            {{ $item['remarks'] ?? '' }} <br>
+                            @endforeach
+                        </div>
+                    </td>
                     @endif
                 </tr>
 
@@ -216,13 +245,27 @@
                     <td>
                         {{ ($speciesIndex + 1) }}. {{ $species['species_name'] }}
                     </td>
-                    <td>
+                    <td style="text-align: center;">
                         {{ $entityTargetsInput['species'][$species['id']]['target_value'] ?? '' }}
                     </td>
-                    <td>accomplishment</td>
-                    <td>accomplishment to date</td>
-                    <td>percentage</td>
-                    <td>remarks</td>
+                    <td style="text-align: center;">
+                        <strong>
+                            {{ $totals['species'][$species['id']] ?? 0 }}
+                        </strong>
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $totalsToDate['species'][$species['id']] ?? 0 }}
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $percentagesToDate['species'][$species['id']] ?? 0 }}%
+                    </td>
+                    <td style="text-align: start;">
+                        <div class="mt-2">
+                            @foreach ($remarksList['species'][$species['id']] ?? [] as $item)
+                            {{ $item['remarks'] ?? '' }} <br>
+                            @endforeach
+                        </div>
+                    </td>
                 </tr>
                 @endforeach
                 @endif
@@ -246,13 +289,27 @@
                     <td>
                         &ndash; {{ $nestedSpecies['species_name'] }}
                     </td>
-                    <td>
+                    <td style="text-align: center;">
                         {{ $entityTargetsInput['species'][$nestedSpecies['id']]['target_value'] ?? '' }}
                     </td>
-                    <td>accomplishment</td>
-                    <td>accomplishment to date</td>
-                    <td>percentage</td>
-                    <td>remarks</td>
+                    <td style="text-align: center;">
+                        <strong>
+                            {{ $totals['species'][$nestedSpecies['id']] ?? 0 }}
+                        </strong>
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $totalsToDate['species'][$nestedSpecies['id']] ?? 0 }}
+                    </td>
+                    <td style="text-align: center;">
+                        {{ $percentagesToDate['species'][$nestedSpecies['id']] ?? 0 }}%
+                    </td>
+                    <td style="text-align: start;">
+                        <div class="mt-2">
+                            @foreach ($remarksList['species'][$nestedSpecies['id']] ?? [] as $item)
+                            {{ $item['remarks'] ?? '' }} <br>
+                            @endforeach
+                        </div>
+                    </td>
                 </tr>
                 @endforeach
                 @endif
@@ -270,6 +327,39 @@
                 </tr>
                 @endforelse
             </tbody>
+        </table>
+    </div>
+
+    <div class="content" style="padding-top: 15px;">
+        <table>
+            <tr>
+                <td>Submitted By:</td>
+                <td></td>
+                <td>Recommending Approval:</td>
+                <td></td>
+                <td>Approved By:</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td style="font-weight: bolder; text-align: center; border-bottom: 1px solid black;">{{ $submittedBy }}</td>
+                <td></td>
+                <td style="font-weight: bolder; text-align: center; border-bottom: 1px solid black;">{{ $recommendingApproval }}</td>
+                <td></td>
+                <td style=" font-weight: bolder; text-align: center; border-bottom: 1px solid black;">{{ $approvedBy }}</td>
+            </tr>
+            <tr>
+                <td style="text-align: center;">{{ $submittedByTitle }}</td>
+                <td></td>
+                <td style="text-align: center;">{{ $recommendingApprovalTitle }}</td>
+                <td></td>
+                <td style="text-align: center;">{{ $approvedByTitle }}</td>
+            </tr>
         </table>
     </div>
 </body>

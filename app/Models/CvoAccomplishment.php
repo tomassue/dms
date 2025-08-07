@@ -64,4 +64,9 @@ class CvoAccomplishment extends Model
 
         return $halfYearPeriod; // Returns the original value if 'to' is not found
     }
+
+    public function getYearAttribute()
+    {
+        return substr($this->target, 0, 4);
+    }
 }

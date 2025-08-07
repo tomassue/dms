@@ -8,11 +8,13 @@ use App\Models\CvoPeriodTarget;
 use App\Models\PdfAsset;
 use App\Models\RefAccomplishmentCategory;
 use App\Models\RefAccomplishmentSubcategory;
+use App\Models\RefSignatories;
 use App\Models\RefSpecies;
 use Carbon\Carbon;
 use Dompdf\Dompdf;
 use Dompdf\Options;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Livewire\Attributes\On;
 use Livewire\Attributes\Reactive;
 use Livewire\Component;
@@ -27,6 +29,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
     public $ref_accomplishment_category_id;
     public $ref_accomplishment_subcategory_id;
     public $filter_selected_accomplishment_month;
+    public $signatories = [], $submitted_by, $recommending_approval, $approved_by;
     public $pdf;
 
     //! NOTHING
@@ -80,6 +83,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         $this->accomplishmentId = $accomplishmentId;
         $this->accomplishment = CvoAccomplishment::find($accomplishmentId);
         $this->loadAccomplishmentData();
+        $this->signatories = RefSignatories::all();
     }
 
     public function getAccomplishmentToDateTotalsProperty()
@@ -236,7 +240,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
 
     public function clear()
     {
-        $this->reset('pdf', 'filter_selected_accomplishment_month');
+        $this->reset('pdf', 'filter_selected_accomplishment_month', 'submitted_by', 'recommending_approval', 'approved_by');
     }
 
     // 📝 This is for users like the admin, where they can't update monthly accomplishment values and remarks but only view all user inputs like the technicians.
@@ -726,49 +730,132 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
         };
     }
 
-    //! FIX FIX FIX
-    //TODO: Monthly Inputs and Remarks remains NULL.
     public function generateMonthlyAccomplishmentAndMonitoringReportPdf()
     {
+        if (!$this->selectedAccomplishmentMonth) {
+            $this->dispatch('error', message: 'Please select a month.');
+            return;
+        }
+
+        if (!$this->submitted_by && !$this->recommending_approval && !$this->approved_by) {
+            $this->dispatch('error', message: 'Please select signatories.');
+            return;
+        }
+
         try {
-            // ✅ Ensure data is loaded
+            // Load Targets
             if (empty($this->entityTargetsInput)) {
                 $this->loadTargets();
             }
-            // ✅ Ensure entityMonthlyInputs and entityRemarksInputs are populated
-            if (empty($this->entityMonthlyInputs) && empty($this->entityRemarksInputs)) {
-                // $this->loadAccomplishmentData();
-                $this->loadMonthlyAccomplishmentsForSelectedMonth();
+
+            $month = $this->selectedAccomplishmentMonth;
+            $categories = $this->getCategories();
+
+            // Monthly totals and remarks
+            $totals = [];
+            $remarksList = [];
+
+            foreach ($categories as $category) {
+                $totals['category'][$category['id']] =
+                    $this->getTotalMonthlyAccomplishmentValues('category', $category['id'], $month);
+
+                $remarksList['category'][$category['id']] =
+                    $this->getMonthlyAccomplishmentRemarksList('category', $category['id'], $month);
+
+                foreach ($category['sub_categories'] as $subCategory) {
+                    $totals['subCategory'][$subCategory['id']] =
+                        $this->getTotalMonthlyAccomplishmentValues('subCategory', $subCategory['id'], $month);
+
+                    $remarksList['subCategory'][$subCategory['id']] =
+                        $this->getMonthlyAccomplishmentRemarksList('subCategory', $subCategory['id'], $month);
+
+                    foreach ($subCategory['species'] as $species) {
+                        $totals['species'][$species['id']] =
+                            $this->getTotalMonthlyAccomplishmentValues('species', $species['id'], $month);
+
+                        $remarksList['species'][$species['id']] =
+                            $this->getMonthlyAccomplishmentRemarksList('species', $species['id'], $month);
+
+                        foreach ($species['nested_species'] ?? [] as $nestedSpecies) {
+                            $totals['species'][$nestedSpecies['id']] =
+                                $this->getTotalMonthlyAccomplishmentValues('species', $nestedSpecies['id'], $month);
+
+                            $remarksList['species'][$nestedSpecies['id']] =
+                                $this->getMonthlyAccomplishmentRemarksList('species', $nestedSpecies['id'], $month);
+                        }
+                    }
+                }
             }
 
-            // 🔑 Header assets
+            // Total accomplishment to date
+            $target = $this->accomplishment->target;
+            [$year, $half] = explode('-', $target);
+            $months = match ($half) {
+                'H1' => range(1, 6),
+                'H2' => range(7, 12),
+                default => [],
+            };
+
+            $accomplishments = CvoMonthlyAccomplishment::where('cvo_accomplishment_id', $this->accomplishmentId)
+                ->whereIn('month', $months)
+                ->get();
+
+            $totalsToDate = [];
+            foreach ($accomplishments as $accomplishment) {
+                $type = $this->getTypeFromModelClass($accomplishment->accomplishable_type);
+                $totalsToDate[$type][$accomplishment->accomplishable_id] ??= 0;
+                $totalsToDate[$type][$accomplishment->accomplishable_id] += (int) $accomplishment->accomplished_value;
+            }
+
+            // Percentages to date
+            $percentagesToDate = [];
+            $targets = CvoPeriodTarget::where('cvo_accomplishment_id', $this->accomplishmentId)->get();
+
+            foreach ($targets as $targetRecord) {
+                $type = $this->getTypeFromModelClass($targetRecord->targetable_type);
+                $id = $targetRecord->targetable_id;
+
+                $totalAccomplished = $totalsToDate[$type][$id] ?? 0;
+                $targetValue = (int) $targetRecord->target_value;
+
+                $percentagesToDate[$type][$id] = $targetValue > 0
+                    ? round(($totalAccomplished / $targetValue) * 100, 2)
+                    : 0;
+            }
+
+            // Header assets
             $pdf_asset_headers = PdfAsset::header()->get();
             $headerImages = [];
             foreach ($pdf_asset_headers as $asset) {
                 $headerImages[$asset->title] = $this->formatBase64Image($asset->file);
             }
 
-            // ✅ Merge data directly from component
+            // Merge data
             $data = [
-                'cdofull' => 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('images/compressed_cdofull.png'))) ?? null,
-                'cvo_seal' => 'data:image/jpeg;base64,' . base64_encode(file_get_contents(public_path('images/cvo-logo.jpg'))) ?? null,
-                'rise' => $headerImages['rise'] ?? null,
-                'categories' => $this->getCategories(),
+                'cdofull'           => 'data:image/png;base64,' . base64_encode(file_get_contents(public_path('images/compressed_cdofull.png'))) ?? null,
+                'cvo_seal'          => 'data:image/jpeg;base64,' . base64_encode(file_get_contents(public_path('images/cvo-logo.jpg'))) ?? null,
+                'rise'              => $headerImages['rise'] ?? null,
+                'monthPeriod'       => $this->accomplishment->formatted_half_year_period,
+                'selectedMonth'     => Carbon::parse((int) $month)->format('F') . ' ' . $this->accomplishment->year,
+                'accomplishmentToDate' => $this->accomplishment->accomplishment_to_date,
                 'entityTargetsInput' => $this->entityTargetsInput,
-                'entityMonthlyInputs' => $this->entityMonthlyInputs,
-                'entityRemarksInputs' => $this->entityRemarksInputs,
-                'selectedAccomplishmentMonth' => $this->selectedAccomplishmentMonth,
-                'accomplishment' => $this->accomplishment,
+                'categories'        => $categories,
+                'totals'            => $totals,
+                'remarksList'       => $remarksList,
+                'totalsToDate'      => $totalsToDate,
+                'percentagesToDate' => $percentagesToDate,
+                'selectedAccomplishmentMonth' => $month,
+                'submittedBy'       => RefSignatories::find($this->submitted_by)->name,
+                'submittedByTitle'  => RefSignatories::find($this->submitted_by)->title,
+                'recommendingApproval' => RefSignatories::find($this->recommending_approval)->name,
+                'recommendingApprovalTitle' => RefSignatories::find($this->recommending_approval)->title,
+                'approvedBy'        => RefSignatories::find($this->approved_by)->name,
+                'approvedByTitle'   => RefSignatories::find($this->approved_by)->title
             ];
 
-            // ✅ Generate HTML
             $htmlContent = view('livewire.cvo.reports.pdf.monthly-accomplishment-and-monitoring-report-pdf', $data)->render();
 
-            $options = new Options();
-            $options->set('isRemoteEnabled', true);
-            $options->set('isHtml5ParserEnabled', true);
-
-            $dompdf = new Dompdf($options);
+            $dompdf = new Dompdf();
             $dompdf->loadHtml($htmlContent);
             $dompdf->setPaper('legal', 'portrait');
             $dompdf->render();
@@ -776,7 +863,7 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             $this->pdf = 'data:application/pdf;base64,' . base64_encode($dompdf->output());
             $this->dispatch('show-monthly-accomplishment-and-monitoring-report-modal');
         } catch (\Throwable $th) {
-            // throw $th;
+            throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -892,6 +979,13 @@ class CvoMonthlyAccomplishmentAndMonitoringReport extends Component
             ->toArray();
 
         return $categories;
+    }
+
+    public function loadSignatories()
+    {
+        $signatories = RefSignatories::all();
+
+        return $signatories;
     }
 
     public function render()
