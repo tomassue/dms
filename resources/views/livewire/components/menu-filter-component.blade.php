@@ -84,12 +84,19 @@
 @script
 <script>
     $('#filter_date').daterangepicker({
-        "showDropdowns": true,
-        "autoApply": true,
-        "linkedCalendars": false,
-        "showCustomRangeLabel": false,
-        "alwaysShowCalendars": true,
-        "opens": "center"
+        showDropdowns: true,
+        autoApply: true,
+        linkedCalendars: false,
+        showCustomRangeLabel: false,
+        alwaysShowCalendars: true,
+        opens: "center",
+        parentEl: 'body' // render outside the menu
+    });
+
+    $('#filter_date').on('show.daterangepicker', function() {
+        $('.daterangepicker').off('click.stopPropagation').on('click.stopPropagation', function(e) {
+            e.stopPropagation(); // Prevent menu from closing
+        });
     });
 
     // When dates are selected

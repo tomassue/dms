@@ -56,6 +56,12 @@ class Requests extends Component
 
     /* ------------------------------- end::fields ------------------------------ */
 
+    public function boot()
+    {
+        $this->date_requested = Carbon::now()->format('Y-m-d');
+        $this->date_time = Carbon::now()->format('Y-m-d H:i');
+    }
+
     public function rules()
     {
         return [

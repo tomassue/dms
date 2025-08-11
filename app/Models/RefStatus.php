@@ -25,9 +25,9 @@ class RefStatus extends Model
         $isCVO = $user->hasRole('CITY VETERINARY OFFICE');
 
         if ($isCVO) {
-            return $query->whereNotIn('name', ['forwarded', 'cancelled', 'received']);
+            // return $query->whereNotIn('name', ['forwarded', 'cancelled', 'received']);
         }
         // APO / Default
-        return $query->whereNotIn('name', ['forwarded', 'received', 'pending', 'processed', 'completed']);
+        // return $query->whereNotIn('name', ['forwarded', 'received', 'pending', 'processed', 'completed']);
     }
 }
