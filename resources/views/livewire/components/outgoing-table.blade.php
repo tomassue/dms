@@ -52,7 +52,7 @@
                     </thead>
                     <tbody>
                         @forelse($outgoings as $item)
-                        <tr>
+                        <tr wire:click="viewOutgoing({{ $item->id }})" class="cursor-pointer">
                             <td>
                                 <span class="badge badge-light-info text-uppercase">{{ $item->no ?? '' }}</span>
                             </td>
@@ -120,7 +120,7 @@
                             @can('outgoing.update')
                             <td class="text-center" wire:loading.class="pe-none">
                                 <div class="btn-group" role="group" aria-label="Actions">
-                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})" {{ $item->completed() ? 'disabled' : '' }}>
+                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})" @click.stop {{ $item->completed() ? 'disabled' : '' }}>
                                         <div wire:loading.remove wire:target="editOutgoing({{ $item->id }})">
                                             <i class="bi bi-pencil"></i>
                                         </div>
@@ -130,7 +130,7 @@
                                             </div>
                                         </div>
                                     </button>
-                                    <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})">
+                                    <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
                                         <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
                                             <i class="bi bi-clock-history"></i>
                                         </div>
@@ -377,54 +377,185 @@
         <!--end::Modal - Outgoing-->
     </div>
 
-    @script
-    <script>
-        $wire.on('hide-outgoing-modal', () => {
-            $('#outgoingModal').modal('hide');
-        });
+    <!-- detailsModal -->
+    <div class="modal fade" id="detailsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+        aria-labelledby="detailsModalLabel" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="detailsModalLabel">Outgoing Details</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                        wire:click="clear"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        {{-- Status --}}
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">Status:</div>
+                            <div class="col-7">
+                                <span class="badge 
+                                @switch(strtolower($ref_status_id ?? '-'))
+                                    @case('pending') badge-light-danger @break
+                                    @case('processed') badge-light-primary @break
+                                    @case('forwarded') badge-light-warning @break
+                                    @case('completed') badge-light-success @break
+                                    @case('cancelled') badge-light-dark @break
+                                    @default badge-light-dark
+                                @endswitch
+                                text-capitalize">
+                                    {{ $ref_status_id ?? '-' }}
+                                </span>
+                            </div>
+                        </div>
 
-        $wire.on('show-outgoing-modal', () => {
-            $('#outgoingModal').modal('show');
-        });
+                        {{-- Common fields --}}
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">No.:</div>
+                            <div class="col-7">{{ $no ?? '-' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">Date:</div>
+                            <div class="col-7">{{ $date ?? '-' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">Details:</div>
+                            <div class="col-7">{{ $details ?? '-' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">Destination:</div>
+                            <div class="col-7">{{ $destination ?? '-' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">Person Responsible:</div>
+                            <div class="col-7">{{ $person_responsible ?? '-' }}</div>
+                        </div>
 
-        /* -------------------------------------------------------------------------- */
+                        {{-- Type-specific fields --}}
+                        @switch($type)
+                        @case('other')
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">Document Name:</div>
+                            <div class="col-7">{{ $document_name ?? '-' }}</div>
+                        </div>
+                        @break
+                        @case('payroll')
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">Payroll Type:</div>
+                            <div class="col-7">{{ $payroll_type ?? '-' }}</div>
+                        </div>
+                        @break
+                        @case('procurement')
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">PR No.:</div>
+                            <div class="col-7">{{ $pr_no ?? '-' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">PO No.:</div>
+                            <div class="col-7">{{ $po_no ?? '-' }}</div>
+                        </div>
+                        @break
+                        @case('ris')
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">Document Name:</div>
+                            <div class="col-7">{{ $document_name ?? '-' }}</div>
+                        </div>
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">PPMP Code:</div>
+                            <div class="col-7">{{ $ppmp_code ?? '-' }}</div>
+                        </div>
+                        @break
+                        @case('voucher')
+                        <div class="row mb-2">
+                            <div class="col-5 fw-bold">Voucher Name:</div>
+                            <div class="col-7">{{ $voucher_name ?? '-' }}</div>
+                        </div>
+                        @break
+                        @endswitch
+                    </div>
 
-        // Register the plugin 
-        FilePond.registerPlugin(FilePondPluginFileValidateType); // for file type validation
-        FilePond.registerPlugin(FilePondPluginFileValidateSize); // for file size validation
-        FilePond.registerPlugin(FilePondPluginImagePreview); // for image preview
+                    {{-- Files --}}
+                    <div class="mb-3">
+                        <h5>Files</h5>
+                        <div class="row">
+                            @forelse ($preview_file as $file)
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-file-earmark-text me-2"></i> {{ $file->name }}
+                                        </h6>
+                                        <p class="card-text text-muted">{{ $file->type }}</p>
+                                        <a href="#" wire:click="viewFile({{ $file->id }})"
+                                            class="btn btn-primary btn-sm">Preview</a>
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <p class="text-muted">No files available.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        wire:click="clear">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+@script
+<script>
+    $wire.on('hide-outgoing-modal', () => {
+        $('#outgoingModal').modal('hide');
+    });
 
-        // Turn input element into a pond with configuration options
-        $('.files').filepond({
-            // required: true,
-            allowFileTypeValidation: true,
-            acceptedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
-            labelFileTypeNotAllowed: 'File of invalid type',
-            allowFileSizeValidation: true,
-            maxFileSize: '10MB',
-            labelMaxFileSizeExceeded: 'File is too large',
-            server: {
-                // This will assign the data to the files[] property.
-                process: (fieldName, file, metadata, load, error, progress, abort) => {
-                    @this.upload('file_id', file, load, error, progress);
-                },
-                revert: (uniqueFileId, load, error) => {
-                    @this.removeUpload('file_id', uniqueFileId, load, error);
-                }
+    $wire.on('show-outgoing-modal', () => {
+        $('#outgoingModal').modal('show');
+    });
+
+    $wire.on('show-details-modal', () => {
+        $('#detailsModal').modal('show');
+    });
+
+    /* -------------------------------------------------------------------------- */
+
+    // Register the plugin 
+    FilePond.registerPlugin(FilePondPluginFileValidateType); // for file type validation
+    FilePond.registerPlugin(FilePondPluginFileValidateSize); // for file size validation
+    FilePond.registerPlugin(FilePondPluginImagePreview); // for image preview
+
+    // Turn input element into a pond with configuration options
+    $('.files').filepond({
+        // required: true,
+        allowFileTypeValidation: true,
+        acceptedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+        labelFileTypeNotAllowed: 'File of invalid type',
+        allowFileSizeValidation: true,
+        maxFileSize: '10MB',
+        labelMaxFileSizeExceeded: 'File is too large',
+        server: {
+            // This will assign the data to the files[] property.
+            process: (fieldName, file, metadata, load, error, progress, abort) => {
+                @this.upload('file_id', file, load, error, progress);
+            },
+            revert: (uniqueFileId, load, error) => {
+                @this.removeUpload('file_id', uniqueFileId, load, error);
             }
-        });
+        }
+    });
 
-        $wire.on('reset-files', () => {
-            $('.files').each(function() {
-                $(this).filepond('removeFiles');
-            });
+    $wire.on('reset-files', () => {
+        $('.files').each(function() {
+            $(this).filepond('removeFiles');
         });
+    });
 
-        /* -------------------------------------------------------------------------- */
+    /* -------------------------------------------------------------------------- */
 
-        // Listen for event
-        $wire.on('open-file', (url) => {
-            window.open(event.detail.url, '_blank'); // Open the signed URL in a new tab
-        });
-    </script>
-    @endscript
+    // Listen for event
+    $wire.on('open-file', (url) => {
+        window.open(event.detail.url, '_blank'); // Open the signed URL in a new tab
+    });
+</script>
+@endscript

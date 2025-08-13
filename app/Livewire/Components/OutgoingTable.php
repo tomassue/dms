@@ -468,4 +468,55 @@ class OutgoingTable extends Component
         // Dispatch an event to the browser to open the URL in a new tab
         $this->dispatch('open-file', url: $signedURL);
     }
+
+    public function viewOutgoing(Outgoing $outgoing)
+    {
+        try {
+            $this->outgoingId = $outgoing->id;
+            $this->editMode = true;
+
+            $this->no = $outgoing->no;
+            $this->date = $outgoing->date;
+            $this->details = $outgoing->details;
+            $this->destination = $outgoing->destination;
+            $this->person_responsible = $outgoing->person_responsible;
+            $this->ref_status_id = RefStatus::find($outgoing->ref_status_id)?->name ?? '';
+
+            // Load type and its ID
+            $type = $outgoing->outgoingable;
+            $this->typeId = $type->id;
+
+            switch ($outgoing->outgoingable_type) {
+                case 'App\Models\OutgoingOthers':
+                    $this->type = 'other';
+                    $this->document_name = $outgoing->outgoingable->document_name;
+                    break;
+                case 'App\Models\OutgoingPayrolls':
+                    $this->type = 'payroll';
+                    $this->payroll_type = $outgoing->outgoingable->payroll_type;
+                    break;
+                case 'App\Models\OutgoingProcurement':
+                    $this->type = 'procurement';
+                    $this->pr_no = $outgoing->outgoingable->pr_no;
+                    $this->po_no = $outgoing->outgoingable->po_no;
+                    break;
+                case 'App\Models\OutgoingRis':
+                    $this->type = 'ris';
+                    $this->document_name = $outgoing->outgoingable->document_name;
+                    $this->ppmp_code = $outgoing->outgoingable->ppmp_code;
+                    break;
+                case 'App\Models\OutgoingVoucher':
+                    $this->type = 'voucher';
+                    $this->voucher_name = $outgoing->outgoingable->voucher_name;
+                    break;
+            }
+
+            $this->preview_file = $outgoing->outgoingable->files;
+
+            $this->dispatch('show-details-modal');
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
 }
