@@ -9,6 +9,7 @@ use App\Models\OutgoingPayrolls;
 use App\Models\OutgoingProcurement;
 use App\Models\OutgoingRis;
 use App\Models\OutgoingVoucher;
+use App\Models\RefOutgoingCategory;
 use App\Models\RefStatus;
 use App\Models\Scopes\DivisionScope;
 use Carbon\Carbon;
@@ -126,11 +127,63 @@ class OutgoingTable extends Component
         return view(
             'livewire.components.outgoing-table',
             [
+                'outgoing_categories' => $this->loadOutgoingCategories(),
                 'outgoings' => $this->loadOutgoings(),
                 'status' => $this->loadStatus(), // for status dropdown
             ]
         );
     }
+
+    public function loadOutgoingCategories()
+    {
+        return RefOutgoingCategory::all();
+    }
+
+    // public function loadOutgoings()
+    // {
+    //     return Outgoing::query()
+    //         ->when($this->search, function ($query) {
+    //             $query->search($this->search);
+    //         })
+    //         ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
+    //             $query->dateRange($this->filter_start_date, $this->filter_end_date);
+    //         })
+    //         ->when($this->filter_status, function ($query) {
+    //             $query->where('ref_status_id', $this->filter_status);
+    //         })
+    //         ->when($this->filter_outgoing_category, function ($query) {
+    //             if ($this->filter_outgoing_category === 'others') {
+    //                 $query->where('outgoingable_type', OutgoingOthers::class)
+    //                     ->join('outgoing_others', 'outgoing.outgoingable_id', '=', 'outgoing_others.id')
+    //                     ->whereNull('outgoing_others.outgoing_category_id');
+    //             } elseif (is_numeric($this->filter_outgoing_category)) {
+    //                 $categoryId = $this->filter_outgoing_category;
+    //                 $query->where('outgoingable_type', OutgoingOthers::class)
+    //                     ->join('outgoing_others', 'outgoing.outgoingable_id', '=', 'outgoing_others.id')
+    //                     ->where('outgoing_others.outgoing_category_id', $categoryId);
+    //             } else {
+    //                 $typeMap = [
+    //                     'payroll' => OutgoingPayrolls::class,
+    //                     'procurement' => OutgoingProcurement::class,
+    //                     'ris' => OutgoingRis::class,
+    //                     'voucher' => OutgoingVoucher::class,
+    //                 ];
+
+    //                 if (isset($typeMap[$this->filter_outgoing_category])) {
+    //                     $query->where('outgoingable_type', $typeMap[$this->filter_outgoing_category]);
+    //                 }
+    //             }
+    //         })
+    //         ->when(Auth::user()->hasRole('APOO'), function ($query) {
+    //             // APOO specifically requested the the office admin may access all outgoing entries from divisions.
+    //             // Thus, we removed the Global Scope
+    //             if (Auth::user()->user_metadata->is_office_admin) {
+    //                 $query->withoutGlobalScope(DivisionScope::class);
+    //             }
+    //         })
+    //         ->latest()
+    //         ->paginate(10);
+    // }
 
     public function loadOutgoings()
     {
@@ -145,28 +198,38 @@ class OutgoingTable extends Component
                 $query->where('ref_status_id', $this->filter_status);
             })
             ->when($this->filter_outgoing_category, function ($query) {
-                if ($this->filter_outgoing_category == 'others') {
-                    $query->where('outgoingable_type', OutgoingOthers::class);
-                } elseif ($this->filter_outgoing_category == 'payroll') {
-                    $query->where('outgoingable_type', OutgoingPayrolls::class);
-                } elseif ($this->filter_outgoing_category == 'procurement') {
-                    $query->where('outgoingable_type', OutgoingProcurement::class);
-                } elseif ($this->filter_outgoing_category == 'ris') {
-                    $query->where('outgoingable_type', OutgoingRis::class);
-                } elseif ($this->filter_outgoing_category == 'voucher') {
-                    $query->where('outgoingable_type', OutgoingVoucher::class);
+                if ($this->filter_outgoing_category === 'others') {
+                    $query->where('outgoingable_type', OutgoingOthers::class)
+                        ->join('outgoing_others', 'outgoing.outgoingable_id', '=', 'outgoing_others.id')
+                        ->whereNull('outgoing_others.outgoing_category_id');
+                } elseif (is_numeric($this->filter_outgoing_category)) {
+                    $categoryId = $this->filter_outgoing_category;
+                    $query->where('outgoingable_type', OutgoingOthers::class)
+                        ->join('outgoing_others', 'outgoing.outgoingable_id', '=', 'outgoing_others.id')
+                        ->where('outgoing_others.outgoing_category_id', $categoryId);
+                } else {
+                    $typeMap = [
+                        'payroll'     => OutgoingPayrolls::class,
+                        'procurement' => OutgoingProcurement::class,
+                        'ris'         => OutgoingRis::class,
+                        'voucher'     => OutgoingVoucher::class,
+                    ];
+
+                    if (isset($typeMap[$this->filter_outgoing_category])) {
+                        $query->where('outgoingable_type', $typeMap[$this->filter_outgoing_category]);
+                    }
                 }
             })
             ->when(Auth::user()->hasRole('APOO'), function ($query) {
-                // APOO specifically requested the the office admin may access all outgoing entries from divisions.
-                // Thus, we removed the Global Scope
                 if (Auth::user()->user_metadata->is_office_admin) {
                     $query->withoutGlobalScope(DivisionScope::class);
                 }
             })
-            ->latest()
+            ->orderBy('outgoing.created_at', 'desc') // qualified table name to avoid ambiguity
+            ->select('outgoing.*') // make sure you only select outgoing columns
             ->paginate(10);
     }
+
 
     public function loadStatus()
     {
@@ -226,7 +289,19 @@ class OutgoingTable extends Component
                         break;
 
                     default:
-                        throw new \Exception("Unknown type: {$this->type}");
+                        if (is_numeric($this->type)) {
+                            $type = OutgoingOthers::updateOrCreate(
+                                ['id' => $this->typeId],
+                                [
+                                    'outgoing_category_id' => $this->type, // link to outgoing category
+                                    'document_name'        => $this->document_name
+                                ]
+                            );
+                        } else {
+                            throw new \Exception("Unknown type: {$this->type}");
+                        }
+                        break;
+                        // throw new \Exception("Unknown type: {$this->type}");
                 }
 
                 // remember for next save
@@ -301,6 +376,57 @@ class OutgoingTable extends Component
     }
 
 
+    // public function editOutgoing(Outgoing $outgoing)
+    // {
+    //     try {
+    //         $this->outgoingId = $outgoing->id;
+    //         $this->editMode = true;
+
+    //         $this->no = $outgoing->no;
+    //         $this->date = $outgoing->date;
+    //         $this->details = $outgoing->details;
+    //         $this->destination = $outgoing->destination;
+    //         $this->person_responsible = $outgoing->person_responsible;
+    //         $this->ref_status_id = $outgoing->ref_status_id;
+
+    //         // Load type and its ID
+    //         $type = $outgoing->outgoingable;
+    //         $this->typeId = $type->id;
+
+    //         switch ($outgoing->outgoingable_type) {
+    //             case 'App\Models\OutgoingOthers':
+    //                 $this->type = 'other';
+    //                 $this->document_name = $outgoing->outgoingable->document_name;
+    //                 break;
+    //             case 'App\Models\OutgoingPayrolls':
+    //                 $this->type = 'payroll';
+    //                 $this->payroll_type = $outgoing->outgoingable->payroll_type;
+    //                 break;
+    //             case 'App\Models\OutgoingProcurement':
+    //                 $this->type = 'procurement';
+    //                 $this->pr_no = $outgoing->outgoingable->pr_no;
+    //                 $this->po_no = $outgoing->outgoingable->po_no;
+    //                 break;
+    //             case 'App\Models\OutgoingRis':
+    //                 $this->type = 'ris';
+    //                 $this->document_name = $outgoing->outgoingable->document_name;
+    //                 $this->ppmp_code = $outgoing->outgoingable->ppmp_code;
+    //                 break;
+    //             case 'App\Models\OutgoingVoucher':
+    //                 $this->type = 'voucher';
+    //                 $this->voucher_name = $outgoing->outgoingable->voucher_name;
+    //                 break;
+    //         }
+
+    //         $this->preview_file = $outgoing->outgoingable->files;
+
+    //         $this->dispatch('show-outgoing-modal');
+    //     } catch (\Throwable $th) {
+    //         //throw $th;
+    //         $this->dispatch('error', message: 'Something went wrong.');
+    //     }
+    // }
+
     public function editOutgoing(Outgoing $outgoing)
     {
         try {
@@ -318,36 +444,36 @@ class OutgoingTable extends Component
             $type = $outgoing->outgoingable;
             $this->typeId = $type->id;
 
-            switch ($outgoing->outgoingable_type) {
-                case 'App\Models\OutgoingOthers':
+            if ($outgoing->outgoingable_type === 'App\Models\OutgoingOthers') {
+                // Check if it's a fixed 'other' type or dynamic category
+                if (is_numeric($type->outgoing_category_id)) {
+                    // Dynamic category
+                    $this->type = $type->outgoing_category_id; // store numeric category ID
+                } else {
+                    // Fixed 'other'
                     $this->type = 'other';
-                    $this->document_name = $outgoing->outgoingable->document_name;
-                    break;
-                case 'App\Models\OutgoingPayrolls':
-                    $this->type = 'payroll';
-                    $this->payroll_type = $outgoing->outgoingable->payroll_type;
-                    break;
-                case 'App\Models\OutgoingProcurement':
-                    $this->type = 'procurement';
-                    $this->pr_no = $outgoing->outgoingable->pr_no;
-                    $this->po_no = $outgoing->outgoingable->po_no;
-                    break;
-                case 'App\Models\OutgoingRis':
-                    $this->type = 'ris';
-                    $this->document_name = $outgoing->outgoingable->document_name;
-                    $this->ppmp_code = $outgoing->outgoingable->ppmp_code;
-                    break;
-                case 'App\Models\OutgoingVoucher':
-                    $this->type = 'voucher';
-                    $this->voucher_name = $outgoing->outgoingable->voucher_name;
-                    break;
+                }
+                $this->document_name = $type->document_name;
+            } elseif ($outgoing->outgoingable_type === 'App\Models\OutgoingPayrolls') {
+                $this->type = 'payroll';
+                $this->payroll_type = $type->payroll_type;
+            } elseif ($outgoing->outgoingable_type === 'App\Models\OutgoingProcurement') {
+                $this->type = 'procurement';
+                $this->pr_no = $type->pr_no;
+                $this->po_no = $type->po_no;
+            } elseif ($outgoing->outgoingable_type === 'App\Models\OutgoingRis') {
+                $this->type = 'ris';
+                $this->document_name = $type->document_name;
+                $this->ppmp_code = $type->ppmp_code;
+            } elseif ($outgoing->outgoingable_type === 'App\Models\OutgoingVoucher') {
+                $this->type = 'voucher';
+                $this->voucher_name = $type->voucher_name;
             }
 
-            $this->preview_file = $outgoing->outgoingable->files;
+            $this->preview_file = $type->files;
 
             $this->dispatch('show-outgoing-modal');
         } catch (\Throwable $th) {
-            //throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }

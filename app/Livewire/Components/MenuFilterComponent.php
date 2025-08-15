@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Components;
 
+use App\Models\RefOutgoingCategory;
 use App\Models\RefStatus;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
@@ -44,6 +45,7 @@ class MenuFilterComponent extends Component
     {
         return view('livewire.components.menu-filter-component', [
             'status_dropdown' => $this->loadStatus(), // Status dropdown
+            'outgoing_categories' => $this->loadOutgoingCategories(),
         ]);
     }
 
@@ -62,5 +64,10 @@ class MenuFilterComponent extends Component
         }
 
         return $status;
+    }
+
+    public function loadOutgoingCategories()
+    {
+        return RefOutgoingCategory::all();
     }
 }

@@ -72,7 +72,11 @@
                                 echo 'Payroll';
                                 break;
                                 case 'App\Models\OutgoingOthers':
+                                if($item->outgoingable->outgoing_category_id != null) {
+                                echo $item->outgoingable->outgoingCategory->outgoing_category_name ?? '';
+                                } else {
                                 echo 'Other';
+                                }
                                 break;
                                 default:
                                 echo 'Unknown';
@@ -196,6 +200,9 @@
                                     <option value="ris">RIS</option>
                                     <option value="procurement">Procurement</option>
                                     <option value="payroll">Payroll</option>
+                                    @foreach ($outgoing_categories as $item)
+                                    <option value="{{ $item->id }}">{{ $item->outgoing_category_name }}</option>
+                                    @endforeach
                                     <option value="other">Other</option>
                                 </select>
                                 @error('type')
@@ -223,8 +230,7 @@
                                     @enderror
                                 </div>
 
-                                @switch($type)
-                                @case('voucher')
+                                @if($type === 'voucher')
                                 <div class="mb-10">
                                     <label class="form-label required">Voucher Name</label>
                                     <input type="text" class="form-control" wire:model="voucher_name">
@@ -232,8 +238,8 @@
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
-                                @break
-                                @case('ris')
+
+                                @elseif($type === 'ris')
                                 <div class="mb-10">
                                     <label class="form-label required">Document name</label>
                                     <input type="text" class="form-control" wire:model="document_name">
@@ -248,8 +254,8 @@
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
-                                @break
-                                @case('procurement')
+
+                                @elseif($type === 'procurement')
                                 <div class="mb-10">
                                     <label class="form-label required">PR No.</label>
                                     <input type="text" class="form-control" wire:model="pr_no">
@@ -264,8 +270,8 @@
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
-                                @break
-                                @case('payroll')
+
+                                @elseif($type === 'payroll')
                                 <div class="mb-10">
                                     <label class="form-label required">Payroll type</label>
                                     <select class="form-select" aria-label="Type" wire:model="payroll_type">
@@ -277,8 +283,8 @@
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
-                                @break
-                                @case('other')
+
+                                @elseif($type === 'other' || is_numeric($type))
                                 <div class="mb-10">
                                     <label class="form-label required">Document name</label>
                                     <input type="text" class="form-control" wire:model="document_name">
@@ -286,9 +292,7 @@
                                     <span class="text-danger">{{ $message }}</span>
                                     @enderror
                                 </div>
-                                @break
-                                @default
-                                @endswitch
+                                @endif
 
                                 <div class="mb-10">
                                     <label class="form-label required">Date</label>

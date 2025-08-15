@@ -15,6 +15,7 @@ use App\Livewire\Shared\Settings\Divisions;
 use App\Livewire\Shared\Settings\IncomingDocumentCategory;
 use App\Livewire\Shared\Settings\IncomingRequestCategory;
 use App\Livewire\Shared\Settings\MeetingsCategory;
+use App\Livewire\Shared\Settings\OutgoingCategory;
 use App\Livewire\Shared\Settings\Positions;
 use App\Livewire\Shared\Settings\Signatories;
 use App\Livewire\Shared\Settings\UserManagement;
@@ -58,6 +59,8 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMI
         Route::get('/settings/incoming-document-categories', IncomingDocumentCategory::class)->name('incoming-document-categories')->middleware('permission:reference.incomingDocumentCategory.read');
         # Settings.Incoming Request Category
         Route::get('/settings/incoming-request-categories', IncomingRequestCategory::class)->name('incoming-request-categories')->middleware('permission:reference.incomingRequestCategory.read');
+        # Settings.Outgoing Category
+        Route::get('/settings/outgoing-category', OutgoingCategory::class)->name('outgoing-category')->middleware('permission:reference.outgoingCategory.read');
         # Settings.Signatories
         Route::get('/settings/signatories', Signatories::class)->name('settings.signatories')->middleware('permission:reference.signatories.read');
         # Settings.Divisions

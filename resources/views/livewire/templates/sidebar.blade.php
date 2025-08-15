@@ -243,6 +243,17 @@
                         </div>
                         @endcan
 
+                        @can('reference.outgoingCategory.read')
+                        <div class="menu-item">
+                            <a class="menu-link {{ Route::currentRouteName() == 'outgoing-category' ? 'active' : '' }}" href="{{ route('outgoing-category') }}">
+                                <span class="menu-bullet">
+                                    <span class="bullet bullet-dot"></span>
+                                </span>
+                                <span class="menu-title">Outgoing (Category)</span>
+                            </a>
+                        </div>
+                        @endcan
+
                         @can('reference.accomplishmentCategory.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'accomplishment-category' ? 'active' : '' }}" href="{{ route('accomplishment-category') }}">

@@ -63,6 +63,9 @@
                     <option value="ris">RIS</option>
                     <option value="procurement">Procurement</option>
                     <option value="payroll">Payroll</option>
+                    @foreach ($outgoing_categories as $item)
+                    <option value="{{ $item->id }}">{{ $item->outgoing_category_name }}</option>
+                    @endforeach
                     <option value="others">Others</option>
                 </select>
                 <!--end::Input-->

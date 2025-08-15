@@ -15,6 +15,7 @@ class OutgoingOthers extends Model
 
     protected $table = "outgoing_others";
     protected $fillable = [
+        'outgoing_category_id',
         'document_name'
     ];
 
@@ -27,6 +28,12 @@ class OutgoingOthers extends Model
     public function files()
     {
         return $this->morphMany(File::class, 'fileable');
+    }
+
+    public function outgoingCategory()
+    {
+        return $this->belongsTo(RefOutgoingCategory::class, 'outgoing_category_id', 'id')
+            ->withTrashed(); // Include soft-deleted records;
     }
 
     // Activity Log
