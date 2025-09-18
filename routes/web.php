@@ -27,7 +27,6 @@ Route::get('/', function () {
 Auth::routes();
 
 Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMISID|CITY ADMIN|OBO']], function () {
-
     // Routes accessible only by admin of team 1
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
