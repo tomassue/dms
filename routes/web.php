@@ -21,6 +21,7 @@ use App\Livewire\Shared\Settings\Signatories;
 use App\Livewire\Shared\Settings\UserManagement;
 use App\Livewire\SuperAdmin\RolesAndPermissions;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
     return view('auth.login');
@@ -28,7 +29,13 @@ Route::get('/', function () {
 
 Auth::routes();
 
+<<<<<<< Updated upstream
 Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMISID|CITY ADMIN']], function () {
+=======
+Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|OBO|CITY ADMIN|CMISID']], function () {
+    // Routes accessible only by admin of team 1
+    Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
+>>>>>>> Stashed changes
 
     # Account Settings
     Route::get('/account-settings', AccountSettings::class)->name('account-settings');
