@@ -29,13 +29,9 @@ Route::get('/', function () {
 
 Auth::routes();
 
-<<<<<<< Updated upstream
-Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMISID|CITY ADMIN']], function () {
-=======
 Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|OBO|CITY ADMIN|CMISID']], function () {
     // Routes accessible only by admin of team 1
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
->>>>>>> Stashed changes
 
     # Account Settings
     Route::get('/account-settings', AccountSettings::class)->name('account-settings');
