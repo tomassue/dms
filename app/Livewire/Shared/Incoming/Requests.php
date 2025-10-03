@@ -43,6 +43,7 @@ class Requests extends Component
     /* ------------------------------ begin::fields ----------------------------- */
 
     public $no,
+        $category_no,
         $office_barangay_organization,
         $date_requested,
         $ref_incoming_request_category_id,
@@ -55,6 +56,8 @@ class Requests extends Component
         $file_id = []; // for file upload - MorphMany
 
     /* ------------------------------- end::fields ------------------------------ */
+    //--TEODZ
+        public $is_custom;
 
     public function rules()
     {
@@ -103,6 +106,10 @@ class Requests extends Component
     {
         $this->no = IncomingRequest::generateUniqueReference('INCR-', 8); // Pre-generate reference number to show in the input field (disabled).
     }
+    public function categoryNo()
+    {
+        $this->category_no = IncomingRequest::latest('category_no');
+    }
 
     public function render()
     {
@@ -110,6 +117,7 @@ class Requests extends Component
             'livewire.shared.incoming.requests',
             [
                 'incoming_requests' => $this->loadIncomingRequests(),
+                'sss' => $this->loadRoleCustom(),
                 'incoming_request_categories' => $this->loadIncomingRequestCategories(), // Incoming Request Category dropdown
                 'status' => $this->loadStatus(), // Status dropdown
                 'divisions' => $this->loadDivisions(), // Division dropdown
@@ -120,6 +128,30 @@ class Requests extends Component
 
     public function loadIncomingRequests()
     {
+        // $results = IncomingRequest::query()
+        // ->when($this->search, function ($query) {
+        //     $query->where('no', 'like', '%' . $this->search . '%')
+        //         ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%')
+        //         ->orWhereHas('category', function ($q) {
+        //             $q->where('incoming_request_category_name', 'like', '%' . $this->search . '%');
+        //         });
+        // })
+        // ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
+        //     $query->whereBetween('date_time', [
+        //         Carbon::parse($this->filter_start_date)->startOfDay(),
+        //         Carbon::parse($this->filter_end_date)->endOfDay()
+        //     ]);
+        // })
+        // ->when($this->filter_status, function ($query) {
+        //     $query->where('ref_status_id', $this->filter_status);
+        // })
+        // ->latest()
+        // // 💡 TEMPORARILY change to get() to fetch the collection
+        // ->get(); 
+            
+        // // 🛑 DUMP AND DIE: This will stop the page load and display the data
+        // dd($results);
+        
         return IncomingRequest::query()
             ->when($this->search, function ($query) {
                 $query->where('no', 'like', '%' . $this->search . '%')
@@ -168,6 +200,7 @@ class Requests extends Component
 
     public function loadDivisions()
     {
+       // dd(auth()->user()->roles()->first()->id);
         return RefDivision::where('office_id', auth()->user()->roles()->first()->id)
             ->get()
             ->map(function ($division) {
@@ -356,7 +389,7 @@ class Requests extends Component
                 ->whereIn('subject_id', $fileIds)
                 ->with(['causer.user_metadata.division'])
                 ->get();
-
+                
             // Step 4: Combine and sort by created_at DESC
             $this->activity_log = $incomingRequestLogs->merge($fileLogs)
                 ->sortByDesc('created_at')
@@ -656,5 +689,11 @@ class Requests extends Component
             //throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
+    }
+
+    //--------------------------------------
+    public function loadRoleCustom(){
+        
+        $this->is_custom = auth()->user()->roles()->first()->id;
     }
 }
