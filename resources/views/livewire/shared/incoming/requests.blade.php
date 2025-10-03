@@ -275,7 +275,7 @@
     @include('livewire.shared.modals.forward-modal')
 
     <!--begin::Modal - Incoming Requests-->
-    @if(auth()->user()->roles()->first()->is_custom=='N')
+    @if(auth()->user()->roles()->first()->is_custom=='Y')
     <div class="modal fade" tabindex="-1" id="incomingRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
@@ -504,8 +504,8 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Category No.</label>
-                                <input type="text" class="form-control" wire:model="office_category_no" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('office_category_no')
+                                <input type="text" class="form-control" wire:model="category_no" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('category_no')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -538,16 +538,16 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Contact Person (Name)</label>
-                                <input type="text" class="form-control" wire:model="contact_person_name" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('contact_person_name')
+                                <label class="form-label required">Location</label>
+                                <input type="text" class="form-control" wire:model="location" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('location')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Email</label>
-                                <input type="text" class="form-control" wire:model="contact_email" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('contact_email')
+                                <label class="form-label required">Contact Person (Name)</label>
+                                <input type="text" class="form-control" wire:model="contact_person_name" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('contact_person_name')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -563,9 +563,23 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
+                                <label class="form-label required">Contact Email</label>
+                                <input type="text" class="form-control" wire:model="contact_email" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('contact_email')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
                                 <label class="form-label required">Description</label>
                                 <textarea class="form-control" wire:model="description" {{ $is_office_admin ? '' : 'disabled' }}></textarea>
                                 @error('description')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label">Memo No.</label>
+                                <input type="text" class="form-control" wire:model="memo_no" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('memo_no')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>

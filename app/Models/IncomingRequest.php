@@ -33,7 +33,12 @@ class IncomingRequest extends Model
         'description',
         'ref_status_id',
         'remarks',
-        'office_id'
+        'office_id',
+        // 'category_no', // Additional Teodz
+        // 'date_received', 
+        // 'contact_email',
+        // 'location',
+        // 'memo_no'
     ];
 
     // Accessors

@@ -43,7 +43,6 @@ class Requests extends Component
     /* ------------------------------ begin::fields ----------------------------- */
 
     public $no,
-        $category_no,
         $office_barangay_organization,
         $date_requested,
         $ref_incoming_request_category_id,
@@ -53,6 +52,11 @@ class Requests extends Component
         $description,
         $ref_status_id,
         $remarks,
+        $category_no,
+        $date_received,
+        $contact_email,
+        $location,
+        $memo_no,
         $file_id = []; // for file upload - MorphMany
 
     /* ------------------------------- end::fields ------------------------------ */
@@ -70,6 +74,11 @@ class Requests extends Component
             'contact_person_name' => 'required',
             'contact_person_number' => 'required',
             'description' => 'required',
+            // 'category_no' => 'nullable', // Additional Teodz
+            // 'date_received' => 'nullable',
+            // 'contact_email' => 'nullable',
+            // 'location' => 'nullable',
+            // 'memo_no' => 'nullable',
         ];
     }
 
@@ -230,10 +239,14 @@ class Requests extends Component
                         'description' => $this->description,
                         'ref_status_id' => $this->ref_status_id ?? '1', //! Default value set in the database is not working. - Set to pending.
                         'remarks' => $this->remarks,
-                        'office_id' => auth()->user()->roles()->first()->id
+                        'office_id' => auth()->user()->roles()->first()->id,
+                        // 'office_received' => $this->office_received,
+                        // 'category_no' => $this->category_no,
+                        // 'contact_email' => $this->contact_email,
+                        // 'location' => $this->location,
+                        // 'memo_no' => $this->memo_no,
                     ]
                 );
-
                 // save files
                 $this->saveFiles($incomingRequest);
 
