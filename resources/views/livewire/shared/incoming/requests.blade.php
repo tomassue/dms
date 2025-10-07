@@ -145,9 +145,8 @@
                                         <thead>
                                             <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
                                                 <th>No.</th>
-                                                <th>Category - No.</th>
+                                                <th>Category No.</th>
                                                 <th>Office/Brgy/Org</th>
-                                                <th>Date Recieved</th>
                                                 <th>Date Requested</th>
                                                 <th>Status</th>
                                                 @can('incoming.requests.update')
@@ -162,13 +161,10 @@
                                                     <span class="badge badge-light-info text-uppercase">{{ $item->no }}</span>
                                                 </td>
                                                 <td>
-                                                    {{ $item->category->incoming_request_category_name }} - 211
+                                                    {{ $item->category->incoming_request_category_name }}-{{$item->category_no}}
                                                 </td>
                                                 <td>
                                                     {{ $item->office_barangay_organization }}
-                                                </td>
-                                                <td>
-                                                    {{ $item->formatted_date_requested }}
                                                 </td>
                                                 <td>
                                                     {{ $item->formatted_date_requested }}
@@ -198,6 +194,8 @@
                                             ">
                                                         {{ $item->status->name }}
                                                     </span><br/>
+                                                    <span class="badge badge-light-success">James
+                                                    </span><br/>
                                                     <span class="badge badge-light-danger">3 days ago
                                                     </span>
                                                 </td>
@@ -221,6 +219,16 @@
                                                             <i class="bi bi-arrow-up-square"></i>
                                                         </button>
                                                         @endcan
+                                                        <button type="button" class="btn btn-icon btn-sm btn-primary" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
+                                                            <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
+                                                                <i class="bi bi-person-check"></i>
+                                                            </div>
+                                                            <div wire:loading wire:target="activityLog({{ $item->id }})">
+                                                                <div class="spinner-border spinner-border-sm" role="status">
+                                                                    <span class="visually-hidden">Loading...</span>
+                                                                </div>
+                                                            </div>
+                                                        </button>
                                                         <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
                                                             <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
                                                                 <i class="bi bi-clock-history"></i>
@@ -275,7 +283,7 @@
     @include('livewire.shared.modals.forward-modal')
 
     <!--begin::Modal - Incoming Requests-->
-    @if(auth()->user()->roles()->first()->is_custom=='Y')
+    @if(auth()->user()->roles()->first()->is_custom=='N')
     <div class="modal fade" tabindex="-1" id="incomingRequestModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
@@ -510,16 +518,16 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Office/Brgy/Org</label>
-                                <input type="text" class="form-control" wire:model="office_barangay_organization" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('office_barangay_organization')
+                                <label class="form-label">Memo No.</label>
+                                <input type="text" class="form-control" wire:model="memo_no" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('memo_no')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Date Recieved</label>
-                                <input type="date" class="form-control" wire:model="date_recieved" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('date_recieved')
+                                <label class="form-label required">Office/Brgy/Org</label>
+                                <input type="text" class="form-control" wire:model="office_barangay_organization" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('office_barangay_organization')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -564,8 +572,8 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Contact Email</label>
-                                <input type="text" class="form-control" wire:model="contact_email" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('contact_email')
+                                <input type="text" class="form-control" wire:model="contact_person_email" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('contact_person_email')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -573,13 +581,6 @@
                                 <label class="form-label required">Description</label>
                                 <textarea class="form-control" wire:model="description" {{ $is_office_admin ? '' : 'disabled' }}></textarea>
                                 @error('description')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div class="mb-10">
-                                <label class="form-label">Memo No.</label>
-                                <input type="text" class="form-control" wire:model="memo_no" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('memo_no')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -669,6 +670,7 @@
     <!--end::Modal - Incoming Requests-->
 
     <!-- detailsModal -->
+    @if(auth()->user()->roles()->first()->is_custom=='N')
     <div class="modal fade" id="detailsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true" wire:ignore.self>
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
@@ -779,6 +781,130 @@
             </div>
         </div>
     </div>
+    @else
+    <div class="modal fade" id="detailsModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="detailsModalLabel">Details</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" wire:click="clear"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-5 fw-bold">Status:</div>
+                            <div class="col-7">
+                                <span class="badge 
+                                @switch(strtolower($ref_status_id ?? '-'))
+                                    @case('pending')
+                                        badge-light-danger
+                                        @break
+                                    @case('processed')
+                                        badge-light-primary
+                                        @break
+                                    @case('forwarded')
+                                        badge-light-warning
+                                        @break
+                                    @case('completed')
+                                        badge-light-success
+                                        @break
+                                    @case('cancelled')
+                                        badge-light-dark
+                                        @break
+                                    @default
+                                        badge-light-dark
+                                @endswitch
+                                text-capitalize">
+                                    {{ $ref_status_id ?? '-' }}
+                                </span>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Forwarded to:</div>
+                            <div class="col-7">
+                                @foreach($forwarded_divisions as $item)
+                                {{ $item['division_name'] }}@if(!$loop->last), @endif
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">No.:</div>
+                            <div class="col-7">{{ $no ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Category No:</div>
+                            <div class="col-7">{{ $ref_incoming_request_category_id ?? '-' }}-{{ $category_no ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Memo No.:</div>
+                            <div class="col-7">{{ $memo_no ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Office/Brgy/Org:</div>
+                            <div class="col-7">{{ $office_barangay_organization ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Date requested:</div>
+                            <div class="col-7">{{ $date_requested ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Date and Time:</div>
+                            <div class="col-7">{{ $date_time ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Location:</div>
+                            <div class="col-7">{{ $location ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Contact person name:</div>
+                            <div class="col-7">{{ $contact_person_name ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Contact person number:</div>
+                            <div class="col-7">{{ $contact_person_number ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Contact person email:</div>
+                            <div class="col-7">{{ $contact_person_email ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Description:</div>
+                            <div class="col-7">{{ $description ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Remarks:</div>
+                            <div class="col-7">{{ $remarks ?? '-' }}</div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <h5>Files</h5>
+                        <div class="row">
+                            @forelse ($preview_file as $file)
+                            <div class="col-md-6 mb-3">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <h6 class="card-title">
+                                            <i class="bi bi-file-earmark-text me-2"></i> {{ $file->name }}
+                                        </h6>
+                                        <p class="card-text text-muted">{{ $file->type }}</p>
+                                        <a href="#" wire:click="viewFile({{ $file->id }})" class="btn btn-primary btn-sm">Preview</a>
+                                    </div>
+                                </div>
+                            </div>
+                            @empty
+                            <p class="text-muted">No files available.</p>
+                            @endforelse
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    @endif
 </div>
 
 @script

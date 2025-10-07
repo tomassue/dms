@@ -53,8 +53,7 @@ class Requests extends Component
         $ref_status_id,
         $remarks,
         $category_no,
-        $date_received,
-        $contact_email,
+        $contact_person_email,
         $location,
         $memo_no,
         $file_id = []; // for file upload - MorphMany
@@ -74,11 +73,10 @@ class Requests extends Component
             'contact_person_name' => 'required',
             'contact_person_number' => 'required',
             'description' => 'required',
-            // 'category_no' => 'nullable', // Additional Teodz
-            // 'date_received' => 'nullable',
-            // 'contact_email' => 'nullable',
-            // 'location' => 'nullable',
-            // 'memo_no' => 'nullable',
+            'category_no' => 'string|nullable', // Additional Teodz
+            'contact_person_email' => 'string|nullable',
+            'location' => 'string|nullable',
+            'memo_no' => 'string|nullable',
         ];
     }
 
@@ -165,6 +163,8 @@ class Requests extends Component
             ->when($this->search, function ($query) {
                 $query->where('no', 'like', '%' . $this->search . '%')
                     ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%')
+                    ->orWhere('category_no', 'like', '%' . $this->search . '%')
+                    ->orWhere('memo_no', 'like', '%' . $this->search . '%')
                     ->orWhereHas('category', function ($q) {
                         $q->where('incoming_request_category_name', 'like', '%' . $this->search . '%');
                     });
@@ -240,11 +240,10 @@ class Requests extends Component
                         'ref_status_id' => $this->ref_status_id ?? '1', //! Default value set in the database is not working. - Set to pending.
                         'remarks' => $this->remarks,
                         'office_id' => auth()->user()->roles()->first()->id,
-                        // 'office_received' => $this->office_received,
-                        // 'category_no' => $this->category_no,
-                        // 'contact_email' => $this->contact_email,
-                        // 'location' => $this->location,
-                        // 'memo_no' => $this->memo_no,
+                        'category_no' => $this->category_no,
+                        'contact_person_email' => $this->contact_person_email,
+                        'location' => $this->location,
+                        'memo_no' => $this->memo_no,
                     ]
                 );
                 // save files
@@ -314,6 +313,10 @@ class Requests extends Component
             $this->contact_person_number = $incomingRequest->contact_person_number;
             $this->description = $incomingRequest->description;
             $this->ref_status_id = $incomingRequest->ref_status_id;
+            $this->category_no = $incomingRequest->category_no; //Teodz
+            $this->contact_person_email = $incomingRequest->contact_person_email;
+            $this->location = $incomingRequest->location;
+            $this->memo_no = $incomingRequest->memo_no;
 
             //* Hide it so that other divisions won't see it. Remarks inputted can only be seen inside activity log modal.
             //// $this->remarks = $incomingRequest->remarks; 
@@ -694,6 +697,10 @@ class Requests extends Component
             $this->description = $incomingRequest->description;
             $this->ref_status_id = $incomingRequest->status->name;
             $this->remarks = $incomingRequest->remarks;
+            $this->category_no = $incomingRequest->category_no; //Teodz
+            $this->contact_person_email = $incomingRequest->contact_person_email;
+            $this->location = $incomingRequest->location;
+            $this->memo_no = $incomingRequest->memo_no;
 
             $this->preview_file = $incomingRequest->files;
 

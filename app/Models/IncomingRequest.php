@@ -34,11 +34,11 @@ class IncomingRequest extends Model
         'ref_status_id',
         'remarks',
         'office_id',
-        // 'category_no', // Additional Teodz
-        // 'date_received', 
-        // 'contact_email',
-        // 'location',
-        // 'memo_no'
+        'category_no', // Additional Teodz
+        'contact_person_email',
+        'location',
+        'memo_no',
+        'user_id'
     ];
 
     // Accessors

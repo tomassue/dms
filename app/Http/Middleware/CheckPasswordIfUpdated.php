@@ -18,7 +18,7 @@ class CheckPasswordIfUpdated
     public function handle(Request $request, Closure $next): Response
     {
         $user = Auth::user();
-
+        
         // Check if user is authenticated and password is the default
         if ($user && Hash::check('password', $user->password)) {
             return redirect()->route('account-settings')
