@@ -220,6 +220,85 @@ class Requests extends Component
             });
     }
 
+    // Assuming this code is within a Livewire component or a class with $this-> files (array of uploaded files)
+    // and an IncomingRequest model relationship is NOT being used for files.
+
+    public function saveIncomingRequestInDirectory(){
+        // 1. Validation (Ensure $this->files is validated in your rules() method)
+        $this->validate($this->rules(), [], $this->attributes());
+
+        try {
+            // Start Database Transaction
+            DB::transaction(function () {
+                
+                // 2. Create or Update Incoming Request record
+                $incomingRequest = IncomingRequest::updateOrCreate(
+                    ['id' => $this->incomingRequestId ?? null],
+                    [
+                        'no' => $this->no,
+                        'office_barangay_organization' => $this->office_barangay_organization,
+                        'date_requested' => $this->date_requested,
+                        'ref_incoming_request_category_id' => $this->ref_incoming_request_category_id,
+                        'date_time' => $this->date_time,
+                        'contact_person_name' => $this->contact_person_name,
+                        'contact_person_number' => $this->contact_person_number,
+                        'description' => $this->description,
+                        'ref_status_id' => $this->ref_status_id ?? '1',
+                        'remarks' => $this->remarks,
+                        'office_id' => auth()->user()->roles()->first()->id,
+                        'category_no' => $this->category_no,
+                        'contact_person_email' => $this->contact_person_email,
+                        'location' => $this->location,
+                        'memo_no' => $this->memo_no,
+                    ]
+                );
+
+                // Get the ID of the saved/updated Incoming Request
+                $incomingRequestId = $incomingRequest->id;
+
+                // --- File Upload Logic for files_directory table ---
+                
+                // Assuming the uploaded files are in a property named $this->files (PDFs/Images)
+                if (!empty($this->files)) {
+                    
+                    // Get the Model for the files_directory table
+                    // NOTE: You must replace 'FilesDirectoryModel' with the actual name of your Eloquent model
+                    $FilesDirectoryModel = app('App\Models\FilesDirectoryModel'); 
+
+                    foreach ($this->files as $file) {
+                        // Store the file (PDF or image)
+                        // Files will be stored in storage/app/public/incoming_requests
+                        $directory = $file->store('incoming_requests', 'public');
+
+                        // Create the record in the 'files_directory' table
+                        $FilesDirectoryModel->create([
+                            'data_id' => $incomingRequestId, // The ID of the parent IncomingRequest
+                            'file_category' => 'incoming', // The category as per your table structure
+                            'directory' => $directory, // The path where the file is stored
+                        ]);
+                    }
+                }
+                
+                // NOTE: I removed your old foreach loop and the $this->saveFiles() call
+                // as the file saving logic is consolidated above.
+
+                DB::commit();
+
+                // Optional: Reset form fields and give feedback
+                $this->clear();
+                session()->flash('message', 'Data and files uploaded successfully!');
+
+                $this->dispatch('hide-incoming-request-modal');
+                $this->dispatch('success', message: 'Incoming Request successfully saved.');
+                
+            });
+        } catch (\Throwable $th) {
+            DB::rollBack(); // Ensure rollback on failure
+            // throw $th; // Uncomment this line for deep debugging
+            $this->dispatch('error', message: 'Something went wrong: ' . $th->getMessage());
+        }
+    }
+
     public function saveIncomingRequest()
     {
         $this->validate($this->rules(), [], $this->attributes());

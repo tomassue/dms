@@ -8,7 +8,11 @@
                 <div class="row g-5 g-xl-8 col-xxl-8">
                     <div class="col-xxl-12">
                         <!--begin::Mixed Widget 5-->
+                        @if(auth()->user()->roles()->first()->is_custom=='N')
                         <div class="card card-xxl-stretch" wire:loading.class="opacity-50 pe-none" wire:target.except="saveIncomingRequest, generateReferenceNo">
+                        @else
+                        <div class="card card-xxl-stretch" wire:loading.class="opacity-50 pe-none" wire:target.except="saveIncomingRequestInDirectory, generateReferenceNo">
+                        @endif
                             <!--begin::Header-->
                             <div class="card-header border-0 py-5">
                                 <h3 class="card-title align-items-start flex-column">
@@ -475,7 +479,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="saveIncomingRequest">
+                    <form wire:submit="saveIncomingRequestInDirectory">
                         <div class="p-2">
                             @can('incoming.requests.update.status')
                             <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }};">
@@ -655,7 +659,7 @@
                     <div wire:loading.remove>
                         <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
                     </div>
-                    <div wire:loading wire:target="saveIncomingRequest">
+                    <div wire:loading wire:target="saveIncomingRequestInDirectory">
                         <button class="btn btn-primary" type="button" disabled>
                             <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                             <span role="status">Loading...</span>
