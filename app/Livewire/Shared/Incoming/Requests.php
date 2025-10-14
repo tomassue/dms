@@ -22,6 +22,7 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Spatie\Activitylog\Models\Activity;
+use App\Models\FilesDirectory; // Teodz
 
 #[Title('Incoming Requests')]
 class Requests extends Component
@@ -77,6 +78,7 @@ class Requests extends Component
             'contact_person_email' => 'string|nullable',
             'location' => 'string|nullable',
             'memo_no' => 'string|nullable',
+            'file_id.*' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', 
         ];
     }
 
