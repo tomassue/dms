@@ -18,7 +18,8 @@ class File extends Model
         'name',
         'size',
         'type',
-        'file',
+        'file_path',
+        'disk',
     ];
 
     // Activity Log

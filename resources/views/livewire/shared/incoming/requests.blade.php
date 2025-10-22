@@ -336,9 +336,9 @@
                             <div class="mb-10">
                                 <label class="form-label">File Upload</label>
                                 <div wire:ignore>
-                                    <input type="file" class="form-control files" multiple>
+                                    <input type="file" class="form-control files" name="files[]" multiple>
                                 </div>
-                                @error('file_id')
+                                @error('files')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -373,11 +373,15 @@
                         </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
-                    <div wire:loading.remove>
-                        <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                    <div wire:loading.remove wire:target="saveIncomingRequest, files">
+                        <button 
+                            type="submit" 
+                            class="btn btn-primary" 
+                            wire:loading.attr="disabled" 
+                            wire:target="files" 
+                        >{{ $editMode ? 'Update' : 'Create' }}</button>
                     </div>
-                    <div wire:loading wire:target="saveIncomingRequest">
+                    <div wire:loading wire:target="saveIncomingRequest, files">
                         <button class="btn btn-primary" type="button" disabled>
                             <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
                             <span role="status">Loading...</span>
@@ -548,10 +552,10 @@
         server: {
             // This will assign the data to the files[] property.
             process: (fieldName, file, metadata, load, error, progress, abort) => {
-                @this.upload('file_id', file, load, error, progress);
+                @this.upload('files', file, load, error, progress);
             },
             revert: (uniqueFileId, load, error) => {
-                @this.removeUpload('file_id', uniqueFileId, load, error);
+                @this.removeUpload('files', uniqueFileId, load, error);
             }
         }
     });

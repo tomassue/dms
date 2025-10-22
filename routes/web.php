@@ -19,6 +19,9 @@ use App\Livewire\Shared\Settings\Signatories;
 use App\Livewire\Shared\Settings\UserManagement;
 use App\Livewire\SuperAdmin\RolesAndPermissions;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Response;
+
 
 Route::get('/', function () {
     return view('auth.login');
@@ -95,3 +98,27 @@ Livewire::setScriptRoute(function ($handle) {
 Livewire::setUpdateRoute(function ($handle) {
     return Route::post('/cdo-dms/livewire/update', $handle);
 });
+
+/* ---------------------------------Teodz----------------------------------------- */ 
+
+Route::get('/view-disk-file/{disk}/{path}', function ($disk, $path) {
+    // 1. Security Check: Verify the signed URL
+    if (! request()->hasValidSignature()) {
+        abort(401);
+    }
+
+    // 2. Ensure the file exists
+    if (! Storage::disk($disk)->exists($path)) {
+        abort(404);
+    }
+    
+    // 3. Retrieve the file
+    $file = Storage::disk($disk)->get($path);
+    $mimeType = Storage::disk($disk)->mimeType($path);
+    
+    // 4. Return the file as a response
+    return Response::make($file, 200, [
+        'Content-Type' => $mimeType,
+        'Content-Disposition' => 'inline; filename="' . basename($path) . '"', // Display inline
+    ]);
+})->name('file.view.disk')->where('path', '.*'); // The '.*' is needed for paths with slashes

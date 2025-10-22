@@ -23,6 +23,8 @@ use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Spatie\Activitylog\Models\Activity;
 use App\Models\FilesDirectory; // Teodz
+use Illuminate\Support\Facades\Storage;
+
 
 #[Title('Incoming Requests')]
 class Requests extends Component
@@ -57,7 +59,7 @@ class Requests extends Component
         $contact_person_email,
         $location,
         $memo_no,
-        $file_id = []; // for file upload - MorphMany
+        $files = []; // for file upload - MorphMany
 
     /* ------------------------------- end::fields ------------------------------ */
     //--TEODZ
@@ -78,7 +80,7 @@ class Requests extends Component
             'contact_person_email' => 'string|nullable',
             'location' => 'string|nullable',
             'memo_no' => 'string|nullable',
-            'file_id.*' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', 
+            'files.*' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', 
         ];
     }
 
@@ -106,6 +108,7 @@ class Requests extends Component
     public function clear()
     {
         $this->reset();
+        $this->reset('files');
         $this->resetValidation();
         $this->dispatch('reset-files');
         $this->dispatch('reset-division-select');
@@ -265,23 +268,38 @@ class Requests extends Component
 
     protected function saveFiles($model)
     {
-        if (empty($this->file_id)) return null;
+        if (empty($this->files)) return null;
 
         $uploadedFiles = [];
+        $storageDisk = 'public'; 
+        $storagePath = 'incoming_requests_files'; 
 
-        foreach ((array)$this->file_id as $file) {
+        foreach ((array)$this->files as $file) {
+            // 💡 CRITICAL FIX: Ensure $file is a valid Livewire TemporaryUploadedFile object.
+            // If the upload failed or the array contains stale/invalid data, this check prevents the error.
+            if (empty($file) || !($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile)) {
+                continue; // Skip this invalid item and move to the next.
+            }
+
+            // 1. Store the file on the disk (this handles Livewire's TemporaryUploadedFile)
+            $filePath = $file->store($storagePath, $storageDisk);
+            
+            // 2. Create the File model record with the path
             $uploadedFiles[] = $model->files()->create([
                 'name' => $file->getClientOriginalName(),
                 'size' => $file->getSize(),
                 'type' => $file->getMimeType(),
-                'file' => file_get_contents($file->getRealPath()),
-                // fileable_id and fileable_type are auto-set by morphMany
+                'file_path' => $filePath, 
+                'disk' => $storageDisk,    
             ]);
         }
 
+        // 3. IMPORTANT: Clear the uploaded files from the Livewire property after saving
+        $this->files = []; 
+
         return $uploadedFiles;
     }
-
+    
     public function editIncomingRequest(IncomingRequest $incomingRequest)
     {
         try {
@@ -379,10 +397,20 @@ class Requests extends Component
 
     public function viewFile($fileId)
     {
+        // 1. Get the file record (assuming your File model now has a 'file_path' and 'disk' column)
+        $file = File::findOrFail($fileId);
+        
+        // 2. Check if the file exists in storage
+        if (!Storage::disk($file->disk)->exists($file->file_path)) {
+            $this->dispatch('error', message: 'File not found in storage.');
+            return;
+        }
+
+        // 3. Generate a temporary signed URL for the file path
         $signedURL = URL::temporarySignedRoute(
-            'file.view',
+            'file.view.disk', // Note: This route name must be a custom one you define in web.php
             now()->addMinutes(10),
-            ['id' => $fileId]
+            ['path' => $file->file_path, 'disk' => $file->disk] 
         );
 
         $this->dispatch('open-file', url: $signedURL);
@@ -719,5 +747,71 @@ class Requests extends Component
     public function loadRoleCustom(){
         
         $this->is_custom = auth()->user()->roles()->first()->id;
+    }
+
+    /**
+     * Initiates the process to download all attachments merged into a single PDF.
+     * This is called from the 'show-details-modal' where $this->preview_file is populated.
+     */
+    public function downloadMergedAttachments()
+    {
+        // The files you want to merge (assuming $this->preview_file contains the File models)
+        $filesToMerge = $this->preview_file; // This comes from your showDetails method
+
+        if ($filesToMerge->isEmpty()) {
+            $this->dispatch('error', message: 'No files attached to merge.');
+            return;
+        }
+
+        // --- STEP 1: Get the local paths of all files ---
+        $filePaths = $filesToMerge->map(function ($file) {
+            // ASSUMPTION: 'path' is the column in your File model storing the storage path (e.g., 'requests_files/xyz.pdf')
+            // And the 'public' disk is linked to the storage path.
+            return storage_path('app/public/' . $file->path);
+        })->toArray();
+
+        // --- STEP 2: Use a PDF Merging Library ---
+        // This part requires a package like "smalot/pdfparser" or "setasign/fpdf"
+        // to handle the complex merging of images/PDFs into one document.
+        // **For a working solution, you would typically use a package that handles this.**
+
+        // Since this requires a specific package setup, we'll demonstrate using a placeholder method.
+        try {
+            // Placeholder for the merging logic
+            $mergedFilePath = $this->mergeFilesIntoSinglePdf($filePaths); 
+
+            if ($mergedFilePath) {
+                // --- STEP 3: Stream the merged file for download ---
+                return response()->download($mergedFilePath, 'merged_request_attachments_' . now()->format('Ymd_His') . '.pdf')
+                    ->deleteFileAfterSend(true); // Delete the temporary merged file after download
+            }
+        } catch (\Throwable $th) {
+            // Log the error for debugging
+            FacadesLog::error("PDF Merging failed: " . $th->getMessage());
+            $this->dispatch('error', message: 'Failed to merge and download files.');
+        }
+    }
+
+
+    /**
+     * Placeholder for actual file merging logic. You MUST implement this using a library.
+     * This is the most complex part as it deals with different file types (PDF, JPG, PNG).
+     */
+    private function mergeFilesIntoSinglePdf(array $filePaths): ?string
+    {
+        // ⚠️ IMPLEMENTATION REQUIRED ⚠️
+        // You would use a library here to:
+        // 1. Initialize a new PDF document.
+        // 2. Loop through $filePaths:
+        //    - If file is a PDF, import its pages into the new document.
+        //    - If file is an Image (JPG/PNG), add a new page and embed the image.
+        // 3. Save the resulting PDF to a temporary location (e.g., storage_path('app/temp/merged.pdf')).
+
+        // For a real-world scenario, I recommend looking at libraries like:
+        // - Spatie's Laravel-Medialibrary (simplifies file storage but not merging itself)
+        // - 'setasign/fpdi' (for merging existing PDFs) and 'tecnickcom/tcpdf' (for creating new PDFs from images)
+
+        // For now, return a placeholder path (This will fail until you install and implement a merger)
+        return null; 
     }
 }
