@@ -22,8 +22,12 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Spatie\Activitylog\Models\Activity;
-use App\Models\FilesDirectory; // Teodz
+// Teodz
+use App\Models\FilesDirectory;
 use Illuminate\Support\Facades\Storage;
+use setasign\Fpdi\Fpdi;
+use Fpdi\PdfParser\StreamReader;
+use Illuminate\Support\Facades\Response;
 
 
 #[Title('Incoming Requests')]
@@ -749,69 +753,190 @@ class Requests extends Component
         $this->is_custom = auth()->user()->roles()->first()->id;
     }
 
-    /**
-     * Initiates the process to download all attachments merged into a single PDF.
-     * This is called from the 'show-details-modal' where $this->preview_file is populated.
-     */
+    public function removeUploadedFile($fileId)
+    {
+        try {
+            // Find the file record
+            $file = File::findOrFail($fileId);
+            
+            // 1. Delete from storage (check if it exists first)
+            if (Storage::disk('public')->exists($file->file_path)) {
+                Storage::disk('public')->delete($file->file_path);
+            }
+
+            // 2. Delete the database record
+            $file->delete();
+
+            // 3. Update the preview list to reflect the removal without full page reload
+            // We use filter() to remove the deleted file from the local Livewire property
+            $this->preview_file = $this->preview_file->filter(fn($f) => $f->id != $fileId);
+
+            $this->dispatch('success', message: 'File removed successfully.');
+
+        } catch (\Exception $e) {
+            FacadesLog::error("Error removing uploaded file ID $fileId: " . $e->getMessage());
+            $this->dispatch('error', message: 'Failed to remove file. Please check logs.');
+        }
+    }
+    
     public function downloadMergedAttachments()
     {
-        // The files you want to merge (assuming $this->preview_file contains the File models)
-        $filesToMerge = $this->preview_file; // This comes from your showDetails method
+        $filesToMerge = $this->preview_file;
 
         if ($filesToMerge->isEmpty()) {
             $this->dispatch('error', message: 'No files attached to merge.');
             return;
         }
 
-        // --- STEP 1: Get the local paths of all files ---
-        $filePaths = $filesToMerge->map(function ($file) {
-            // ASSUMPTION: 'path' is the column in your File model storing the storage path (e.g., 'requests_files/xyz.pdf')
-            // And the 'public' disk is linked to the storage path.
-            return storage_path('app/public/' . $file->path);
-        })->toArray();
+        // --- UPDATED FILENAME GENERATION ---
+        $categoryName = $this->ref_incoming_request_category_id ?? 'Unknown-Category';
+        $categoryNo = $this->category_no ?? 'N-A';
+        $memoNo = $this->memo_no ?? 'N-A';
+        $dateTime = now()->format('YmdHis'); // YearMonthDayHourMinuteSecond for uniqueness and detailed time
 
-        // --- STEP 2: Use a PDF Merging Library ---
-        // This part requires a package like "smalot/pdfparser" or "setasign/fpdf"
-        // to handle the complex merging of images/PDFs into one document.
-        // **For a working solution, you would typically use a package that handles this.**
+        // Sanitize category name: replace non-alphanumeric/spaces with hyphen and remove other special chars
+        $sanitizedCategory = preg_replace('/[^A-Za-z0-9\s-]+/', '', $categoryName);
+        $sanitizedCategory = trim(preg_replace('/\s+/', '-', $sanitizedCategory), '-');
+        
+        // Assemble the filename based on the requested format: (category)-(category_no)_(memo_no)_(nowdatetime).pdf
+        $mergedFilename = sprintf(
+            '%s-%s_%s_%s.pdf',
+            $sanitizedCategory,
+            $categoryNo,
+            $memoNo,
+            $dateTime
+        );
+        // --- END UPDATED FILENAME GENERATION ---
 
-        // Since this requires a specific package setup, we'll demonstrate using a placeholder method.
-        try {
-            // Placeholder for the merging logic
-            $mergedFilePath = $this->mergeFilesIntoSinglePdf($filePaths); 
-
-            if ($mergedFilePath) {
-                // --- STEP 3: Stream the merged file for download ---
-                return response()->download($mergedFilePath, 'merged_request_attachments_' . now()->format('Ymd_His') . '.pdf')
-                    ->deleteFileAfterSend(true); // Delete the temporary merged file after download
+        
+        // Use storage_path() for the temporary directory to ensure it's outside the public web root
+        $tempAppDir = storage_path('app/temp/pdf_merger');
+        if (!is_dir($tempAppDir)) {
+            if (!mkdir($tempAppDir, 0777, true)) {
+                FacadesLog::error("Failed to create temporary directory: " . $tempAppDir);
+                $this->dispatch('error', message: 'Failed to create temp directory for merging.');
+                return;
             }
+        }
+        
+        // Define path for the final merged PDF
+        $tempMergedFilePath = $tempAppDir . '/' . $mergedFilename;
+
+        $pdf = new Fpdi('P', 'mm', 'A4');
+        $tempFilesToCleanup = [];
+
+        try {
+            // --- 1. Iterate and Prepare Files for Merging ---
+            foreach ($filesToMerge as $file) {
+                
+                FacadesLog::info("Attempting to process file ID: " . ($file->id ?? 'N/A') . " with path: " . ($file->file_path ?? 'NULL'));
+
+                if (empty($file->file_path)) {
+                    FacadesLog::warning("Skipping file merge because 'file_path' is empty/null.");
+                    continue; 
+                }
+                
+                // Use Storage::disk('public')->path() to get the absolute path
+                $fullPath = Storage::disk('public')->path($file->file_path);
+                
+                if (!file_exists($fullPath)) {
+                    FacadesLog::warning("Skipping file merge: File not found on disk at path: " . $fullPath);
+                    continue; 
+                }
+
+                $extension = pathinfo($fullPath, PATHINFO_EXTENSION);
+                $fileToMerge = $fullPath;
+                $shouldMerge = false;
+
+                // --- Type Check and Conversion ---
+                $mimeType = mime_content_type($fullPath);
+
+                if (strtolower($extension) === 'pdf' || strtolower($mimeType) === 'application/pdf') {
+                    $shouldMerge = true;
+                } elseif (in_array(strtolower($extension), ['jpg', 'jpeg', 'png']) && 
+                          in_array(strtolower($mimeType), ['image/jpeg', 'image/png'])) {
+                    
+                    // Image Validation
+                    $image_info = @getimagesize($fullPath); 
+                    if ($image_info === false || ($image_info[0] ?? 0) <= 0 || ($image_info[1] ?? 0) <= 0) {
+                        FacadesLog::error("SKIPPING INVALID IMAGE: Image is corrupt or dimensions are zero. Path: " . $fullPath);
+                        $this->dispatch('warning', message: 'Skipping corrupted image file(s).');
+                        continue; 
+                    }
+
+                    // Image Conversion: Create a temporary PDF from the image
+                    $tempPdfPath = $tempAppDir . '/' . uniqid() . '.pdf'; 
+                    $tempPdf = new Fpdi('P', 'mm', 'A4');
+                    $tempPdf->AddPage();
+                    // Image will be added scaled down to fit the A4 page width, maintaining aspect ratio
+                    $tempPdf->Image($fullPath, 10, 10, $tempPdf->GetPageWidth() - 20, 0); 
+                    $tempPdf->Output($tempPdfPath, 'F'); 
+
+                    $fileToMerge = $tempPdfPath;
+                    $tempFilesToCleanup[] = $tempPdfPath; // Mark for cleanup
+                    $shouldMerge = true;
+                } else {
+                    FacadesLog::warning("Skipping unsupported file type: " . $fullPath);
+                    continue;
+                }
+
+                // --- 4. Merge the Prepared File (Now guaranteed to be a PDF) ---
+                if ($shouldMerge) {
+                    try {
+                        $pageCount = $pdf->setSourceFile($fileToMerge);
+                        
+                        for ($i = 1; $i <= $pageCount; $i++) {
+                            
+                            $templateId = $pdf->importPage($i);
+                            $size = $pdf->getTemplateSize($templateId);
+                            
+                            $orientation = ($size['rotation'] ?? 0) === 90 || ($size['rotation'] ?? 0) === 270 ? 'L' : 'P';
+                            
+                            // Use the imported page format and rotation if available
+                            if (isset($size['format']) && is_array($size['format'])) {
+                                $pdf->AddPage($orientation, $size['format']);
+                            } else {
+                                $pdf->AddPage($orientation, 'A4'); // Fallback to named format
+                            }
+                            
+                            // Import the content
+                            $pdf->useTemplate($templateId); 
+                        }
+                    } catch (\Throwable $e) {
+                        // Catches ALL errors (compression, invalid structure, etc.)
+                        FacadesLog::error("SKIPPING CORRUPT FILE: FPDI failed to process file ID " . ($file->id ?? 'N/A') . ". Error: " . $e->getMessage());
+                        $this->dispatch('warning', message: 'Skipping one corrupt attachment due to unsupported format/compression.');
+                    }
+                }
+            }
+            
+            if ($pdf->PageNo() == 0) {
+                $this->dispatch('error', message: 'No supported PDF or image files were successfully merged.');
+                return;
+            }
+
+            // --- 5. Output and Stream ---
+            // Save the final merged PDF to the temporary location
+            $pdf->Output($tempMergedFilePath, 'F');
+            
+            // Return a Laravel download response to force the download directly via the route/Livewire request
+            return response()->download($tempMergedFilePath, $mergedFilename)
+                ->deleteFileAfterSend(true); // Ensures the final merged file is deleted after download
+
         } catch (\Throwable $th) {
-            // Log the error for debugging
-            FacadesLog::error("PDF Merging failed: " . $th->getMessage());
-            $this->dispatch('error', message: 'Failed to merge and download files.');
+            FacadesLog::error("SYSTEM-LEVEL PDF Merging failed: " . $th->getMessage() . " on line " . $th->getLine());
+            $this->dispatch('error', message: 'System error during merging. Check logs.');
+            return;
+
+        } finally {
+            // --- 6. Cleanup Temporary Files ---
+            // Clean up any temporary PDFs created from images
+            foreach ($tempFilesToCleanup as $path) {
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+            }
         }
     }
 
-
-    /**
-     * Placeholder for actual file merging logic. You MUST implement this using a library.
-     * This is the most complex part as it deals with different file types (PDF, JPG, PNG).
-     */
-    private function mergeFilesIntoSinglePdf(array $filePaths): ?string
-    {
-        // ⚠️ IMPLEMENTATION REQUIRED ⚠️
-        // You would use a library here to:
-        // 1. Initialize a new PDF document.
-        // 2. Loop through $filePaths:
-        //    - If file is a PDF, import its pages into the new document.
-        //    - If file is an Image (JPG/PNG), add a new page and embed the image.
-        // 3. Save the resulting PDF to a temporary location (e.g., storage_path('app/temp/merged.pdf')).
-
-        // For a real-world scenario, I recommend looking at libraries like:
-        // - Spatie's Laravel-Medialibrary (simplifies file storage but not merging itself)
-        // - 'setasign/fpdi' (for merging existing PDFs) and 'tecnickcom/tcpdf' (for creating new PDFs from images)
-
-        // For now, return a placeholder path (This will fail until you install and implement a merger)
-        return null; 
-    }
 }

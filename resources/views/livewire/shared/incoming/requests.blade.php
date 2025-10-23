@@ -512,6 +512,21 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button 
+                        type="button" 
+                        class="btn btn-primary" 
+                        wire:click="downloadMergedAttachments" 
+                        wire:loading.attr="disabled"
+                        wire:target="downloadMergedAttachments"
+                    >
+                        <span wire:loading.remove wire:target="downloadMergedAttachments">
+                            <i class="fa fa-file-pdf"></i> Download Attachments
+                        </span>
+                        <span wire:loading wire:target="downloadMergedAttachments">
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Merging & Downloading...
+                        </span>
+                    </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" wire:click="clear">Close</button>
                 </div>
             </div>
