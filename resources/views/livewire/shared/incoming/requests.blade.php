@@ -358,7 +358,18 @@
                                                 {{ $item->name }}
                                             </td>
                                             <td>
-                                                <a href="#" class="btn btn-sm btn-info" wire:click="viewFile({{ $item->id }})">View</a>
+                                                <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                                                    <a href="#" class="btn btn-icon btn-sm btn-light-info ms-2" wire:click="viewFile({{ $item->id }})"><i class="bi bi-eye"></i></a>
+                                                    <button 
+                                                            type="button" 
+                                                            class="btn btn-icon btn-sm btn-light-danger ms-2"
+                                                            title="Remove File"
+                                                            wire:click.prevent="removeUploadedFile({{ $item->id }})"
+                                                            wire:confirm="Are you sure you want to permanently delete this file from the request? This action cannot be undone."
+                                                            wire:loading.attr="disabled"
+                                                        ><i class="bi bi-trash-fill"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                         @empty
