@@ -180,4 +180,9 @@ class IncomingRequest extends Model
     {
         return $this->morphMany(Forwarded::class, 'forwardable');
     }
+    
+    public function username()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
+    }
 }

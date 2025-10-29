@@ -46,11 +46,11 @@
                                     <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                         <thead>
                                             <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
-                                                <th>No.</th>
+                                                <th>Status</th>
+                                                <th>Assign By</th>
                                                 <th>Category No.</th>
                                                 <th>Office/Brgy/Org</th>
                                                 <th>Date Requested</th>
-                                                <th>Status</th>
                                                 @can('incoming.requests.update')
                                                 <th class="text-center">Actions</th>
                                                 @endcan
@@ -60,7 +60,35 @@
                                             @forelse($incoming_requests as $item)
                                             <tr wire:click="viewIncomingRequest({{ $item->id }})" class="cursor-pointer">
                                                 <td>
-                                                    <span class="badge badge-light-info text-uppercase">{{ $item->no }}</span>
+                                                    <span class="badge
+                                            @switch($item->status->name)
+                                            @case('pending')
+                                            badge-danger
+                                            @break
+                                            @case('processed')
+                                            badge-primary
+                                            @break
+                                            @case('forwarded')
+                                            badge-warning
+                                            @break
+                                            @case('completed')
+                                            badge-info
+                                            @break
+                                            @case('cancelled')
+                                            badge-dark
+                                            @break
+                                            @default
+                                            badge-dark
+                                            @endswitch
+                                            text-capitalize
+                                            ">
+                                                        {{ $item->status->name }}
+                                                    </span><br/>
+                                                </td>
+                                                <td>
+                                                    <span class="badge text-uppercase {{ ($item->username->name ?? 'None') === 'None' ? 'badge-light-danger' : 'badge-info' }}">
+                                                        {{ $item->username->name ?? 'None' }}
+                                                    </span><br/>
                                                 </td>
                                                 <td>
                                                     {{ $item->category->incoming_request_category_name }}-{{$item->category_no}}
@@ -70,38 +98,11 @@
                                                 </td>
                                                 <td>
                                                     {{ $item->formatted_date_requested }}
-                                                </td>
-                                                <td>
-                                                    <span class="badge
-                                            @switch($item->status->name)
-                                            @case('pending')
-                                            badge-light-danger
-                                            @break
-                                            @case('processed')
-                                            badge-light-primary
-                                            @break
-                                            @case('forwarded')
-                                            badge-light-warning
-                                            @break
-                                            @case('completed')
-                                            badge-light-success
-                                            @break
-                                            @case('cancelled')
-                                            badge-light-dark
-                                            @break
-                                            @default
-                                            badge-light-dark
-                                            @endswitch
-                                            text-capitalize
-                                            ">
-                                                        {{ $item->status->name }}
-                                                    </span><br/>
-                                                    <span class="badge badge-light-success">James
-                                                    </span><br/>
-                                                    <span class="badge badge-light-danger">3 days ago
+                                                    @if($item->status->name!='completed')
+                                                    <span class="badge badge-light-danger">{{ $item->request_age }}
                                                     </span>
+                                                    @endif
                                                 </td>
-
                                                 <td class="text-center" wire:loading.class="pe-none">
                                                     <div class="btn-group" role="group" aria-label="Actions">
                                                         @can('incoming.requests.update')
@@ -121,11 +122,11 @@
                                                             <i class="bi bi-arrow-up-square"></i>
                                                         </button>
                                                         @endcan
-                                                        <button type="button" class="btn btn-icon btn-sm btn-primary" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
-                                                            <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
+                                                        <button type="button" class="btn btn-icon btn-sm btn-primary" title="Assign" wire:click="showAssignRequest({{ $item->id }})" @click.stop>
+                                                            <div wire:loading.remove wire:target="showAssignRequest({{ $item->id }})">
                                                                 <i class="bi bi-person-check"></i>
                                                             </div>
-                                                            <div wire:loading wire:target="activityLog({{ $item->id }})">
+                                                            <div wire:loading wire:target="showAssignRequest({{ $item->id }})">
                                                                 <div class="spinner-border spinner-border-sm" role="status">
                                                                     <span class="visually-hidden">Loading...</span>
                                                                 </div>
@@ -543,6 +544,55 @@
             </div>
         </div>
     </div>
+    
+    <!-- showAssignModal -->
+    <div class="modal fade" id="showAssignModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="detailsModalLabel" aria-hidden="true" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h1 class="modal-title fs-5" id="showAssignModalLabel">Person Assign</h1>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" wire:click="clear"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <div class="row">
+                            <div class="col-5 fw-bold">No.:</div>
+                            <div class="col-7">{{ $no ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Category No:</div>
+                            <div class="col-7">{{ $ref_incoming_request_category_id ?? '-' }}-{{ $category_no ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Memo No.:</div>
+                            <div class="col-7">{{ $memo_no ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Person Assign: </div>
+                            <div class="col-7">{{ $user_id ?? '-' }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div wire:loading.remove wire:click="setAssignRequest({{ $tempID }})">
+                        <button 
+                            type="submit" 
+                            class="btn btn-primary" 
+                            wire:loading.attr="disabled" 
+                            wire:target="files" 
+                        >{{ $assignThis ? 'Re-Assign' : 'Assign' }}</button>
+                    </div>
+                    <div wire:loading wire:target="setAssignRequest">
+                        <button class="btn btn-primary" type="button" disabled>
+                            <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
+                            <span role="status">Loading...</span>
+                        </button>
+                    </div>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" wire:click="clear">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @script
@@ -557,6 +607,14 @@
 
     $wire.on('show-details-modal', () => {
         $('#detailsModal').modal('show');
+    });
+    
+    $wire.on('show-assign-modal', () => {
+        $('#showAssignModal').modal('show');
+    });
+
+    $wire.on('hide-assign-modal', () => {
+        $('#showAssignModal').modal('hide');
     });
 
     /* -------------------------------------------------------------------------- */

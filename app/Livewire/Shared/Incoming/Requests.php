@@ -28,6 +28,8 @@ use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
 use Fpdi\PdfParser\StreamReader;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\File as FileFacade;
+use setasign\Fpdi\PdfParser\PdfParserException; // Added for specific error handling
 
 
 #[Title('Incoming Requests')]
@@ -63,11 +65,14 @@ class Requests extends Component
         $contact_person_email,
         $location,
         $memo_no,
+        $user_id,
         $files = []; // for file upload - MorphMany
 
     /* ------------------------------- end::fields ------------------------------ */
     //--TEODZ
-        public $is_custom;
+        public $is_custom,
+            $assignThis,
+            $tempID;
 
     public function rules()
     {
@@ -129,11 +134,12 @@ class Requests extends Component
 
     public function render()
     {
+        // dd($this->loadStatus());
         return view(
             'livewire.shared.incoming.requests',
             [
                 'incoming_requests' => $this->loadIncomingRequests(),
-                'sss' => $this->loadRoleCustom(),
+                // 'sss' => $this->loadRoleCustom(),
                 'incoming_request_categories' => $this->loadIncomingRequestCategories(), // Incoming Request Category dropdown
                 'status' => $this->loadStatus(), // Status dropdown
                 'divisions' => $this->loadDivisions(), // Division dropdown
@@ -212,8 +218,10 @@ class Requests extends Component
 
     public function loadStatus()
     {
-        return RefStatus::incoming()
-            ->get();
+        // return RefStatus::incoming()
+        //     ->get();
+            
+        return RefStatus::get();
     }
 
     public function loadDivisions()
@@ -753,6 +761,73 @@ class Requests extends Component
         $this->is_custom = auth()->user()->roles()->first()->id;
     }
 
+    public function showAssignRequest(IncomingRequest $incomingRequest)
+    {
+        // dd($incomingRequest);
+        try {
+            $this->tempID = $incomingRequest->id;
+            $this->no = $incomingRequest->no;
+            $this->office_barangay_organization = $incomingRequest->office_barangay_organization;
+            $this->ref_incoming_request_category_id = $incomingRequest->category->incoming_request_category_name;
+            $this->category_no = $incomingRequest->category_no;
+            $this->memo_no = $incomingRequest->memo_no;
+            $this->user_id = $incomingRequest->username->name;
+
+            if($incomingRequest->user_id){
+                $this->assignThis = true;
+            }else{
+                $this->assignThis = false;
+            }
+
+            $this->dispatch('show-assign-modal');
+        } catch (\Throwable $th) {
+            //throw $th;
+            $this->dispatch('show-assign-modal');
+            //$this->dispatch('error', message: 'Something went wrong.');
+        }
+        // $this->dispatch('show-assign-modal');
+        //dd('gfgfg');
+        // $incomingAssignRequest = IncomingRequest::updateOrCreate(
+        //     [
+        //         'user_id' => $userID,
+        //     ]
+        // );
+        // // save files
+        // $this->saveFiles($incomingAssignRequest);
+        // $this->preview_file = $this->preview_file->filter(fn($f) => $f->id != $userID);
+        // $this->dispatch('success', message: 'Assign Successfully.');
+    }
+    
+    public function setAssignRequest($tempID)
+    {
+        // The tempID should be validated to ensure it's a valid ID before proceeding
+        // $this->validate($this->rules(), [], $this->attributes()); 
+
+        try {
+            // Pass $tempID into the closure using the 'use' keyword
+            DB::transaction(function () use ($tempID) { 
+                
+                // 1. Find the existing IncomingRequest record by its ID.
+                $incomingRequest = IncomingRequest::find($tempID);
+
+                // Check if the request was found
+                if ($incomingRequest) {
+                    // 2. Update ONLY the user_id column with the current authenticated user's ID
+                    $incomingRequest->update([
+                        'user_id' => Auth::user()->id,
+                    ]);
+                }
+                
+                // Dispatch events regardless of whether saveFiles was called
+                $this->dispatch('hide-assign-modal');
+                $this->dispatch('success', message: 'Successfully assign.');
+            });
+        } catch (\Throwable $th) {
+            // throw $th; // Uncomment for debugging
+            $this->dispatch('error', message: 'Something went wrong. Refresh the Browser.');
+        }
+    }
+
     public function removeUploadedFile($fileId)
     {
         try {
@@ -778,7 +853,7 @@ class Requests extends Component
             $this->dispatch('error', message: 'Failed to remove file. Please check logs.');
         }
     }
-    
+
     public function downloadMergedAttachments()
     {
         $filesToMerge = $this->preview_file;
@@ -787,18 +862,23 @@ class Requests extends Component
             $this->dispatch('error', message: 'No files attached to merge.');
             return;
         }
+        
+        // --- MODIFICATION START: REVERSE ORDER ---
+        // Reverse the collection so that the latest (most recently attached) files
+        // are processed first, making them appear at the beginning of the merged PDF.
+        $filesToMerge = $filesToMerge->reverse();
+        // --- MODIFICATION END: REVERSE ORDER ---
 
         // --- UPDATED FILENAME GENERATION ---
         $categoryName = $this->ref_incoming_request_category_id ?? 'Unknown-Category';
         $categoryNo = $this->category_no ?? 'N-A';
         $memoNo = $this->memo_no ?? 'N-A';
-        $dateTime = now()->format('YmdHis'); // YearMonthDayHourMinuteSecond for uniqueness and detailed time
+        $dateTime = now()->format('YmdHis');
 
-        // Sanitize category name: replace non-alphanumeric/spaces with hyphen and remove other special chars
+        // Sanitize category name: replace non-alphanumeric/spaces with hyphen
         $sanitizedCategory = preg_replace('/[^A-Za-z0-9\s-]+/', '', $categoryName);
         $sanitizedCategory = trim(preg_replace('/\s+/', '-', $sanitizedCategory), '-');
         
-        // Assemble the filename based on the requested format: (category)-(category_no)_(memo_no)_(nowdatetime).pdf
         $mergedFilename = sprintf(
             '%s-%s_%s_%s.pdf',
             $sanitizedCategory,
@@ -809,10 +889,10 @@ class Requests extends Component
         // --- END UPDATED FILENAME GENERATION ---
 
         
-        // Use storage_path() for the temporary directory to ensure it's outside the public web root
+        // Use storage_path() for the temporary directory
         $tempAppDir = storage_path('app/temp/pdf_merger');
-        if (!is_dir($tempAppDir)) {
-            if (!mkdir($tempAppDir, 0777, true)) {
+        if (!FileFacade::isDirectory($tempAppDir)) {
+            if (!FileFacade::makeDirectory($tempAppDir, 0777, true)) {
                 FacadesLog::error("Failed to create temporary directory: " . $tempAppDir);
                 $this->dispatch('error', message: 'Failed to create temp directory for merging.');
                 return;
@@ -836,7 +916,7 @@ class Requests extends Component
                     continue; 
                 }
                 
-                // Use Storage::disk('public')->path() to get the absolute path
+                // Get the absolute path using the 'public' disk
                 $fullPath = Storage::disk('public')->path($file->file_path);
                 
                 if (!file_exists($fullPath)) {
@@ -848,13 +928,13 @@ class Requests extends Component
                 $fileToMerge = $fullPath;
                 $shouldMerge = false;
 
-                // --- Type Check and Conversion ---
+                // --- Type Check and Conversion (Images to PDF) ---
                 $mimeType = mime_content_type($fullPath);
 
                 if (strtolower($extension) === 'pdf' || strtolower($mimeType) === 'application/pdf') {
                     $shouldMerge = true;
                 } elseif (in_array(strtolower($extension), ['jpg', 'jpeg', 'png']) && 
-                          in_array(strtolower($mimeType), ['image/jpeg', 'image/png'])) {
+                            in_array(strtolower($mimeType), ['image/jpeg', 'image/png'])) {
                     
                     // Image Validation
                     $image_info = @getimagesize($fullPath); 
@@ -868,7 +948,7 @@ class Requests extends Component
                     $tempPdfPath = $tempAppDir . '/' . uniqid() . '.pdf'; 
                     $tempPdf = new Fpdi('P', 'mm', 'A4');
                     $tempPdf->AddPage();
-                    // Image will be added scaled down to fit the A4 page width, maintaining aspect ratio
+                    // Add image scaled down to fit A4 width, maintaining aspect ratio (0 for height)
                     $tempPdf->Image($fullPath, 10, 10, $tempPdf->GetPageWidth() - 20, 0); 
                     $tempPdf->Output($tempPdfPath, 'F'); 
 
@@ -883,6 +963,7 @@ class Requests extends Component
                 // --- 4. Merge the Prepared File (Now guaranteed to be a PDF) ---
                 if ($shouldMerge) {
                     try {
+                        // ** Catch the specific FPDI error for unsupported compression **
                         $pageCount = $pdf->setSourceFile($fileToMerge);
                         
                         for ($i = 1; $i <= $pageCount; $i++) {
@@ -890,22 +971,23 @@ class Requests extends Component
                             $templateId = $pdf->importPage($i);
                             $size = $pdf->getTemplateSize($templateId);
                             
+                            // Determine orientation
                             $orientation = ($size['rotation'] ?? 0) === 90 || ($size['rotation'] ?? 0) === 270 ? 'L' : 'P';
                             
-                            // Use the imported page format and rotation if available
-                            if (isset($size['format']) && is_array($size['format'])) {
-                                $pdf->AddPage($orientation, $size['format']);
-                            } else {
-                                $pdf->AddPage($orientation, 'A4'); // Fallback to named format
-                            }
-                            
+                            // Add a new page matching the imported page's dimensions
+                            $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+
                             // Import the content
                             $pdf->useTemplate($templateId); 
                         }
-                    } catch (\Throwable $e) {
-                        // Catches ALL errors (compression, invalid structure, etc.)
-                        FacadesLog::error("SKIPPING CORRUPT FILE: FPDI failed to process file ID " . ($file->id ?? 'N/A') . ". Error: " . $e->getMessage());
+                    } catch (PdfParserException $e) {
+                        // Catches specific FPDI parsing errors (like unsupported compression)
+                        FacadesLog::error("SKIPPING CORRUPT PDF: FPDI failed to process file ID " . ($file->id ?? 'N/A') . ". Error: " . $e->getMessage());
                         $this->dispatch('warning', message: 'Skipping one corrupt attachment due to unsupported format/compression.');
+                    } catch (\Throwable $e) {
+                        // Catches any other general error during PDF merging/import
+                        FacadesLog::error("SKIPPING FILE due to general error: " . ($file->id ?? 'N/A') . ". Error: " . $e->getMessage());
+                        $this->dispatch('warning', message: 'Skipping one attachment due to an unexpected merging error.');
                     }
                 }
             }
@@ -916,21 +998,20 @@ class Requests extends Component
             }
 
             // --- 5. Output and Stream ---
-            // Save the final merged PDF to the temporary location
             $pdf->Output($tempMergedFilePath, 'F');
             
-            // Return a Laravel download response to force the download directly via the route/Livewire request
+            // Return a Laravel download response to force the download
             return response()->download($tempMergedFilePath, $mergedFilename)
-                ->deleteFileAfterSend(true); // Ensures the final merged file is deleted after download
+                ->deleteFileAfterSend(true);
 
         } catch (\Throwable $th) {
+            // This catch block handles any other unexpected system error
             FacadesLog::error("SYSTEM-LEVEL PDF Merging failed: " . $th->getMessage() . " on line " . $th->getLine());
             $this->dispatch('error', message: 'System error during merging. Check logs.');
             return;
 
         } finally {
             // --- 6. Cleanup Temporary Files ---
-            // Clean up any temporary PDFs created from images
             foreach ($tempFilesToCleanup as $path) {
                 if (file_exists($path)) {
                     unlink($path);
@@ -938,5 +1019,6 @@ class Requests extends Component
             }
         }
     }
+
 
 }
