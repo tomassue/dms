@@ -5,7 +5,7 @@
         <!--begin::Svg Icon | path: icons/duotune/general/gen022.svg-->
         <i class="bi bi-bell"></i>
         <!--end::Svg Icon-->
-        <span class="bullet bullet-dot bg-success h-6px w-6px position-absolute translate-middle top-0 start-50 animation-blink"
+        <span class="bullet bullet-dot bg-danger h-10px w-10px position-absolute translate-middle top-0 start-50 animation-blink"
             style="display: {{ $notifications->isEmpty() ? 'none' : '' }};">
         </span>
     </div>

@@ -54,7 +54,8 @@ class MenuFilterComponent extends Component
                 $status = RefStatus::outgoing()->get();
                 break;
             case 'incoming':
-                $status = RefStatus::incoming()->get();
+                // $status = RefStatus::incoming()->get();
+                $status = RefStatus::get();
                 break;
             default:
                 $status = RefStatus::all();

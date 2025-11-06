@@ -45,14 +45,11 @@
                                 <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                     <thead>
                                         <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
-                                            <th>No</th>
-                                            <th>Document Category</th>
-                                            <th>Info</th>
-                                            <th>Date</th>
                                             <th>Status</th>
-                                            @role('APOO')
-                                            <th>Source</th>
-                                            @endrole
+                                            <th>Category</th>
+                                            <th>No.</th>
+                                            <th>Information</th>
+                                            <th>Date</th>
                                             @can('incoming.documents.update')
                                             <th class="text-center">Actions</th>
                                             @endcan
@@ -62,10 +59,36 @@
                                         @forelse($incoming_documents as $item)
                                         <tr wire:click="viewIncomingDocument({{ $item->id }})" class="cursor-pointer">
                                             <td>
-                                                <span class="badge badge-light-info text-uppercase">{{ $item->no ?? '' }}</span>
+                                                <span class="badge
+                                            @switch($item->status->name)
+                                            @case('pending')
+                                            badge-danger
+                                            @break
+                                            @case('processed')
+                                            badge-primary
+                                            @break
+                                            @case('forwarded')
+                                            badge-warning
+                                            @break
+                                            @case('completed')
+                                            badge-success
+                                            @break
+                                            @case('cancelled')
+                                            badge-dark
+                                            @break
+                                            @default
+                                            badge-dark
+                                            @endswitch
+                                            text-capitalize
+                                            ">
+                                                    {{ $item->status->name }}
+                                                </span>
                                             </td>
                                             <td>
                                                 {{ $item->category->incoming_document_category_name }}
+                                            </td>
+                                            <td>
+                                                {{ $item->category_no ?? '-' }}
                                             </td>
                                             <td>
                                                 {{ $item->document_info }}
@@ -73,37 +96,6 @@
                                             <td>
                                                 {{ $item->formatted_date }}
                                             </td>
-                                            <td>
-                                                <span class="badge
-                                            @switch($item->status->name)
-                                            @case('pending')
-                                            badge-light-danger
-                                            @break
-                                            @case('processed')
-                                            badge-light-primary
-                                            @break
-                                            @case('forwarded')
-                                            badge-light-warning
-                                            @break
-                                            @case('completed')
-                                            badge-light-success
-                                            @break
-                                            @case('cancelled')
-                                            badge-light-dark
-                                            @break
-                                            @default
-                                            badge-light-dark
-                                            @endswitch
-                                            text-capitalize
-                                            ">
-                                                    {{ $item->status->name }}
-                                                </span>
-                                            </td>
-                                            @role('APOO')
-                                            <td>
-                                                {{ $item->apoDocument->source ?? '' }}
-                                            </td>
-                                            @endrole
                                             <td class="text-center" wire:loading.class="pe-none">
                                                 <div class="btn-group" role="group" aria-label="Actions">
                                                     @can('incoming.documents.update')
@@ -223,15 +215,13 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            @role('APOO')
                             <div class="mb-10">
-                                <label class="form-label required">Source</label>
-                                <input type="text" class="form-control" wire:model="source" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('source')
+                                <label class="form-label required">No.</label>
+                                <input type="text" class="form-control" wire:model="category_no" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('category_no')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
-                            @endrole
                             <div class="mb-10">
                                 <label class="form-label required">Document Info</label>
                                 <textarea class="form-control" wire:model="document_info" {{ $is_office_admin ? '' : 'disabled' }}></textarea>
@@ -298,7 +288,18 @@
                                                 {{ $item->name }}
                                             </td>
                                             <td>
-                                                <a href="#" class="btn btn-sm btn-info" wire:click="viewFile({{ $item->id }})">View</a>
+                                                <div class="btn-group" role="group" aria-label="Basic mixed styles example">
+                                                    <a href="#" class="btn btn-icon btn-sm btn-light-info ms-2" wire:click="viewFile({{ $item->id }})"><i class="bi bi-eye"></i></a>
+                                                    <button 
+                                                            type="button" 
+                                                            class="btn btn-icon btn-sm btn-light-danger ms-2"
+                                                            title="Remove File"
+                                                            wire:click.prevent="removeUploadedFile({{ $item->id }})"
+                                                            wire:confirm="Are you sure you want to permanently delete this file from the request? This action cannot be undone."
+                                                            wire:loading.attr="disabled"
+                                                        ><i class="bi bi-trash-fill"></i>
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                         @empty
@@ -373,6 +374,10 @@
                             <div class="col-7">{{ $ref_incoming_document_category_id ?? '-' }}</div>
                         </div>
                         <div class="row">
+                            <div class="col-5 fw-bold">Category No:</div>
+                            <div class="col-7">{{ $category_no ?? '-' }}</div>
+                        </div>
+                        <div class="row">
                             <div class="col-5 fw-bold">Forwarded to:</div>
                             <div class="col-7">
                                 @foreach($forwarded_divisions as $item)
@@ -389,15 +394,9 @@
                             <div class="col-7">{{ $date ?? '-' }}</div>
                         </div>
 
-                        @role('APOO')
-                        <div class="row">
-                            <div class="col-5 fw-bold">Source:</div>
-                            <div class="col-7">{{ $source ?? '-' }}</div>
-                        </div>
-                        @endrole
-
                     </div>
 
+                    
                     <div class="mb-3">
                         <h5>Files</h5>
                         <div class="row">
@@ -420,6 +419,21 @@
                     </div>
                 </div>
                 <div class="modal-footer">
+                    <button 
+                        type="button" 
+                        class="btn btn-primary" 
+                        wire:click="downloadMergedAttachments" 
+                        wire:loading.attr="disabled"
+                        wire:target="downloadMergedAttachments"
+                    >
+                        <span wire:loading.remove wire:target="downloadMergedAttachments">
+                            <i class="fa fa-file-pdf"></i> Download Attachments
+                        </span>
+                        <span wire:loading wire:target="downloadMergedAttachments">
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            Merging & Downloading...
+                        </span>
+                    </button>
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" wire:click="clear">Close</button>
                 </div>
             </div>

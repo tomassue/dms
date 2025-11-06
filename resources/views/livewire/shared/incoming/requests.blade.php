@@ -97,7 +97,7 @@
                                                     {{ $item->office_barangay_organization }}
                                                 </td>
                                                 <td>
-                                                    {{ $item->formatted_date_requested }}
+                                                    {{ $item->formatted_date_requested }}<br/>
                                                     @if($item->status->name!='completed')
                                                     <span class="badge badge-light-danger">{{ $item->request_age }}
                                                     </span>
@@ -122,7 +122,8 @@
                                                             <i class="bi bi-arrow-up-square"></i>
                                                         </button>
                                                         @endcan
-                                                        <button type="button" class="btn btn-icon btn-sm btn-primary" title="Assign" wire:click="showAssignRequest({{ $item->id }})" @click.stop>
+                                                        @can('incoming.requests.update')
+                                                        <button type="button" class="btn btn-icon btn-sm btn-primary" title="Assign" wire:click="showAssignRequest({{ $item->id }})" @click.stop {{ ($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '' }}>
                                                             <div wire:loading.remove wire:target="showAssignRequest({{ $item->id }})">
                                                                 <i class="bi bi-person-check"></i>
                                                             </div>
@@ -132,6 +133,7 @@
                                                                 </div>
                                                             </div>
                                                         </button>
+                                                        @endcan
                                                         <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
                                                             <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
                                                                 <i class="bi bi-clock-history"></i>

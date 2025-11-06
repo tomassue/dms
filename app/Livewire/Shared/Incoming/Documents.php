@@ -23,6 +23,15 @@ use Livewire\Component;
 use Livewire\WithFileUploads;
 use Livewire\WithPagination;
 use Spatie\Activitylog\Models\Activity;
+//Teodz
+use Illuminate\Support\Facades\Log as FacadesLog;
+use App\Models\FilesDirectory;
+use Illuminate\Support\Facades\Storage;
+use setasign\Fpdi\Fpdi;
+use Fpdi\PdfParser\StreamReader;
+use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\File as FileFacade;
+use setasign\Fpdi\PdfParser\PdfParserException; // Added for specific error handling
 
 #[Title('Incoming Documents')]
 class Documents extends Component
@@ -48,6 +57,7 @@ class Documents extends Component
         $date,
         $ref_status_id,
         $remarks,
+        $category_no,
         $file_id = []; // for file upload - MorphMany
     //* APO
     public $source;
@@ -59,6 +69,7 @@ class Documents extends Component
             'no' => 'required|unique:incoming_documents,no,' . $this->incomingDocumentId,
             'ref_incoming_document_category_id' => 'required|exists:ref_incoming_documents_categories,id',
             'document_info' => 'required',
+            'category_no' => 'string|nullable',
             'date' => 'required|date'
         ];
 
@@ -131,8 +142,10 @@ class Documents extends Component
 
     public function loadRefStatus()
     {
-        return RefStatus::incoming()
-            ->get();
+        // return RefStatus::incoming()
+        //     ->get();
+            
+        return RefStatus::get();
     }
 
     public function loadDivisions()
@@ -299,6 +312,7 @@ class Documents extends Component
             'date' => $this->date,
             'ref_status_id' => $this->ref_status_id ?? '1', //! Default value set in the database is not working. - Set to pending.
             'remarks' => $this->remarks,
+            'category_no' => $this->category_no,
             'office_id' => auth()->user()->roles()->first()->id
         ];
 
@@ -326,13 +340,26 @@ class Documents extends Component
         if (empty($this->file_id)) return null;
 
         $uploadedFiles = [];
+        $storageDisk = 'public'; 
+        $storagePath = 'incoming_documents_files'; 
 
         foreach ((array)$this->file_id as $file) {
+            // 💡 CRITICAL FIX: Ensure $file is a valid Livewire TemporaryUploadedFile object.
+            // If the upload failed or the array contains stale/invalid data, this check prevents the error.
+            if (empty($file) || !($file instanceof \Livewire\Features\SupportFileUploads\TemporaryUploadedFile)) {
+                continue; // Skip this invalid item and move to the next.
+            }
+
+            // 1. Store the file on the disk (this handles Livewire's TemporaryUploadedFile)
+            $filePath = $file->store($storagePath, $storageDisk);
+            
+            // 2. Create the File model record with the path
             $uploadedFiles[] = $model->files()->create([
                 'name' => $file->getClientOriginalName(),
                 'size' => $file->getSize(),
                 'type' => $file->getMimeType(),
-                'file' => file_get_contents($file->getRealPath()),
+                'file_path' => $filePath, 
+                'disk' => $storageDisk,    
                 // fileable_id and fileable_type are auto-set by morphMany
             ]);
         }
@@ -340,15 +367,25 @@ class Documents extends Component
         return $uploadedFiles;
     }
 
-    public function viewFile($id)
+    
+    public function viewFile($fileId)
     {
+        // 1. Get the file record (assuming your File model now has a 'file_path' and 'disk' column)
+        $file = File::findOrFail($fileId);
+        
+        // 2. Check if the file exists in storage
+        if (!Storage::disk($file->disk)->exists($file->file_path)) {
+            $this->dispatch('error', message: 'File not found in storage.');
+            return;
+        }
+
+        // 3. Generate a temporary signed URL for the file path
         $signedURL = URL::temporarySignedRoute(
-            'file.view',
+            'file.view.disk', // Note: This route name must be a custom one you define in web.php
             now()->addMinutes(10),
-            ['id' => $id]
+            ['path' => $file->file_path, 'disk' => $file->disk] 
         );
 
-        // Dispatch an event to the browser to open the URL in a new tab
         $this->dispatch('open-file', url: $signedURL);
     }
 
@@ -677,7 +714,7 @@ class Documents extends Component
             $this->date = Carbon::parse($incomingDocument->date)->format('M d, Y');
             $this->ref_status_id = $incomingDocument->status->name;
             $this->remarks = $incomingDocument->remarks;
-            $this->preview_file = $incomingDocument->files;
+            $this->category_no = $incomingDocument->category_no;
 
             /* ----------------------------------- APO ---------------------------------- */
             if (Auth::user()->hasRole('APOO')) {
@@ -689,6 +726,198 @@ class Documents extends Component
         } catch (\Throwable $th) {
             // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
+        }
+    }
+
+    public function removeUploadedFile($fileId)
+    {
+        try {
+            // Find the file record
+            $file = File::findOrFail($fileId);
+            
+            // 1. Delete from storage (check if it exists first)
+            if (Storage::disk('public')->exists($file->file_path)) {
+                Storage::disk('public')->delete($file->file_path);
+            }
+
+            // 2. Delete the database record
+            $file->delete();
+
+            // 3. Update the preview list to reflect the removal without full page reload
+            // We use filter() to remove the deleted file from the local Livewire property
+            $this->preview_file = $this->preview_file->filter(fn($f) => $f->id != $fileId);
+
+            $this->dispatch('success', message: 'File removed successfully.');
+
+        } catch (\Exception $e) {
+            FacadesLog::error("Error removing uploaded file ID $fileId: " . $e->getMessage());
+            $this->dispatch('error', message: 'Failed to remove file. Please check logs.');
+        }
+    }
+
+    public function downloadMergedAttachments()
+    {
+        $filesToMerge = $this->preview_file;
+
+        if ($filesToMerge->isEmpty()) {
+            $this->dispatch('error', message: 'No files attached to merge.');
+            return;
+        }
+        
+        // --- MODIFICATION START: REVERSE ORDER ---
+        // Reverse the collection so that the latest (most recently attached) files
+        // are processed first, making them appear at the beginning of the merged PDF.
+        $filesToMerge = $filesToMerge->reverse();
+        // --- MODIFICATION END: REVERSE ORDER ---
+
+        // --- UPDATED FILENAME GENERATION ---
+        $categoryName = $this->ref_incoming_request_category_id ?? 'Unknown-Category';
+        $categoryNo = $this->category_no ?? 'N-A';
+        $memoNo = $this->memo_no ?? 'N-A';
+        $dateTime = now()->format('YmdHis');
+
+        // Sanitize category name: replace non-alphanumeric/spaces with hyphen
+        $sanitizedCategory = preg_replace('/[^A-Za-z0-9\s-]+/', '', $categoryName);
+        $sanitizedCategory = trim(preg_replace('/\s+/', '-', $sanitizedCategory), '-');
+        
+        $mergedFilename = sprintf(
+            '%s-%s_%s_%s.pdf',
+            $sanitizedCategory,
+            $categoryNo,
+            $memoNo,
+            $dateTime
+        );
+        // --- END UPDATED FILENAME GENERATION ---
+
+        
+        // Use storage_path() for the temporary directory
+        $tempAppDir = storage_path('app/temp/pdf_merger');
+        if (!FileFacade::isDirectory($tempAppDir)) {
+            if (!FileFacade::makeDirectory($tempAppDir, 0777, true)) {
+                FacadesLog::error("Failed to create temporary directory: " . $tempAppDir);
+                $this->dispatch('error', message: 'Failed to create temp directory for merging.');
+                return;
+            }
+        }
+        
+        // Define path for the final merged PDF
+        $tempMergedFilePath = $tempAppDir . '/' . $mergedFilename;
+
+        $pdf = new Fpdi('P', 'mm', 'A4');
+        $tempFilesToCleanup = [];
+
+        try {
+            // --- 1. Iterate and Prepare Files for Merging ---
+            foreach ($filesToMerge as $file) {
+                
+                FacadesLog::info("Attempting to process file ID: " . ($file->id ?? 'N/A') . " with path: " . ($file->file_path ?? 'NULL'));
+
+                if (empty($file->file_path)) {
+                    FacadesLog::warning("Skipping file merge because 'file_path' is empty/null.");
+                    continue; 
+                }
+                
+                // Get the absolute path using the 'public' disk
+                $fullPath = Storage::disk('public')->path($file->file_path);
+                
+                if (!file_exists($fullPath)) {
+                    FacadesLog::warning("Skipping file merge: File not found on disk at path: " . $fullPath);
+                    continue; 
+                }
+
+                $extension = pathinfo($fullPath, PATHINFO_EXTENSION);
+                $fileToMerge = $fullPath;
+                $shouldMerge = false;
+
+                // --- Type Check and Conversion (Images to PDF) ---
+                $mimeType = mime_content_type($fullPath);
+
+                if (strtolower($extension) === 'pdf' || strtolower($mimeType) === 'application/pdf') {
+                    $shouldMerge = true;
+                } elseif (in_array(strtolower($extension), ['jpg', 'jpeg', 'png']) && 
+                            in_array(strtolower($mimeType), ['image/jpeg', 'image/png'])) {
+                    
+                    // Image Validation
+                    $image_info = @getimagesize($fullPath); 
+                    if ($image_info === false || ($image_info[0] ?? 0) <= 0 || ($image_info[1] ?? 0) <= 0) {
+                        FacadesLog::error("SKIPPING INVALID IMAGE: Image is corrupt or dimensions are zero. Path: " . $fullPath);
+                        $this->dispatch('warning', message: 'Skipping corrupted image file(s).');
+                        continue; 
+                    }
+
+                    // Image Conversion: Create a temporary PDF from the image
+                    $tempPdfPath = $tempAppDir . '/' . uniqid() . '.pdf'; 
+                    $tempPdf = new Fpdi('P', 'mm', 'A4');
+                    $tempPdf->AddPage();
+                    // Add image scaled down to fit A4 width, maintaining aspect ratio (0 for height)
+                    $tempPdf->Image($fullPath, 10, 10, $tempPdf->GetPageWidth() - 20, 0); 
+                    $tempPdf->Output($tempPdfPath, 'F'); 
+
+                    $fileToMerge = $tempPdfPath;
+                    $tempFilesToCleanup[] = $tempPdfPath; // Mark for cleanup
+                    $shouldMerge = true;
+                } else {
+                    FacadesLog::warning("Skipping unsupported file type: " . $fullPath);
+                    continue;
+                }
+
+                // --- 4. Merge the Prepared File (Now guaranteed to be a PDF) ---
+                if ($shouldMerge) {
+                    try {
+                        // ** Catch the specific FPDI error for unsupported compression **
+                        $pageCount = $pdf->setSourceFile($fileToMerge);
+                        
+                        for ($i = 1; $i <= $pageCount; $i++) {
+                            
+                            $templateId = $pdf->importPage($i);
+                            $size = $pdf->getTemplateSize($templateId);
+                            
+                            // Determine orientation
+                            $orientation = ($size['rotation'] ?? 0) === 90 || ($size['rotation'] ?? 0) === 270 ? 'L' : 'P';
+                            
+                            // Add a new page matching the imported page's dimensions
+                            $pdf->AddPage($orientation, [$size['width'], $size['height']]);
+
+                            // Import the content
+                            $pdf->useTemplate($templateId); 
+                        }
+                    } catch (PdfParserException $e) {
+                        // Catches specific FPDI parsing errors (like unsupported compression)
+                        FacadesLog::error("SKIPPING CORRUPT PDF: FPDI failed to process file ID " . ($file->id ?? 'N/A') . ". Error: " . $e->getMessage());
+                        $this->dispatch('warning', message: 'Skipping one corrupt attachment due to unsupported format/compression.');
+                    } catch (\Throwable $e) {
+                        // Catches any other general error during PDF merging/import
+                        FacadesLog::error("SKIPPING FILE due to general error: " . ($file->id ?? 'N/A') . ". Error: " . $e->getMessage());
+                        $this->dispatch('warning', message: 'Skipping one attachment due to an unexpected merging error.');
+                    }
+                }
+            }
+            
+            if ($pdf->PageNo() == 0) {
+                $this->dispatch('error', message: 'No supported PDF or image files were successfully merged.');
+                return;
+            }
+
+            // --- 5. Output and Stream ---
+            $pdf->Output($tempMergedFilePath, 'F');
+            
+            // Return a Laravel download response to force the download
+            return response()->download($tempMergedFilePath, $mergedFilename)
+                ->deleteFileAfterSend(true);
+
+        } catch (\Throwable $th) {
+            // This catch block handles any other unexpected system error
+            FacadesLog::error("SYSTEM-LEVEL PDF Merging failed: " . $th->getMessage() . " on line " . $th->getLine());
+            $this->dispatch('error', message: 'System error during merging. Check logs.');
+            return;
+
+        } finally {
+            // --- 6. Cleanup Temporary Files ---
+            foreach ($tempFilesToCleanup as $path) {
+                if (file_exists($path)) {
+                    unlink($path);
+                }
+            }
         }
     }
 }

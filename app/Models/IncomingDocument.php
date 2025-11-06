@@ -29,7 +29,8 @@ class IncomingDocument extends Model
         'date',
         'ref_status_id',
         'remarks',
-        'office_id'
+        'office_id',
+        'category_no', // Additional Teodz
     ];
 
     // Generate Unique Reference No.
@@ -177,5 +178,10 @@ class IncomingDocument extends Model
     public function forwards()
     {
         return $this->morphMany(Forwarded::class, 'forwardable');
+    }
+
+    public function username()
+    {
+        return $this->belongsTo(User::class, 'user_id', 'id');
     }
 }

@@ -50,7 +50,7 @@
                         <div class="d-flex align-items-center ms-1 ms-lg-3" id="kt_header_user_menu_toggle">
                             <!--begin::Menu wrapper-->
                             <div class="cursor-pointer symbol symbol-30px symbol-md-40px" data-kt-menu-trigger="click" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end">
-                                <div class="profile-picture bg-color-{{ Auth::user()->id % 5 + 1 }}">
+                                <div class="profile-picture bg-color-{{ Auth::user()->id % 5 + 0 }}">
                                     {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                 </div>
                             </div>
@@ -61,7 +61,7 @@
                                     <div class="menu-content d-flex align-items-center px-3">
                                         <!--begin::Avatar-->
                                         <div class="symbol symbol-50px me-5">
-                                            <div class="profile-picture bg-color-{{ Auth::user()->id % 5 + 1 }}">
+                                            <div class="profile-picture bg-color-{{ Auth::user()->id % 5 + 0 }}">
                                                 {{ strtoupper(substr(Auth::user()->name, 0, 1)) }}
                                             </div>
                                         </div>
