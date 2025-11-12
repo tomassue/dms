@@ -89,7 +89,8 @@ class Requests extends Component
             'contact_person_email' => 'string|nullable',
             'location' => 'string|nullable',
             'memo_no' => 'string|nullable',
-            'files.*' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', 
+            //'files.*' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', 
+            'files.*' => 'nullable|mimes:pdf|max:10240', 
         ];
     }
 

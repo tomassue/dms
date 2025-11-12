@@ -216,6 +216,13 @@
                                 @enderror
                             </div>
                             @endcan
+                            <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }};">
+                                <label class="form-label">Recommendation</label>
+                                <textarea class="form-control" wire:model="remarks"></textarea>
+                                @error('remarks')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
                             <div class="mb-10">
                                 <label class="form-label required">No.</label>
                                 <input type="text" class="form-control" wire:model="no" disabled>
@@ -257,6 +264,13 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
+                                <label class="form-label required">Name of the Requesting Party</label>
+                                <input type="text" class="form-control" wire:model="contact_person_name" {{ $is_office_admin ? '' : 'disabled' }}>
+                                @error('contact_person_name')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
                                 <label class="form-label required">Date Requested</label>
                                 <input type="date" class="form-control" wire:model="date_requested" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('date_requested')
@@ -274,13 +288,6 @@
                                 <label class="form-label required">Location</label>
                                 <input type="text" class="form-control" wire:model="location" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('location')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div class="mb-10">
-                                <label class="form-label required">Contact Person (Name)</label>
-                                <input type="text" class="form-control" wire:model="contact_person_name" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('contact_person_name')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -306,13 +313,6 @@
                                 <label class="form-label required">Description</label>
                                 <textarea class="form-control" wire:model="description" {{ $is_office_admin ? '' : 'disabled' }}></textarea>
                                 @error('description')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }};">
-                                <label class="form-label">Remarks</label>
-                                <textarea class="form-control" wire:model="remarks"></textarea>
-                                @error('remarks')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -499,7 +499,7 @@
                             <div class="col-7">{{ $description ?? '-' }}</div>
                         </div>
                         <div class="row">
-                            <div class="col-5 fw-bold">Remarks:</div>
+                            <div class="col-5 fw-bold">Recommendation:</div>
                             <div class="col-7">{{ $remarks ?? '-' }}</div>
                         </div>
                     </div>
@@ -630,11 +630,12 @@
     $('.files').filepond({
         // required: true,
         allowFileTypeValidation: true,
-        acceptedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+        //acceptedFileTypes: ['image/jpeg', 'image/png', 'application/pdf'],
+        acceptedFileTypes: ['application/pdf'],
         labelFileTypeNotAllowed: 'File of invalid type',
         allowFileSizeValidation: true,
         maxFileSize: '10MB',
-        labelMaxFileSizeExceeded: 'File is too large',
+        labelMaxFileSizeExceeded: 'File is too large', 
         server: {
             // This will assign the data to the files[] property.
             process: (fieldName, file, metadata, load, error, progress, abort) => {
