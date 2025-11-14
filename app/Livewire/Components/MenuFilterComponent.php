@@ -2,7 +2,10 @@
 
 namespace App\Livewire\Components;
 
+use App\Models\RefDocumentType;
+use App\Models\RefIncomingRequestCategory;
 use App\Models\RefStatus;
+use Dom\DocumentType as DomDocumentType;
 use Illuminate\Support\Facades\Auth;
 use Livewire\Component;
 
@@ -12,8 +15,10 @@ class MenuFilterComponent extends Component
     //* APO
     public $start_date,
         $end_date,
+        $ingoing_category,
         $status,
-        $outgoing_category;
+        $outgoing_category,
+        $doctype;
 
     public function mount($page)
     {
@@ -26,6 +31,8 @@ class MenuFilterComponent extends Component
             'filter',
             start_date: $this->start_date,
             end_date: $this->end_date,
+            ingoing_category: $this->ingoing_category,
+            doctype: $this->doctype,
             status: $this->status,
             outgoing_category: $this->outgoing_category
         );
@@ -43,13 +50,27 @@ class MenuFilterComponent extends Component
     public function render()
     {
         return view('livewire.components.menu-filter-component', [
+            'category_dropdown' => $this->loadIngoingCategory(),
+            'doctype_dropdown' => $this->loadDocumentType(),
             'status_dropdown' => $this->loadStatus(), // Status dropdown
         ]);
     }
 
+    public function loadIngoingCategory()
+    {
+        $ingoing_category = RefIncomingRequestCategory::get();
+        return $ingoing_category;
+    }
+
+    public function loadDocumentType()
+    {
+        $doctype = RefDocumentType::get();
+        return $doctype;
+    }
+
     public function loadStatus()
     {
-        switch ($this->page) {
+    switch ($this->page) {
             case 'outgoing':
                 $status = RefStatus::outgoing()->get();
                 break;

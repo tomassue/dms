@@ -33,6 +33,35 @@
             <!--end::Input group-->
 
             @if (in_array($page, ['outgoing', 'incoming']))
+            
+            <div class="mb-10">
+                <!--begin::Label-->
+                <label class="form-label fw-bold">Category:</label>
+                <!--end::Label-->
+                <!--begin::Input-->
+                <select class="form-select text-uppercase" wire:model="ingoing_category">
+                    <option>-Select-</option>
+                    @foreach ($category_dropdown as $item)
+                    <option value="{{ $item->id }}">{{ $item->incoming_request_category_name }}</option>
+                    @endforeach
+                </select>
+                <!--end::Input-->
+            </div>
+
+            <div class="mb-10">
+                <!--begin::Label-->
+                <label class="form-label fw-bold">Document Type:</label>
+                <!--end::Label-->
+                <!--begin::Input-->
+                <select class="form-select text-uppercase" wire:model="doctype">
+                    <option>-Select-</option>
+                    @foreach ($doctype_dropdown as $item)
+                    <option value="{{ $item->id }}">{{ $item->document_name }}</option>
+                    @endforeach
+                </select>
+                <!--end::Input-->
+            </div>
+
             <!--begin::Input group-->
             <div class="mb-10">
                 <!--begin::Label-->

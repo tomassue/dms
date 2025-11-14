@@ -2,7 +2,7 @@
     <!-- Sidebar -->
     <div id="kt_aside" class="aside bg-primary2" data-kt-drawer="true" data-kt-drawer-name="aside" data-kt-drawer-activate="{default: true, lg: false}" data-kt-drawer-overlay="true" data-kt-drawer-width="auto" data-kt-drawer-direction="start" data-kt-drawer-toggle="#kt_aside_toggle">
         <div class="aside-logo d-none d-lg-flex flex-column align-items-center flex-column-auto py-8" id="kt_aside_logo">
-            <a href="#">
+            <a href="{{ route('dashboard') }}">
                 <img alt="Logo" src="{{ asset('images/cdo-seal.png') }}" class="h-55px" />
             </a>
         </div>
@@ -217,6 +217,17 @@
                                     <span class="bullet bullet-dot"></span>
                                 </span>
                                 <span class="menu-title">User Management</span>
+                            </a>
+                        </div>
+                        @endcan
+
+                        @can('reference.incomingRequestCategory.read')
+                        <div class="menu-item">
+                            <a class="menu-link {{ Route::currentRouteName() == 'document-type' ? 'active' : '' }}" href="{{ route('document-type') }}">
+                                <span class="menu-bullet">
+                                    <span class="bullet bullet-dot"></span>
+                                </span>
+                                <span class="menu-title">Document Type</span>
                             </a>
                         </div>
                         @endcan

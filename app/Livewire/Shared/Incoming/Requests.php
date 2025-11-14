@@ -24,6 +24,7 @@ use Livewire\WithPagination;
 use Spatie\Activitylog\Models\Activity;
 // Teodz
 use App\Models\FilesDirectory;
+use App\Models\RefDocumentType;
 use Illuminate\Support\Facades\Storage;
 use setasign\Fpdi\Fpdi;
 use Fpdi\PdfParser\StreamReader;
@@ -42,6 +43,8 @@ class Requests extends Component
     public $search,
         $filter_start_date,
         $filter_end_date,
+        $filter_category,
+        $filter_document_type,
         $filter_status;
     public $incomingRequestId;
     public $selected_divisions = [], // for forwarded
@@ -66,6 +69,7 @@ class Requests extends Component
         $location,
         $memo_no,
         $user_id,
+        $ref_document_type_id,
         $files = []; // for file upload - MorphMany
 
     /* ------------------------------- end::fields ------------------------------ */
@@ -91,9 +95,17 @@ class Requests extends Component
             'memo_no' => 'string|nullable',
             //'files.*' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', 
             'files.*' => 'nullable|mimes:pdf|max:10240', 
+            'ref_document_type_id' => 'string|nullable',
         ];
     }
 
+    public function mount()
+    {
+        $now = Carbon::now();
+        $this->date_requested = $now->format('Y-m-d'); 
+        $this->date_time = $now->format('Y-m-d\TH:i');
+    }
+    
     public function attributes()
     {
         return [
@@ -107,10 +119,12 @@ class Requests extends Component
     }
 
     #[On('filter')]
-    public function filter($start_date, $end_date, $status)
+    public function filter($start_date, $end_date, $ingoing_category, $doctype, $status)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
+        $this->filter_category = $ingoing_category;
+        $this->filter_document_type = $doctype;
         $this->filter_status = $status;
     }
 
@@ -135,7 +149,6 @@ class Requests extends Component
 
     public function render()
     {
-        // dd($this->loadStatus());
         return view(
             'livewire.shared.incoming.requests',
             [
@@ -145,6 +158,7 @@ class Requests extends Component
                 'status' => $this->loadStatus(), // Status dropdown
                 'divisions' => $this->loadDivisions(), // Division dropdown
                 'recent_forwards' => $this->loadRecentForwards(),
+                'document_type' => $this->loadDocumentType(), // Incoming Request Category dropdown
             ]
         );
     }
@@ -181,15 +195,23 @@ class Requests extends Component
                     ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%')
                     ->orWhere('category_no', 'like', '%' . $this->search . '%')
                     ->orWhere('memo_no', 'like', '%' . $this->search . '%')
-                    ->orWhereHas('category', function ($q) {
-                        $q->where('incoming_request_category_name', 'like', '%' . $this->search . '%');
-                    });
+                    ->orWhere('description', 'like', '%' . $this->search . '%')
+                    ->orWhere('contact_person_name', 'like', '%' . $this->search . '%');
+                    // ->orWhereHas('category', function ($q) {
+                    //     $q->where('incoming_request_category_name', 'like', '%' . $this->search . '%');
+                    // });
             })
             ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
                 $query->whereBetween('date_time', [
                     Carbon::parse($this->filter_start_date)->startOfDay(),
                     Carbon::parse($this->filter_end_date)->endOfDay()
                 ]);
+            })
+            ->when($this->filter_category, function ($query) {
+                $query->where('ref_incoming_request_category_id', $this->filter_category);
+            })
+            ->when($this->filter_document_type, function ($query) {
+                $query->where('ref_document_type_id', $this->filter_document_type);
             })
             ->when($this->filter_status, function ($query) {
                 $query->where('ref_status_id', $this->filter_status);
@@ -215,6 +237,11 @@ class Requests extends Component
     public function loadIncomingRequestCategories()
     {
         return RefIncomingRequestCategory::all();
+    }
+
+    public function loadDocumentType()
+    {
+        return RefDocumentType::orderBy('document_name', 'asc')->get();
     }
 
     public function loadStatus()
@@ -264,6 +291,7 @@ class Requests extends Component
                         'contact_person_email' => $this->contact_person_email,
                         'location' => $this->location,
                         'memo_no' => $this->memo_no,
+                        'ref_document_type_id' => $this->ref_document_type_id,
                     ]
                 );
                 // save files
@@ -315,6 +343,7 @@ class Requests extends Component
     
     public function editIncomingRequest(IncomingRequest $incomingRequest)
     {
+        //dd($incomingRequest);
         try {
             if (!Auth::user()->hasRole('Super Admin')) {
                 // Mark all forwarded requests to this division as opened
@@ -352,6 +381,7 @@ class Requests extends Component
             $this->contact_person_email = $incomingRequest->contact_person_email;
             $this->location = $incomingRequest->location;
             $this->memo_no = $incomingRequest->memo_no;
+            $this->ref_document_type_id = $incomingRequest->ref_document_type_id;
 
             //* Hide it so that other divisions won't see it. Remarks inputted can only be seen inside activity log modal.
             //// $this->remarks = $incomingRequest->remarks; 
@@ -746,6 +776,7 @@ class Requests extends Component
             $this->contact_person_email = $incomingRequest->contact_person_email;
             $this->location = $incomingRequest->location;
             $this->memo_no = $incomingRequest->memo_no;
+            $this->ref_document_type_id = $incomingRequest->ref_document_type_id;
 
             $this->preview_file = $incomingRequest->files;
 

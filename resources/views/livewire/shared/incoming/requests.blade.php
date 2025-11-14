@@ -223,6 +223,25 @@
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
+                            <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }};">
+                                <label class="form-label required">Document Type</label>
+                                <select class="form-select" aria-label="Select document category" wire:model="ref_document_type_id">
+                                    <option>-Select-</option>
+                                    @foreach ($document_type as $item)
+                                    <option value="{{ $item->id }}">{{ $item->document_name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('ref_incoming_request_category_id')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }};">
+                                <label class="form-label">Memo No.</label>
+                                <input type="text" class="form-control" wire:model="memo_no">
+                                @error('memo_no')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
                             <div class="mb-10">
                                 <label class="form-label required">No.</label>
                                 <input type="text" class="form-control" wire:model="no" disabled>
@@ -246,13 +265,6 @@
                                 <label class="form-label required">Category No.</label>
                                 <input type="text" class="form-control" wire:model="category_no" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('category_no')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div class="mb-10">
-                                <label class="form-label">Memo No.</label>
-                                <input type="text" class="form-control" wire:model="memo_no" {{ $is_office_admin ? '' : 'disabled' }}>
-                                @error('memo_no')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>

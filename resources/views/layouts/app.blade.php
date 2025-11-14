@@ -8,7 +8,8 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    {{-- <title>{{ config('app.name', 'Laravel') }}</title> --}}
+    <title>Admin Records Management System</title>
 
     <meta name="description" content="DMS" />
     <meta name="keywords" content="Local Government Unit of Cagayan de Oro, City Management Information Systems and Innovation Department" />

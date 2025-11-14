@@ -38,7 +38,8 @@ class IncomingRequest extends Model
         'contact_person_email',
         'location',
         'memo_no',
-        'user_id'
+        'user_id',
+        'ref_document_type_id'
     ];
 
     // Accessors
@@ -184,5 +185,10 @@ class IncomingRequest extends Model
     public function username()
     {
         return $this->belongsTo(User::class, 'user_id', 'id');
+    }
+    
+    public function documentType()
+    {
+        return $this->belongsTo(RefDocumentType::class, 'ref_document_type_id', 'id');
     }
 }

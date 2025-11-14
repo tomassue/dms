@@ -17,7 +17,9 @@
     <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'Laravel') }}</title>
+    {{-- <title>{{ config('app.name', 'Laravel') }}</title> --}}
+    <title>Admin Records Management System</title>
+
     <link rel="icon" href="{{ asset('images/cdo-seal.png') }}" type="image/x-icon">
 
     <!-- Fonts -->
@@ -35,7 +37,7 @@
 
     <style>
         body {
-            background: linear-gradient(to top, #0E4A84 10%, #FFFFFF 90%);
+            background: linear-gradient(to top, #0E4A84 10%, #494949 90%);
             min-height: 100vh;
         }
 

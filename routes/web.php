@@ -11,6 +11,7 @@ use App\Livewire\Shared\Incoming\Requests;
 use App\Livewire\Shared\Outgoing;
 use App\Livewire\Shared\Settings\AccomplishmentCategory;
 use App\Livewire\Shared\Settings\Divisions;
+use App\Livewire\Shared\Settings\DocumentType;
 use App\Livewire\Shared\Settings\IncomingDocumentCategory;
 use App\Livewire\Shared\Settings\IncomingRequestCategory;
 use App\Livewire\Shared\Settings\MeetingsCategory;
@@ -60,6 +61,8 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMI
 
         # Settings.Accomplishment Category
         Route::get('/settings/accomplishment-category', AccomplishmentCategory::class)->name('accomplishment-category')->middleware('permission:reference.accomplishmentCategory.read');
+        # Settings.Document Type
+        Route::get('/settings/document-type', DocumentType::class)->name('document-type')->middleware('permission:reference.incomingRequestCategory.read');
         # Settings.Incoming Document Category
         Route::get('/settings/incoming-document-categories', IncomingDocumentCategory::class)->name('incoming-document-categories')->middleware('permission:reference.incomingDocumentCategory.read');
         # Settings.Incoming Request Category
