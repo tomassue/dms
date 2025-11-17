@@ -3,6 +3,7 @@
 namespace App\Livewire\Components;
 
 use App\Models\RefDocumentType;
+use App\Models\RefIncomingDocumentCategory;
 use App\Models\RefIncomingRequestCategory;
 use App\Models\RefStatus;
 use Dom\DocumentType as DomDocumentType;
@@ -11,18 +12,20 @@ use Livewire\Component;
 
 class MenuFilterComponent extends Component
 {
-    public $page;
+    public $page, $context;
     //* APO
     public $start_date,
         $end_date,
-        $ingoing_category,
+        $request_category,
+        $document_category,
         $status,
         $outgoing_category,
         $doctype;
 
-    public function mount($page)
+    public function mount($page, $context)
     {
         $this->page = $page;
+        $this->context = $context;
     }
 
     public function filter()
@@ -31,7 +34,8 @@ class MenuFilterComponent extends Component
             'filter',
             start_date: $this->start_date,
             end_date: $this->end_date,
-            ingoing_category: $this->ingoing_category,
+            request_category: $this->request_category,
+            document_category: $this->document_category,
             doctype: $this->doctype,
             status: $this->status,
             outgoing_category: $this->outgoing_category
@@ -50,16 +54,23 @@ class MenuFilterComponent extends Component
     public function render()
     {
         return view('livewire.components.menu-filter-component', [
-            'category_dropdown' => $this->loadIngoingCategory(),
+            'category_request_dropdown' => $this->loadRequestCategory(),
+            'category_document_dropdown' => $this->loadDocumentCategory(),
             'doctype_dropdown' => $this->loadDocumentType(),
             'status_dropdown' => $this->loadStatus(), // Status dropdown
         ]);
     }
 
-    public function loadIngoingCategory()
+    public function loadRequestCategory()
     {
-        $ingoing_category = RefIncomingRequestCategory::get();
-        return $ingoing_category;
+        $request_category = RefIncomingRequestCategory::get();
+        return $request_category;
+    }
+
+    public function loadDocumentCategory()
+    {
+        $document_category = RefIncomingDocumentCategory::get();
+        return $document_category;
     }
 
     public function loadDocumentType()

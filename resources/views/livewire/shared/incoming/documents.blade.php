@@ -17,7 +17,7 @@
                             <div class="card-toolbar">
                                 <div class="d-flex align-items-center gap-2">
                                     <!--begin::Menu Filter-->
-                                    <livewire:components.menu-filter-component page="incoming" />
+                                    <livewire:components.menu-filter-component page="incoming" context="documents" />
                                     <!--end::Menu Filter-->
 
                                     <!--begin::Menu 2-->

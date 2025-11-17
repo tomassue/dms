@@ -43,6 +43,7 @@ class Documents extends Component
     public $search,
         $filter_start_date,
         $filter_end_date,
+        $filter_category,
         $filter_status;
     public $incomingDocumentId;
     public $selected_divisions = [],
@@ -91,10 +92,11 @@ class Documents extends Component
     }
 
     #[On('filter')]
-    public function filter($start_date, $end_date, $status)
+    public function filter($start_date, $end_date, $document_category, $status)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
+        $this->filter_category = $document_category;
         $this->filter_status = $status;
     }
 
@@ -123,10 +125,16 @@ class Documents extends Component
         return IncomingDocument::query()
             ->with('apoDocument')
             ->when($this->search, function ($query) {
-                $query->search($this->search);
+                $query->where(function ($q){
+                $q->where('category_no', 'like', '%' . $this->search . '%')
+                    ->orWhere('document_info', 'like', '%' . $this->search . '%');
+                });
             })
             ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
                 $query->DateRangeFilter($this->filter_start_date, $this->filter_end_date);
+            })
+            ->when($this->filter_category, function ($query) {
+                $query->where('ref_incoming_document_category_id', $this->filter_category);
             })
             ->when($this->filter_status, function ($query) {
                 $query->where('ref_status_id', $this->filter_status);

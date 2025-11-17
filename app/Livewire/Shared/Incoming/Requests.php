@@ -119,11 +119,11 @@ class Requests extends Component
     }
 
     #[On('filter')]
-    public function filter($start_date, $end_date, $ingoing_category, $doctype, $status)
+    public function filter($start_date, $end_date, $request_category, $doctype, $status)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
-        $this->filter_category = $ingoing_category;
+        $this->filter_category = $request_category;
         $this->filter_document_type = $doctype;
         $this->filter_status = $status;
     }
@@ -164,34 +164,11 @@ class Requests extends Component
     }
 
     public function loadIncomingRequests()
-    {
-        // $results = IncomingRequest::query()
-        // ->when($this->search, function ($query) {
-        //     $query->where('no', 'like', '%' . $this->search . '%')
-        //         ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%')
-        //         ->orWhereHas('category', function ($q) {
-        //             $q->where('incoming_request_category_name', 'like', '%' . $this->search . '%');
-        //         });
-        // })
-        // ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
-        //     $query->whereBetween('date_time', [
-        //         Carbon::parse($this->filter_start_date)->startOfDay(),
-        //         Carbon::parse($this->filter_end_date)->endOfDay()
-        //     ]);
-        // })
-        // ->when($this->filter_status, function ($query) {
-        //     $query->where('ref_status_id', $this->filter_status);
-        // })
-        // ->latest()
-        // // 💡 TEMPORARILY change to get() to fetch the collection
-        // ->get(); 
-            
-        // // 🛑 DUMP AND DIE: This will stop the page load and display the data
-        // dd($results);
-        
+    {   
         return IncomingRequest::query()
             ->when($this->search, function ($query) {
-                $query->where('no', 'like', '%' . $this->search . '%')
+                $query->where(function ($q){
+                $q->where('no', 'like', '%' . $this->search . '%')
                     ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%')
                     ->orWhere('category_no', 'like', '%' . $this->search . '%')
                     ->orWhere('memo_no', 'like', '%' . $this->search . '%')
@@ -200,6 +177,7 @@ class Requests extends Component
                     // ->orWhereHas('category', function ($q) {
                     //     $q->where('incoming_request_category_name', 'like', '%' . $this->search . '%');
                     // });
+                });
             })
             ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
                 $query->whereBetween('date_time', [
@@ -270,9 +248,21 @@ class Requests extends Component
     public function saveIncomingRequest()
     {
         $this->validate($this->rules(), [], $this->attributes());
+        
+        $padded_category_no = str_pad($this->category_no, 4, '0', STR_PAD_LEFT);
+
+        $CheckCategory = IncomingRequest::where('ref_incoming_request_category_id', $this->ref_incoming_request_category_id)
+                                            ->where('ref_document_type_id', $padded_category_no)
+                                            ->exists();
+
+        if($CheckCategory){
+            $CategoryName = RefIncomingRequestCategory::where('id', $this->ref_incoming_request_category_id)->first();
+            $this->dispatch('error', message: ''.$CategoryName->incoming_request_category_name.'-'.$padded_category_no.' is Already Exist.');
+            return;
+        }
 
         try {
-            DB::transaction(function () {
+            DB::transaction(function () use ($padded_category_no) {
                 $incomingRequest = IncomingRequest::updateOrCreate(
                     ['id' => $this->incomingRequestId ?? null],
                     [
@@ -287,7 +277,7 @@ class Requests extends Component
                         'ref_status_id' => $this->ref_status_id ?? '1', //! Default value set in the database is not working. - Set to pending.
                         'remarks' => $this->remarks,
                         'office_id' => auth()->user()->roles()->first()->id,
-                        'category_no' => $this->category_no,
+                        'category_no' => $padded_category_no,
                         'contact_person_email' => $this->contact_person_email,
                         'location' => $this->location,
                         'memo_no' => $this->memo_no,
