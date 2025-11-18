@@ -276,7 +276,7 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Name of the Requesting Party</label>
+                                <label class="form-label required">Requestor Name</label>
                                 <input type="text" class="form-control" wire:model="contact_person_name" {{ $is_office_admin ? '' : 'disabled' }}>
                                 @error('contact_person_name')
                                 <span class="text-danger">{{ $message }}</span>
@@ -466,10 +466,10 @@
                                 @endforeach
                             </div>
                         </div>
-                        <div class="row">
+                        {{-- <div class="row">
                             <div class="col-5 fw-bold">No.:</div>
                             <div class="col-7">{{ $no ?? '-' }}</div>
-                        </div>
+                        </div> --}}
                         <div class="row">
                             <div class="col-5 fw-bold">Category No:</div>
                             <div class="col-7">{{ $ref_incoming_request_category_id ?? '-' }}-{{ $category_no ?? '-' }}</div>
@@ -483,20 +483,20 @@
                             <div class="col-7">{{ $office_barangay_organization ?? '-' }}</div>
                         </div>
                         <div class="row">
-                            <div class="col-5 fw-bold">Date requested:</div>
+                            <div class="col-5 fw-bold">Requestor Name:</div>
+                            <div class="col-7">{{ $contact_person_name ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Request Received:</div>
                             <div class="col-7">{{ $date_requested ?? '-' }}</div>
                         </div>
                         <div class="row">
-                            <div class="col-5 fw-bold">Date and Time:</div>
+                            <div class="col-5 fw-bold">Requested Date and Time:</div>
                             <div class="col-7">{{ $date_time ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-5 fw-bold">Location:</div>
                             <div class="col-7">{{ $location ?? '-' }}</div>
-                        </div>
-                        <div class="row">
-                            <div class="col-5 fw-bold">Contact person name:</div>
-                            <div class="col-7">{{ $contact_person_name ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-5 fw-bold">Contact person number:</div>

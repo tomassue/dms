@@ -80,40 +80,48 @@
                                 @endforeach
                             </div>
                         </div>
-                        <div class="row">
+                        {{-- <div class="row">
                             <div class="col-5 fw-bold">No.:</div>
                             <div class="col-7">{{ $incomingRequest->no ?? '-' }}</div>
+                        </div> --}}
+                        <div class="row">
+                            <div class="col-5 fw-bold">Category No:</div>
+                            <div class="col-7">{{ $incomingRequest->category->incoming_request_category_name ?? '-' }}-{{ $incomingRequest->category_no ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Memo No.:</div>
+                            <div class="col-7">{{ $incomingRequest->memo_no ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-5 fw-bold">Office/Brgy/Org:</div>
                             <div class="col-7">{{ $incomingRequest->office_barangay_organization ?? '-' }}</div>
                         </div>
                         <div class="row">
-                            <div class="col-5 fw-bold">Date requested:</div>
-                            <div class="col-7">{{ $incomingRequest->formatted_date_requested ?? '-' }}</div>
+                            <div class="col-5 fw-bold">Requestor Name:</div>
+                            <div class="col-7">{{ $incomingRequest->contact_person_name ?? '-' }}</div>
                         </div>
                         <div class="row">
-                            <div class="col-5 fw-bold">Category:</div>
-                            <div class="col-7">{{ $incomingRequest->category->incoming_request_category_name ?? '-' }}</div>
+                            <div class="col-5 fw-bold">Request Received:</div>
+                            <div class="col-7">{{ $incomingRequest->formatted_date_requested ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-5 fw-bold">Date and Time:</div>
                             <div class="col-7">{{ $incomingRequest->formatted_date_time ?? '-' }}</div>
                         </div>
                         <div class="row">
-                            <div class="col-5 fw-bold">Contact person name:</div>
-                            <div class="col-7">{{ $incomingRequest->contact_person_name ?? '-' }}</div>
-                        </div>
-                        <div class="row">
                             <div class="col-5 fw-bold">Contact person number:</div>
                             <div class="col-7">{{ $incomingRequest->contact_person_number ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Contact person email:</div>
+                            <div class="col-7">{{ $incomingRequest->contact_person_email ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-5 fw-bold">Description:</div>
                             <div class="col-7">{{ $incomingRequest->description ?? '-' }}</div>
                         </div>
                         <div class="row">
-                            <div class="col-5 fw-bold">Remarks:</div>
+                            <div class="col-5 fw-bold">Recommendation:</div>
                             <div class="col-7">{{ $incomingRequest->remarks ?? '-' }}</div>
                         </div>
                     </div>
