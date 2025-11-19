@@ -95,7 +95,7 @@ class Requests extends Component
             'memo_no' => 'string|nullable',
             //'files.*' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', 
             'files.*' => 'nullable|mimes:pdf|max:10240', 
-            'ref_document_type_id' => 'string|nullable|exists:ref_document_type,id',
+            'ref_document_type_id' => 'nullable|exists:ref_document_type,id',
         ];
     }
 
@@ -372,9 +372,7 @@ class Requests extends Component
             $this->location = $incomingRequest->location;
             $this->memo_no = $incomingRequest->memo_no;
             $this->ref_document_type_id = $incomingRequest->ref_document_type_id;
-
-            //* Hide it so that other divisions won't see it. Remarks inputted can only be seen inside activity log modal.
-            //// $this->remarks = $incomingRequest->remarks; 
+            $this->remarks = $incomingRequest->remarks; 
 
             $this->preview_file = $incomingRequest->files;
 
