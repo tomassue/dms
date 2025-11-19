@@ -251,10 +251,21 @@ class Requests extends Component
         
         $padded_category_no = str_pad($this->category_no, 4, '0', STR_PAD_LEFT);
 
-        $CheckCategory = IncomingRequest::where('ref_incoming_request_category_id', $this->ref_incoming_request_category_id)
-                                            ->where('ref_document_type_id', $padded_category_no)
-                                            ->exists();
+        $query = IncomingRequest::where('ref_incoming_request_category_id', $this->ref_incoming_request_category_id)
+                            // NOTE: Using ref_document_type_id as per original code for the padded category number check.
+                            ->where('ref_document_type_id', $padded_category_no); 
 
+        // 4. *** CRITICAL UPDATE ***
+        // If we are updating an existing record, exclude the current record from the check.
+        // This allows the current record to keep its unique combination without triggering the error.
+        if ($this->incomingRequestId) {
+            $query->where('id', '!=', $this->incomingRequestId);
+        }
+
+        // 5. Execute the uniqueness check
+        $CheckCategory = $query->exists();
+
+        // 6. Handle the existence error
         if($CheckCategory){
             $CategoryName = RefIncomingRequestCategory::where('id', $this->ref_incoming_request_category_id)->first();
             $this->dispatch('error', message: ''.$CategoryName->incoming_request_category_name.'-'.$padded_category_no.' is Already Exist.');
