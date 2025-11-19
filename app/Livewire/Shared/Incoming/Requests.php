@@ -95,7 +95,7 @@ class Requests extends Component
             'memo_no' => 'string|nullable',
             //'files.*' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', 
             'files.*' => 'nullable|mimes:pdf|max:10240', 
-            'ref_document_type_id' => 'string|nullable',
+            'ref_document_type_id' => 'string|nullable|exists:ref_document_type,id',
         ];
     }
 
