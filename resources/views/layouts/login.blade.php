@@ -37,7 +37,7 @@
 
     <style>
         body {
-            background: linear-gradient(to top, #0E4A84 10%, #494949 90%);
+            background: linear-gradient(135deg, #000000 50%, #005f99 50%);
             min-height: 100vh;
         }
 
