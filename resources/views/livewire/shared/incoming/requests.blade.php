@@ -122,7 +122,6 @@
                                                             <i class="bi bi-arrow-up-square"></i>
                                                         </button>
                                                         @endcan
-                                                        @can('incoming.requests.update')
                                                         <button type="button" class="btn btn-icon btn-sm btn-primary" title="Assign" wire:click="showAssignRequest({{ $item->id }})" @click.stop {{ ($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '' }}>
                                                             <div wire:loading.remove wire:target="showAssignRequest({{ $item->id }})">
                                                                 <i class="bi bi-person-check"></i>
@@ -133,7 +132,6 @@
                                                                 </div>
                                                             </div>
                                                         </button>
-                                                        @endcan
                                                         <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
                                                             <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
                                                                 <i class="bi bi-clock-history"></i>
@@ -251,7 +249,7 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Category</label>
-                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_request_category_id" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_request_category_id" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                     <option>-Select-</option>
                                     @foreach ($incoming_request_categories as $item)
                                     <option value="{{ $item->id }}">{{ $item->incoming_request_category_name }}</option>
@@ -263,68 +261,68 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Category No.</label>
-                                <input type="text" class="form-control" wire:model="category_no" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <input type="text" class="form-control" wire:model="category_no" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('category_no')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Office/Brgy/Org</label>
-                                <input type="text" class="form-control" wire:model="office_barangay_organization" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <input type="text" class="form-control" wire:model="office_barangay_organization" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('office_barangay_organization')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Requestor Name</label>
-                                <input type="text" class="form-control" wire:model="contact_person_name" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <label class="form-label ">Description</label>
+                                <textarea class="form-control" wire:model="description" {{ $is_office_admin ? '' : 'xdisabled' }}></textarea>
+                                @error('description')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label ">Requestor Name</label>
+                                <input type="text" class="form-control" wire:model="contact_person_name" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('contact_person_name')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Date Requested</label>
-                                <input type="date" class="form-control" wire:model="date_requested" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <label class="form-label ">Date Requested</label>
+                                <input type="date" class="form-control" wire:model="date_requested" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('date_requested')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Date and Time</label>
-                                <input type="datetime-local" class="form-control" wire:model="date_time" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <label class="form-label ">Date and Time</label>
+                                <input type="datetime-local" class="form-control" wire:model="date_time" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('date_time')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Location</label>
-                                <input type="text" class="form-control" wire:model="location" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <label class="form-label ">Location</label>
+                                <input type="text" class="form-control" wire:model="location" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('location')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Contact Number</label>
+                                <label class="form-label ">Contact Number</label>
                                 <input type="text" class="form-control" wire:model="contact_person_number"
                                     maxlength="11"
                                     oninput="this.value = '09' + this.value.slice(2).replace(/\D/g, '');"
                                     placeholder="09XXXXXXXXX"
-                                    {{ $is_office_admin ? '' : 'disabled' }}>
+                                    {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('contact_person_number')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label required">Contact Email</label>
-                                <input type="text" class="form-control" wire:model="contact_person_email" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <label class="form-label ">Contact Email</label>
+                                <input type="text" class="form-control" wire:model="contact_person_email" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('contact_person_email')
-                                <span class="text-danger">{{ $message }}</span>
-                                @enderror
-                            </div>
-                            <div class="mb-10">
-                                <label class="form-label required">Description</label>
-                                <textarea class="form-control" wire:model="description" {{ $is_office_admin ? '' : 'disabled' }}></textarea>
-                                @error('description')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>

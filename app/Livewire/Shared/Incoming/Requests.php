@@ -83,12 +83,12 @@ class Requests extends Component
         return [
             'no' => 'required|unique:incoming_requests,no,' . $this->incomingRequestId,
             'office_barangay_organization' => 'required',
-            'date_requested' => 'required',
+            'date_requested' => 'nullable',
             'ref_incoming_request_category_id' => 'required|exists:ref_incoming_request_categories,id',
-            'date_time' => 'required',
-            'contact_person_name' => 'required',
-            'contact_person_number' => 'required',
-            'description' => 'required',
+            'date_time' => 'nullable',
+            'contact_person_name' => 'nullable',
+            'contact_person_number' => 'nullable',
+            'description' => 'nullable',
             'category_no' => 'string|nullable', // Additional Teodz
             'contact_person_email' => 'string|nullable',
             'location' => 'string|nullable',

@@ -22,7 +22,7 @@
                 <!--begin::Page title-->
                 <div class="page-title d-flex flex-column align-items-start justify-content-center flex-wrap me-lg-20 pb-2 pb-lg-0" data-kt-swapper="true" data-kt-swapper-mode="prepend" data-kt-swapper-parent="{default: '#kt_content_container', lg: '#kt_header_wrapper'}">
                     <!--begin::Heading-->
-                    <h1 class="text-dark fw-bolder my-1 fs-3 lh-1">{{ $title ?? 'Document Management System ' }}</h1>
+                    <h1 class="text-dark fw-bolder my-1 fs-3 lh-1">{{ $title ?? 'Admin Records Management System ' }}</h1>
                     <!--end::Heading-->
                 </div>
                 <!--end::Page title=-->
