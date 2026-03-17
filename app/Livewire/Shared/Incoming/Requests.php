@@ -64,6 +64,7 @@ class Requests extends Component
         $description,
         $ref_status_id,
         $remarks,
+        $comment,
         $category_no,
         $contact_person_email,
         $location,
@@ -96,6 +97,7 @@ class Requests extends Component
             //'files.*' => 'nullable|mimes:pdf,jpg,jpeg,png|max:10240', 
             'files.*' => 'nullable|mimes:pdf|max:10240', 
             'ref_document_type_id' => 'nullable|exists:ref_document_type,id',
+            'comment' => 'nullable',
         ];
     }
 
@@ -293,6 +295,7 @@ class Requests extends Component
                         'location' => $this->location,
                         'memo_no' => $this->memo_no,
                         'ref_document_type_id' => $this->ref_document_type_id,
+                        'comment' => $this->comment,
                     ]
                 );
                 // save files
@@ -384,6 +387,7 @@ class Requests extends Component
             $this->memo_no = $incomingRequest->memo_no;
             $this->ref_document_type_id = $incomingRequest->ref_document_type_id;
             $this->remarks = $incomingRequest->remarks; 
+            $this->comment = $incomingRequest->comment; 
 
             $this->preview_file = $incomingRequest->files;
 
@@ -776,6 +780,7 @@ class Requests extends Component
             $this->location = $incomingRequest->location;
             $this->memo_no = $incomingRequest->memo_no;
             $this->ref_document_type_id = $incomingRequest->ref_document_type_id;
+            $this->comment = $incomingRequest->comment;
 
             $this->preview_file = $incomingRequest->files;
 

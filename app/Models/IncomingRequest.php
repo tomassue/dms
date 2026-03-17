@@ -39,7 +39,8 @@ class IncomingRequest extends Model
         'location',
         'memo_no',
         'user_id',
-        'ref_document_type_id'
+        'ref_document_type_id',
+        'comment'
     ];
 
     // Accessors

@@ -87,7 +87,7 @@
                                                 </td>
                                                 <td>
                                                     <span class="badge text-uppercase {{ ($item->username->name ?? 'None') === 'None' ? 'badge-light-danger' : 'badge-info' }}">
-                                                        {{ $item->username->name ?? 'None' }}
+                                                        {{ $item->username->name ?? 'None' }} 
                                                     </span><br/>
                                                 </td>
                                                 <td>
@@ -106,7 +106,7 @@
                                                 <td class="text-center" wire:loading.class="pe-none">
                                                     <div class="btn-group" role="group" aria-label="Actions">
                                                         @can('incoming.requests.update')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})" @click.stop {{ ($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '' }}>
+                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})" @click.stop {{ ($is_office_admin == '1') ? '' : (($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '') }}>
                                                             <div wire:loading.remove wire:target="editIncomingRequest({{ $item->id }})">
                                                                 <i class="bi bi-pencil"></i>
                                                             </div>
@@ -274,7 +274,7 @@
                                 @enderror
                             </div>
                             <div class="mb-10">
-                                <label class="form-label ">Description</label>
+                                <label class="form-label ">Subject</label>
                                 <textarea class="form-control" wire:model="description" {{ $is_office_admin ? '' : 'xdisabled' }}></textarea>
                                 @error('description')
                                 <span class="text-danger">{{ $message }}</span>
@@ -323,6 +323,13 @@
                                 <label class="form-label ">Contact Email</label>
                                 <input type="text" class="form-control" wire:model="contact_person_email" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('contact_person_email')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10" style="display:{{ $editMode ? '' : 'none' }};">
+                                <label class="form-label">Comment</label>
+                                <textarea class="form-control" wire:model="comment"></textarea>
+                                @error('comment')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -481,6 +488,10 @@
                             <div class="col-7">{{ $office_barangay_organization ?? '-' }}</div>
                         </div>
                         <div class="row">
+                            <div class="col-5 fw-bold">Subject:</div>
+                            <div class="col-7">{{ $description ?? '-' }}</div>
+                        </div>
+                        <div class="row">
                             <div class="col-5 fw-bold">Requestor Name:</div>
                             <div class="col-7">{{ $contact_person_name ?? '-' }}</div>
                         </div>
@@ -505,12 +516,12 @@
                             <div class="col-7">{{ $contact_person_email ?? '-' }}</div>
                         </div>
                         <div class="row">
-                            <div class="col-5 fw-bold">Description:</div>
-                            <div class="col-7">{{ $description ?? '-' }}</div>
-                        </div>
-                        <div class="row">
                             <div class="col-5 fw-bold">Recommendation:</div>
                             <div class="col-7">{{ $remarks ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Comment:</div>
+                            <div class="col-7">{{ $comment ?? '-' }}</div>
                         </div>
                     </div>
 
