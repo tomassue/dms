@@ -527,6 +527,65 @@
 
                     <div class="mb-3">
                         <h5>Files</h5>
+                        {{-- START COPY ATTACHMENT NAME --}}
+                        <div class="row align-items-center" x-data="{ 
+                            tooltip: 'Copy',
+                            copyToClipboard() {
+                                const textToCopy = $refs.attachmentValue.innerText.trim();
+                                
+                                // 1. Try Modern API (Works on localhost/HTTPS)
+                                if (navigator.clipboard && window.isSecureContext) {
+                                    navigator.clipboard.writeText(textToCopy).then(() => this.showSuccess());
+                                } else {
+                                    // 2. Fallback for HTTP (dms.test)
+                                    // We create an input instead of textarea for better mobile/modal support
+                                    const input = document.createElement('input');
+                                    input.value = textToCopy;
+                                    
+                                    // Append it to the modal body specifically to bypass focus traps
+                                    $refs.copyContainer.appendChild(input);
+                                    
+                                    input.select();
+                                    input.setSelectionRange(0, 99999); // For mobile devices
+
+                                    try {
+                                        const successful = document.execCommand('copy');
+                                        if (successful) {
+                                            this.showSuccess();
+                                        } else {
+                                            console.error('ExecCommand returned false');
+                                        }
+                                    } catch (err) {
+                                        console.error('Fallback copy failed', err);
+                                    }
+
+                                    // Clean up
+                                    $refs.copyContainer.removeChild(input);
+                                }
+                            },
+                            showSuccess() {
+                                this.tooltip = 'Copied!';
+                                setTimeout(() => this.tooltip = 'Copy', 2000);
+                            }
+                        }">
+                            <div class="col-5 fw-bold">Attachment Name:</div>
+                            <div class="col-7 d-flex align-items-center" x-ref="copyContainer">
+                                <span x-ref="attachmentValue" class="me-2">
+                                    {{ $ref_incoming_request_category_id ?? '-' }}-{{ $category_no ?? '-' }}_{{ $memo_no ?? '-' }}
+                                </span>
+
+                                <button 
+                                    type="button" 
+                                    class="btn btn-sm btn-outline-primary p-1" 
+                                    @click="copyToClipboard()"
+                                    title="Copy to clipboard"
+                                >
+                                    <i class="bi bi-clipboard" x-show="tooltip === 'Copy'"></i>
+                                    <span style="font-size: 0.75rem;" x-text="tooltip"></span>
+                                </button>
+                            </div>
+                        </div>
+                        {{-- END COPY ATTACHMENT NAME --}}
                         <div class="row">
                             @forelse ($preview_file as $file)
                             <div class="col-md-6 mb-3">
