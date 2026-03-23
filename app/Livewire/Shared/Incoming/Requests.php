@@ -326,10 +326,18 @@ class Requests extends Component
                 continue; // Skip this invalid item and move to the next.
             }
 
-            // 1. Store the file on the disk (this handles Livewire's TemporaryUploadedFile)
-            $filePath = $file->store($storagePath, $storageDisk);
+            // 1. Get the original filename and extension separately
+            $originalName = pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME);
+            $extension = $file->getClientOriginalExtension();
+            $timestamp = now()->format('YmdHis');
+
+            // 2. Combine them: Name + Underscore + Timestamp + Dot + Extension
+            $newFileName = $originalName . '_' . $timestamp . '.' . $extension;
+
+            // 3. Store the file with the new name
+            $filePath = $file->storeAs($storagePath, $newFileName, $storageDisk);
             
-            // 2. Create the File model record with the path
+            // 4. Create the File model record with the path
             $uploadedFiles[] = $model->files()->create([
                 'name' => $file->getClientOriginalName(),
                 'size' => $file->getSize(),
