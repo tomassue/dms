@@ -84,6 +84,15 @@
                                             ">
                                                         {{ $item->status->name }}
                                                     </span><br/>
+                                                    @if($item->status->name == 'forwarded' || $item->status->name == 'received')
+                                                        <div class="mt-1">
+                                                            @foreach($item->forwards as $forward)
+                                                                <span class="badge badge-light-primary fs-9 px-2 py-1 mb-1">
+                                                                    {{ $forward->division->name ?? 'N/A' }}
+                                                                </span>
+                                                            @endforeach
+                                                        </div>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     <span class="badge text-uppercase {{ ($item->username->name ?? 'None') === 'None' ? 'badge-light-danger' : 'badge-info' }}">
@@ -518,10 +527,10 @@
                             }
                         }">
                             <div class="col-5 fw-bold">Category No:</div>
-                            <div class="col-7 d-flex align-items-center" x-ref="copyCategory"">
+                            <div class="col-7 d-flex align-items-center" x-ref="copyCategory">
                                 
                                 <span x-ref="attachmentValueCategoryNo" class="me-2">
-                                {{ $ref_incoming_request_category_id ?? '-' }}-{{ $category_no ?? '-' }}
+                                &nbsp;&nbsp;&nbsp;{{ $ref_incoming_request_category_id ?? '-' }}-{{ $category_no ?? '-' }}
                                 </span>
                                 
                                 <button 
