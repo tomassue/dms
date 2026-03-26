@@ -277,6 +277,12 @@
                                     </li>
                                     <div class="row py-2 ms-8">
                                         <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.requestsall" id="incomingRequestsAll" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingRequestsAll"> All Request </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
                                             <input class="form-check-input" type="checkbox" value="incoming.requests.create" id="incomingRequestsCreate" wire:model="permissions" />
                                             <label class="form-check-label" for="incomingRequestsCreate"> Create </label>
                                         </div>

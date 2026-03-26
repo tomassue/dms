@@ -12,7 +12,7 @@
                             <!--begin::Header-->
                             <div class="card-header border-0 py-5">
                                 <h3 class="card-title align-items-start flex-column">
-                                    <span class="card-label fw-bolder fs-3 mb-1">Incoming Requests</span>
+                                    <span class="card-label fw-bolder fs-3 mb-1">Incoming All Requests</span>
                                     <span class="text-muted fw-bold fs-7">Over {{ $incoming_requests->count() }} incoming requests</span>
                                 </h3>
                                 <div class="card-toolbar">

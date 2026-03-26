@@ -33,8 +33,8 @@ use Illuminate\Support\Facades\File as FileFacade;
 use setasign\Fpdi\PdfParser\PdfParserException; // Added for specific error handling
 
 
-#[Title('Incoming Requests')]
-class Requests extends Component
+#[Title('Incoming Requests All')]
+class AllRequests extends Component
 {
     use WithPagination, WithFileUploads;
 
@@ -152,7 +152,7 @@ class Requests extends Component
     public function render()
     {
         return view(
-            'livewire.shared.incoming.requests',
+            'livewire.shared.incoming.all-requests',
             [
                 'incoming_requests' => $this->loadIncomingRequests(),
                 // 'sss' => $this->loadRoleCustom(),
@@ -167,42 +167,40 @@ class Requests extends Component
     }
 
     public function loadIncomingRequests()
-{   
-    return IncomingRequest::query()
-        // Added eager loading for forwards and divisions to support your Blade column update
-        ->with(['status', 'category', 'username', 'forwards.division']) 
-        ->when($this->search, function ($query) {
-            $query->where(function ($q){
-            $q->where('no', 'like', '%' . $this->search . '%')
-                ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%')
-                ->orWhere('category_no', 'like', '%' . $this->search . '%')
-                ->orWhere('memo_no', 'like', '%' . $this->search . '%')
-                ->orWhere('description', 'like', '%' . $this->search . '%')
-                ->orWhere('contact_person_name', 'like', '%' . $this->search . '%');
-                // ->orWhereHas('category', function ($q) {
-                //     $q->where('incoming_request_category_name', 'like', '%' . $this->search . '%');
-                // });
-            });
-        })
-        ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
-            $query->whereBetween('date_time', [
-                Carbon::parse($this->filter_start_date)->startOfDay(),
-                Carbon::parse($this->filter_end_date)->endOfDay()
-            ]);
-        })
-        ->when($this->filter_category, function ($query) {
-            $query->where('ref_incoming_request_category_id', $this->filter_category);
-        })
-        ->when($this->filter_document_type, function ($query) {
-            $query->where('ref_document_type_id', $this->filter_document_type);
-        })
-        ->when($this->filter_status, function ($query) {
-            $query->where('ref_status_id', $this->filter_status);
-        })
-        ->latest()
-        ->paginate(10);
-        
-}
+    {   
+        return IncomingRequest::query()
+            // Added eager loading for forwards and divisions to support your Blade column update
+            ->withoutGlobalScopes()
+            ->with(['status', 'category', 'username', 'forwards.division']) 
+            ->when($this->search, function ($query) {
+                $query->where(function ($q){
+                $q->where('no', 'like', '%' . $this->search . '%')
+                    ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%')
+                    ->orWhere('category_no', 'like', '%' . $this->search . '%')
+                    ->orWhere('memo_no', 'like', '%' . $this->search . '%')
+                    ->orWhere('description', 'like', '%' . $this->search . '%')
+                    ->orWhere('contact_person_name', 'like', '%' . $this->search . '%');
+                });
+            })
+            ->when($this->filter_start_date && $this->filter_end_date, function ($query) {
+                $query->whereBetween('date_time', [
+                    Carbon::parse($this->filter_start_date)->startOfDay(),
+                    Carbon::parse($this->filter_end_date)->endOfDay()
+                ]);
+            })
+            ->when($this->filter_category, function ($query) {
+                $query->where('ref_incoming_request_category_id', $this->filter_category);
+            })
+            ->when($this->filter_document_type, function ($query) {
+                $query->where('ref_document_type_id', $this->filter_document_type);
+            })
+            ->when($this->filter_status, function ($query) {
+                $query->where('ref_status_id', $this->filter_status);
+            })
+            ->latest()
+            ->paginate(10);
+            
+    }
 
     /**
      * loadRecentForwards

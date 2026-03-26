@@ -6,6 +6,7 @@ use App\Livewire\Shared\Accomplishments;
 use App\Livewire\Shared\AccountSettings;
 use App\Livewire\Shared\Calendar;
 use App\Livewire\Shared\Dashboard;
+use App\Livewire\Shared\Incoming\AllRequests;
 use App\Livewire\Shared\Incoming\Documents;
 use App\Livewire\Shared\Incoming\Requests;
 use App\Livewire\Shared\Outgoing;
@@ -44,6 +45,9 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMI
         # Dashboard
         Route::get('/dashboard', Dashboard::class)->name('dashboard')->middleware('permission:dashboard.read');
 
+        # All Incoming.Requests
+        Route::get('/incoming/requests-all', AllRequests::class)->name('incoming-requests-all')->middleware('permission:incoming.requests.read');
+        
         # Incoming.Requests
         Route::get('/incoming/requests', Requests::class)->name('incoming-requests')->middleware('permission:incoming.requests.read');
 

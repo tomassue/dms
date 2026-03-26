@@ -45,7 +45,17 @@
                                 <span class="menu-section fs-5 fw-bolder ps-1 py-1">Incoming</span>
                             </div>
                         </div>
-
+                        
+                        @can('incoming.requestsall')
+                        <div class="menu-item">
+                            <a class="menu-link {{ Route::currentRouteName() == 'incoming-requests-all' ? 'active' : '' }}" href="{{ route('incoming-requests-all') }}">
+                                <span class="menu-bullet">
+                                    <span class="bullet bullet-dot"></span>
+                                </span>
+                                <span class="menu-title">All Requests</span>
+                            </a>
+                        </div>
+                        @endcan
                         @can('incoming.requests.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'incoming-requests' ? 'active' : '' }}" href="{{ route('incoming-requests') }}">
