@@ -79,6 +79,9 @@ class AllRequests extends Component
             $assignThis,
             $tempID;
 
+        public $sortField = 'date_requested'; // Default sort field
+        public $sortDirection = 'desc';
+
     public function rules()
     {
         return [
@@ -166,6 +169,16 @@ class AllRequests extends Component
         
     }
 
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
     public function loadIncomingRequests()
     {   
         return IncomingRequest::query()
@@ -197,7 +210,8 @@ class AllRequests extends Component
             ->when($this->filter_status, function ($query) {
                 $query->where('ref_status_id', $this->filter_status);
             })
-            ->latest()
+            ->orderBy($this->sortField, $this->sortDirection)
+            // ->latest()
             ->paginate(10);
             
     }

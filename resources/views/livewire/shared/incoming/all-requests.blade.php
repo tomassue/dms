@@ -48,9 +48,20 @@
                                             <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
                                                 <th>Status</th>
                                                 <th>Assign By</th>
-                                                <th>Category No.</th>
+                                                <th class="min-w-100px cursor-pointer" wire:click="sortBy('no')">
+                                                    Category No.
+                                                    @if($sortField === 'no')
+                                                        <i class="bi {{ $sortDirection === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down' }}"></i>
+                                                    @endif
+                                                </th>
                                                 <th>Office/Brgy/Org</th>
-                                                <th>Date Requested</th>
+                                                {{-- <th>Date Requested</th> --}}
+                                                <th class="min-w-150px cursor-pointer" wire:click="sortBy('date_requested')">
+                                                    Date Requested
+                                                    @if($sortField === 'date_requested')
+                                                        <i class="bi {{ $sortDirection === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down' }}"></i>
+                                                    @endif
+                                                </th>
                                                 @can('incoming.requests.update')
                                                 <th class="text-center">Actions</th>
                                                 @endcan
