@@ -78,6 +78,9 @@ class Requests extends Component
         public $is_custom,
             $assignThis,
             $tempID;
+            
+        public $sortField = 'date_requested'; // Default sort field
+        public $sortDirection = 'desc';
 
     public function rules()
     {
@@ -166,6 +169,16 @@ class Requests extends Component
         
     }
 
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
     public function loadIncomingRequests()
 {   
     return IncomingRequest::query()
@@ -199,7 +212,8 @@ class Requests extends Component
         ->when($this->filter_status, function ($query) {
             $query->where('ref_status_id', $this->filter_status);
         })
-        ->latest()
+        ->orderBy($this->sortField, $this->sortDirection)
+        // ->latest()
         ->paginate(10);
         
 }
