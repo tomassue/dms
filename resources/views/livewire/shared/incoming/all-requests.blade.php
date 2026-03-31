@@ -41,7 +41,14 @@
                                     </div>
                                 </div>
                                 <!-- end:search -->
-                                
+                                <style>
+                                    th.cursor-pointer {
+                                        cursor: pointer;
+                                    }
+                                    th.cursor-pointer:hover {
+                                        background-color: #ecf0ec;
+                                    }
+                                </style>
                                 <div class="table-responsive">
                                     <table class="table align-middle table-hover table-rounded border gy-7 gs-7">
                                         <thead>
@@ -51,7 +58,7 @@
                                                 <th class="min-w-100px cursor-pointer" wire:click="sortBy('no')">
                                                     Category No.
                                                     @if($sortField === 'no')
-                                                        <i class="bi {{ $sortDirection === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down' }}"></i>
+                                                        <i style="color:rgb(255, 0, 0)" class="bi {{ $sortDirection === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down' }}"></i>
                                                     @endif
                                                 </th>
                                                 <th>Office/Brgy/Org</th>
@@ -59,7 +66,7 @@
                                                 <th class="min-w-150px cursor-pointer" wire:click="sortBy('date_requested')">
                                                     Date Requested
                                                     @if($sortField === 'date_requested')
-                                                        <i class="bi {{ $sortDirection === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down' }}"></i>
+                                                        <i style="color:rgb(255, 0, 0)" class="bi {{ $sortDirection === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down' }}"></i>
                                                     @endif
                                                 </th>
                                                 @can('incoming.requests.update')
