@@ -213,6 +213,7 @@ class Requests extends Component
             $query->where('ref_status_id', $this->filter_status);
         })
         ->orderBy($this->sortField, $this->sortDirection)
+        ->orderBy('id', 'desc')
         // ->latest()
         ->paginate(10);
         
@@ -269,7 +270,7 @@ class Requests extends Component
     {
         $this->validate($this->rules(), [], $this->attributes());
         
-        $padded_category_no = str_pad($this->category_no, 4, '0', STR_PAD_LEFT);
+        $padded_category_no = str_pad($this->category_no, 3, '0', STR_PAD_LEFT);
 
         $query = IncomingRequest::where('ref_incoming_request_category_id', $this->ref_incoming_request_category_id)
                             // NOTE: Using ref_document_type_id as per original code for the padded category number check.
@@ -286,11 +287,11 @@ class Requests extends Component
         $CheckCategory = $query->exists();
 
         // 6. Handle the existence error
-        if($CheckCategory){
-            $CategoryName = RefIncomingRequestCategory::where('id', $this->ref_incoming_request_category_id)->first();
-            $this->dispatch('error', message: ''.$CategoryName->incoming_request_category_name.'-'.$padded_category_no.' is Already Exist.');
-            return;
-        }
+        // if($CheckCategory){
+        //     $CategoryName = RefIncomingRequestCategory::where('id', $this->ref_incoming_request_category_id)->first();
+        //     $this->dispatch('error', message: ''.$CategoryName->incoming_request_category_name.'-'.$padded_category_no.' is Already Exist.');
+        //     return;
+        // }
 
         try {
             DB::transaction(function () use ($padded_category_no) {
