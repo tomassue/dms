@@ -272,26 +272,25 @@ class Requests extends Component
         
         $padded_category_no = str_pad($this->category_no, 3, '0', STR_PAD_LEFT);
 
+         // 2. Check if this specific combination already exists
         $query = IncomingRequest::where('ref_incoming_request_category_id', $this->ref_incoming_request_category_id)
-                            // NOTE: Using ref_document_type_id as per original code for the padded category number check.
-                            ->where('ref_document_type_id', $padded_category_no); 
+                                ->where('category_no', $padded_category_no); // Changed from ref_document_type_id to category_no
 
-        // 4. *** CRITICAL UPDATE ***
-        // If we are updating an existing record, exclude the current record from the check.
-        // This allows the current record to keep its unique combination without triggering the error.
+        // 3. If editing, don't count the current record as a duplicate
         if ($this->incomingRequestId) {
             $query->where('id', '!=', $this->incomingRequestId);
         }
 
-        // 5. Execute the uniqueness check
-        $CheckCategory = $query->exists();
+        $exists = $query->exists();
 
-        // 6. Handle the existence error
-        // if($CheckCategory){
-        //     $CategoryName = RefIncomingRequestCategory::where('id', $this->ref_incoming_request_category_id)->first();
-        //     $this->dispatch('error', message: ''.$CategoryName->incoming_request_category_name.'-'.$padded_category_no.' is Already Exist.');
-        //     return;
-        // }
+        if ($exists) {
+            // Fetch the category name for a clearer error message
+            $category = RefIncomingRequestCategory::find($this->ref_incoming_request_category_id);
+            
+            // Dispatch the "pop-up" error message
+            $this->dispatch('error', message: "{$category->incoming_request_category_name}-{$padded_category_no} already exists ");
+            return; // Stop the execution here so it doesn't save
+        }
 
         try {
             DB::transaction(function () use ($padded_category_no) {

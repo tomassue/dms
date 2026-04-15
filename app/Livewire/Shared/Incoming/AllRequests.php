@@ -270,26 +270,25 @@ class AllRequests extends Component
         
         $padded_category_no = str_pad($this->category_no, 3, '0', STR_PAD_LEFT);
 
+         // 2. Check if this specific combination already exists
         $query = IncomingRequest::where('ref_incoming_request_category_id', $this->ref_incoming_request_category_id)
-                            // NOTE: Using ref_document_type_id as per original code for the padded category number check.
-                            ->where('ref_document_type_id', $padded_category_no); 
+                                ->where('category_no', $padded_category_no); // Changed from ref_document_type_id to category_no
 
-        // 4. *** CRITICAL UPDATE ***
-        // If we are updating an existing record, exclude the current record from the check.
-        // This allows the current record to keep its unique combination without triggering the error.
+        // 3. If editing, don't count the current record as a duplicate
         if ($this->incomingRequestId) {
             $query->where('id', '!=', $this->incomingRequestId);
         }
 
-        // 5. Execute the uniqueness check
-        $CheckCategory = $query->exists();
+        $exists = $query->exists();
 
-        // 6. Handle the existence error
-        // if($CheckCategory){
-        //     $CategoryName = RefIncomingRequestCategory::where('id', $this->ref_incoming_request_category_id)->first();
-        //     $this->dispatch('error', message: ''.$CategoryName->incoming_request_category_name.'-'.$padded_category_no.' is Already Exist.');
-        //     return;
-        // }
+        if ($exists) {
+            // Fetch the category name for a clearer error message
+            $category = RefIncomingRequestCategory::find($this->ref_incoming_request_category_id);
+            
+            // Dispatch the "pop-up" error message
+            $this->dispatch('error', message: "{$category->incoming_request_category_name}-{$padded_category_no} already exists ");
+            return; // Stop the execution here so it doesn't save
+        }
 
         try {
             DB::transaction(function () use ($padded_category_no) {
@@ -370,30 +369,34 @@ class AllRequests extends Component
         return $uploadedFiles;
     }
     
-    public function editIncomingRequest(IncomingRequest $incomingRequest)
+    public function editIncomingRequest($id) // Change parameter to $id
     {
-        //dd($incomingRequest);
         try {
+            // Fetch the model manually while bypassing the Office/Forwarded scopes
+            $incomingRequest = IncomingRequest::withoutGlobalScopes()->findOrFail($id);
+
             if (!Auth::user()->hasRole('Super Admin')) {
                 // Mark all forwarded requests to this division as opened
+                // Note: Relationship queries also respect global scopes, 
+                // so we add withoutGlobalScopes() to the forwards() relation as well if needed
                 $incomingRequest->forwards()
+                    ->withoutGlobalScopes() 
                     ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
                     ->update([
                         'is_opened' => true
                     ]);
 
-                // Log the activity of opening the request
                 activity()
                     ->causedBy(auth()->user())
-                    ->performedOn($incomingRequest) // Equivalent to setting subject_type & subject_id manually
+                    ->performedOn($incomingRequest)
                     ->useLog('incoming_request')
                     ->event('updated')
                     ->withProperties(['is_opened' => true])
                     ->log('Opened incoming request ' . ($incomingRequest->no ?? '') . ': ' . (auth()->user()?->user_metadata?->division?->name ?? 'System'));
 
-                // Check if all divisions have opened their copies
                 $this->checkAllDivisionsOpened($incomingRequest);
             }
+
             $this->editMode = true;
             $this->incomingRequestId = $incomingRequest->id;
 
@@ -406,7 +409,7 @@ class AllRequests extends Component
             $this->contact_person_number = $incomingRequest->contact_person_number;
             $this->description = $incomingRequest->description;
             $this->ref_status_id = $incomingRequest->ref_status_id;
-            $this->category_no = $incomingRequest->category_no; //Teodz
+            $this->category_no = $incomingRequest->category_no; 
             $this->contact_person_email = $incomingRequest->contact_person_email;
             $this->location = $incomingRequest->location;
             $this->memo_no = $incomingRequest->memo_no;
@@ -414,11 +417,13 @@ class AllRequests extends Component
             $this->remarks = $incomingRequest->remarks; 
             $this->comment = $incomingRequest->comment; 
 
-            $this->preview_file = $incomingRequest->files;
+            // Ensure files are fetched without scopes if the File model also has restrictions
+            $this->preview_file = $incomingRequest->files()->withoutGlobalScopes()->get();
 
             $this->dispatch('show-incoming-request-modal');
         } catch (\Throwable $th) {
-            // throw $th;
+            // Log the error for debugging since we are suppressing it
+            \Illuminate\Support\Facades\Log::error($th->getMessage());
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
@@ -615,8 +620,11 @@ class AllRequests extends Component
      * * This function is used to get the forwarded divisions of the incoming document.
      * * It will return the forwarded divisions of the incoming document.
      */
-    public function getForwardedDivisions(IncomingRequest $incomingRequest)
+    public function getForwardedDivisions($id)
     {
+        // Fetch the model manually while bypassing the Office/Forwarded scopes
+        $incomingRequest = IncomingRequest::withoutGlobalScopes()->findOrFail($id);
+
         try {
             $forwarded_divisions = $incomingRequest->forwards()
                 ->with(['division'])
@@ -644,7 +652,7 @@ class AllRequests extends Component
         ]);
 
         try {
-            $incomingRequest = IncomingRequest::find($this->incomingRequestId);
+            $incomingRequest = IncomingRequest::withoutGlobalScopes()->find($this->incomingRequestId);
 
             /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
             if (Auth::user()->hasRole('CITY VETERINARY OFFICE')) {
@@ -775,8 +783,11 @@ class AllRequests extends Component
         }
     }
 
-    public function viewIncomingRequest(IncomingRequest $incomingRequest)
+    public function viewIncomingRequest($id)
     {
+        // Fetch the model manually while bypassing the Office/Forwarded scopes
+        $incomingRequest = IncomingRequest::withoutGlobalScopes()->findOrFail($id);
+
         try {
             $this->no = $incomingRequest->no;
 
@@ -822,9 +833,11 @@ class AllRequests extends Component
         $this->is_custom = auth()->user()->roles()->first()->id;
     }
 
-    public function showAssignRequest(IncomingRequest $incomingRequest)
+    public function showAssignRequest($id)
     {
-        // dd($incomingRequest);
+        // Fetch the model manually while bypassing the Office/Forwarded scopes
+        $incomingRequest = IncomingRequest::withoutGlobalScopes()->findOrFail($id);
+
         try {
             $this->tempID = $incomingRequest->id;
             $this->no = $incomingRequest->no;
@@ -869,7 +882,7 @@ class AllRequests extends Component
             DB::transaction(function () use ($tempID) { 
                 
                 // 1. Find the existing IncomingRequest record by its ID.
-                $incomingRequest = IncomingRequest::find($tempID);
+                $incomingRequest = IncomingRequest::withoutGlobalScopes()->find($tempID);
 
                 // Check if the request was found
                 if ($incomingRequest) {
