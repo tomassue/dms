@@ -1,13 +1,28 @@
 <div>
+    <div class="card-header border-0 py-5">
+    <h3 class="card-title align-items-start flex-column">
+        <div class="d-flex align-items-center">
+            <span class="card-label badge-light-info fw-bolder fs-3 mb-1">
+                @if(auth()->user()->user_metadata?->division)
+                    {{ auth()->user()->user_metadata->division->name }}
+                @endif
+            </span>
+        </div>
+        
+        <span class="text-muted fw-bold fs-7">Over {{ $incoming_requests->total() }} incoming requests for your division</span>
+    </h3>
+
+    
     <!--begin::Row-->
     <div class="row g-5 g-xl-8 justify-content-center">
         <!--begin::Col-->
         <div class="col-sm-12 col-md-3 col-lg-3 col-xl-3 col-xxl-3">
             <div class="card card-dashed">
                 <div class="card-header">
+                    
                     <h3 class="card-title">Pending Request</h3>
                 </div>
-                <div class="card-body text-center" style="font-size: 50px;">
+                <div class="card-body text-center" style="font-size: 30px;">
                     {{ $pending_incoming_requests->count() }}
                 </div>
             </div>
@@ -20,7 +35,7 @@
                 <div class="card-header">
                     <h3 class="card-title">Forwarded Request</h3>
                 </div>
-                <div class="card-body text-center" style="font-size: 50px;">
+                <div class="card-body text-center" style="font-size: 30px;">
                     {{ $forwarded_incoming_requests->count() }}
                 </div>
             </div>
@@ -49,7 +64,7 @@
                 <div class="card-header">
                     <h3 class="card-title">Total Requests</h3>
                 </div>
-                <div class="card-body text-center" style="font-size: 50px;">
+                <div class="card-body text-center" style="font-size: 30px;">
                     {{ $total_incoming_requests }}
                 </div>
             </div>
@@ -57,102 +72,92 @@
         <!--end::Col-->
     </div>
     <!--end::Row-->
-
-    <!--begin::Incoming Request-->
-    <div class="row pt-5 g-5 g-xl-8">
-        <!--begin::Col-->
-        <div class="col-xxl-12">
-            <div class="card card-dashed">
-                <div class="card-header">
-                    <h3 class="card-title">Incoming Requests <span class=""></span></h3>
+    </div>
+    
+    <div class="row g-5 g-xl-8 mt-5">
+        <div class="col-xl-12">
+            <div class="card card-xl-stretch mb-xl-8">
+                <div class="card-header border-0 pt-5">
+                    <h3 class="card-title align-items-start flex-column">
+                        <span class="card-label fw-bolder fs-3 mb-1">Monthly Request Performance</span>
+                        <span class="text-muted fw-bold fs-7">Requests vs. Completed for {{ now()->year }}</span>
+                    </h3>
                 </div>
                 <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-rounded table-striped border gy-7 gs-7 align-middle">
-                            <thead>
-                                <tr class="fw-bold fs-6 text-gray-800 border-bottom border-gray-200">
-                                    <th>No.</th>
-                                    <th>Date Requested</th>
-                                    <th>Office/Brgy/Org</th>
-                                    <th>Category</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($incoming_requests as $item)
-                                <tr style="cursor: pointer" onclick="window.location='{{ route('incoming-requests') }}'">
-                                    <td>{{ $item->no }}</td>
-                                    <td>{{ $item->date_requested }}</td>
-                                    <td>{{ $item->office_barangay_organization }}</td>
-                                    <td>{{ $item->category->incoming_request_category_name }}</td>
-                                    <td>
-                                        <span class="badge badge-secondary">{{ $item->request_age }}</span>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td class="text-center" colspan="5">No records found.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                        <div class="mt-3 mb-5">
-                            {{ $incoming_requests->links(data: ['scrollTo' => false]) }}
-                        </div>
-                    </div>
+                    <div id="kt_charts_widget_requests" style="height: 350px"></div>
                 </div>
             </div>
         </div>
-        <!--end::Col-->
     </div>
-    <!--end::Incoming Request-->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script>
+        document.addEventListener('livewire:navigated', () => {
+            var element = document.getElementById('kt_charts_widget_requests');
 
-    @role('CITY VETERINARY OFFICE')
-    <!--begin::Incoming Documents-->
-    <div class="row pt-5 g-5 g-xl-8">
-        <!--begin::Col-->
-        <div class="col-xxl-12">
-            <div class="card card-dashed">
-                <div class="card-header">
-                    <h3 class="card-title">Incoming Documents <span class=""></span></h3>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-rounded table-striped border gy-7 gs-7 align-middle">
-                            <thead>
-                                <tr class="fw-bold fs-6 text-gray-800 border-bottom border-gray-200">
-                                    <th>Document Category</th>
-                                    <th>Info</th>
-                                    <th>Date</th>
-                                    <th></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @forelse($incoming_documents as $item)
-                                <tr style="cursor: pointer" onclick="window.location='{{ route('incoming-documents') }}'">
-                                    <td>{{ $item->category->incoming_document_category_name }}</td>
-                                    <td>{{ $item->document_info }}</td>
-                                    <td>{{ $item->formatted_date }}</td>
-                                    <td>
-                                        <span class="badge badge-secondary">{{ $item->document_age }}</span>
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td class="text-center" colspan="4">No records found.</td>
-                                </tr>
-                                @endforelse
-                            </tbody>
-                        </table>
-                        <div class="mt-3 mb-5">
-                            {{ $incoming_documents->links(data: ['scrollTo' => false]) }}
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <!--end::Col-->
-    </div>
-    <!--end::Incoming Documents-->
-    @endrole
+            if (!element) return;
+
+            var options = {
+                series: [{
+                    name: 'Total Requests',
+                    data: @json($monthly_stats['total'])
+                }, {
+                    name: 'Completed',
+                    data: @json($monthly_stats['completed'])
+                }],
+                chart: {
+                    type: 'bar',
+                    height: 350,
+                    toolbar: { show: false }
+                },
+                plotOptions: {
+                    bar: {
+                        horizontal: false,
+                        columnWidth: '55%',
+                        borderRadius: 5
+                    },
+                },
+                legend: { show: true },
+                dataLabels: { enabled: false },
+                stroke: {
+                    show: true,
+                    width: 2,
+                    colors: ['transparent']
+                },
+                xaxis: {
+                    categories: @json($monthly_stats['months']),
+                    axisBorder: { show: false },
+                    axisTicks: { show: false },
+                    labels: {
+                        style: { colors: '#a1a5b7', fontSize: '12px' }
+                    }
+                },
+                yaxis: {
+                    labels: {
+                        style: { colors: '#a1a5b7', fontSize: '12px' }
+                    }
+                },
+                fill: { opacity: 1 },
+                states: {
+                    normal: { filter: { type: 'none', value: 0 } },
+                    hover: { filter: { type: 'none', value: 0 } },
+                    active: { allowMultipleDataPointsSelection: false, filter: { type: 'none', value: 0 } }
+                },
+                tooltip: {
+                    style: { fontSize: '12px' },
+                    y: {
+                        formatter: function (val) { return val + " requests" }
+                    }
+                },
+                colors: ['#009EF7', '#50CD89'], // Blue for total, Green for completed
+                grid: {
+                    borderColor: '#eff2f5',
+                    strokeDashArray: 4,
+                    yaxis: { lines: { show: true } }
+                }
+            };
+
+            var chart = new ApexCharts(element, options);
+            chart.render();
+        });
+    </script>
 </div>

@@ -292,7 +292,7 @@ class AllRequests extends Component
 
         try {
             DB::transaction(function () use ($padded_category_no) {
-                $incomingRequest = IncomingRequest::updateOrCreate(
+                $incomingRequest = IncomingRequest::withoutGlobalScopes()->updateOrCreate(
                     ['id' => $this->incomingRequestId ?? null],
                     [
                         'no' => $this->no,
