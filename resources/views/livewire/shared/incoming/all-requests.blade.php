@@ -62,6 +62,7 @@
                                                     @endif
                                                 </th>
                                                 <th>Office/Brgy/Org</th>
+                                                <th>Subject</th>
                                                 {{-- <th>Date Requested</th> --}}
                                                 <th class="min-w-150px cursor-pointer" wire:click="sortBy('date_requested')">
                                                     Date Requested
@@ -122,6 +123,9 @@
                                                 </td>
                                                 <td>
                                                     {{ $item->office_barangay_organization }}
+                                                </td>
+                                                <td>
+                                                    {{ $item->description }}
                                                 </td>
                                                 <td>
                                                     {{ $item->formatted_date_requested }}<br/>
