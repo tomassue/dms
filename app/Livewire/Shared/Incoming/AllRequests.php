@@ -269,10 +269,14 @@ class AllRequests extends Component
         $this->validate($this->rules(), [], $this->attributes());
         
         $padded_category_no = str_pad($this->category_no, 3, '0', STR_PAD_LEFT);
+        // Parse the date to extract Month and Year
+        $requestedDate = \Carbon\Carbon::parse($this->date_requested);
 
          // 2. Check if this specific combination already exists
         $query = IncomingRequest::where('ref_incoming_request_category_id', $this->ref_incoming_request_category_id)
-                                ->where('category_no', $padded_category_no); // Changed from ref_document_type_id to category_no
+                                ->where('category_no', $padded_category_no) // Changed from ref_document_type_id to category_no
+                                ->whereMonth('date_requested', $requestedDate->month)
+                                ->whereYear('date_requested', $requestedDate->year);
 
         // 3. If editing, don't count the current record as a duplicate
         if ($this->incomingRequestId) {
