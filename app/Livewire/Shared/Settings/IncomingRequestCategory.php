@@ -6,6 +6,7 @@ use App\Models\RefIncomingDocumentCategory;
 use App\Models\RefIncomingRequestCategory;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -24,8 +25,18 @@ class IncomingRequestCategory extends Component
 
     public function rules()
     {
+        // Determine the office_id to scope uniqueness against
+        $officeId = Auth::user()->hasRole('Super Admin')
+            ? $this->office_id
+            : auth()->user()->roles()->first()->id;
+
         $rules = [
-            'incoming_request_category_name' => 'required|unique:ref_incoming_request_categories,incoming_request_category_name,' . $this->incomingRequestCategoryId,
+            'incoming_request_category_name' => [
+                'required',
+                Rule::unique('ref_incoming_request_categories', 'incoming_request_category_name')
+                    ->where(fn($query) => $query->where('office_id', $officeId))
+                    ->ignore($this->incomingRequestCategoryId),
+            ],
         ];
 
         if (Auth::user()->hasRole('Super Admin')) {
