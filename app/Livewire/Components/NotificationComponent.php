@@ -61,9 +61,9 @@ class NotificationComponent extends Component
             ->merge($documents->map(function ($item) {
                 return [
                     'type' => 'document',
-                    'status' => $item->status->name,
+                    'status' => $item->status?->name,
                     'id' => $item->id,
-                    'title' => $item->category->name, // or whatever field you display
+                    'title' => $item->category?->name ?? 'N/A', // null-safe: handles deleted category
                     'created_at' => $item->created_at->diffForHumans(),
                     'human_time' => $item->updated_at->diffForHumans(),
                     'raw_time' => $item->updated_at->format('Y-m-d H:i:s'),
