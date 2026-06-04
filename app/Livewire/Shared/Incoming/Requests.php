@@ -215,7 +215,7 @@ class Requests extends Component
         ->orderBy($this->sortField, $this->sortDirection)
         ->orderBy('id', 'desc')
         // ->latest()
-        ->paginate(10);
+        ->paginate(20);
         
 }
 

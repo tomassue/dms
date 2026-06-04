@@ -213,7 +213,7 @@ class AllRequests extends Component
             ->orderBy($this->sortField, $this->sortDirection)
             ->orderBy('id', 'desc')
             // ->latest()
-            ->paginate(10);
+            ->paginate(20);
             
     }
 
@@ -277,7 +277,12 @@ class AllRequests extends Component
                                 ->where('category_no', $padded_category_no) // Changed from ref_document_type_id to category_no
                                 ->whereMonth('date_requested', $requestedDate->month)
                                 ->whereYear('date_requested', $requestedDate->year);
-
+// dd([
+//     'category_id' => $this->ref_incoming_request_category_id,
+//     'category_no' => $padded_category_no,
+//     'month' => $requestedDate->month,
+//     'year' => $requestedDate->year,
+// ]);
         // 3. If editing, don't count the current record as a duplicate
         if ($this->incomingRequestId) {
             $query->where('id', '!=', $this->incomingRequestId);
