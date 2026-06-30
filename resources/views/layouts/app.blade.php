@@ -114,11 +114,29 @@
             });
         });
 
-        Livewire.on('error', () => {
+        Livewire.on('error', (data) => {
             Swal.fire({
                 title: "Error",
-                text: "Something went wrong.",
+                text: data.message ?? "Something went wrong.",
                 icon: "error"
+            });
+        });
+
+        Livewire.on('warning', (data) => {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                didOpen: (toast) => {
+                    toast.onmouseenter = Swal.stopTimer;
+                    toast.onmouseleave = Swal.resumeTimer;
+                }
+            });
+            Toast.fire({
+                icon: "warning",
+                title: data.message ?? "Warning"
             });
         });
     });

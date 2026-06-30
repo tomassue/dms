@@ -27,6 +27,7 @@ class Dashboard extends Component
                 'incoming_requests' => $this->loadIncomingRequests(),
                 'incoming_documents' => $this->loadIncomingDocuments(),
                 'monthly_stats' => $this->getMonthlyStats(),
+                'weekly_stats' => $this->getWeeklyStats(),
             ]
         );
     }
@@ -101,6 +102,43 @@ class Dashboard extends Component
         }
 
         // dd($data);
+        return $data;
+    }
+
+    public function getWeeklyStats()
+    {
+        $startOfWeek = Carbon::now()->startOfWeek(Carbon::SUNDAY);
+        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SATURDAY);
+
+        // DAYOFWEEK() returns 1 (Sunday) through 7 (Saturday) in MySQL
+        $totalRequests = IncomingRequest::withoutGlobalScopes()
+            ->selectRaw('DAYOFWEEK(date_requested) as day, count(*) as count')
+            ->whereBetween('date_requested', [$startOfWeek, $endOfWeek])
+            ->groupBy('day')
+            ->pluck('count', 'day')
+            ->all();
+
+        $completedRequests = IncomingRequest::withoutGlobalScopes()
+            ->completed()
+            ->selectRaw('DAYOFWEEK(date_requested) as day, count(*) as count')
+            ->whereBetween('date_requested', [$startOfWeek, $endOfWeek])
+            ->groupBy('day')
+            ->pluck('count', 'day')
+            ->all();
+
+        $data = [
+            'days' => [],
+            'total' => [],
+            'completed' => [],
+        ];
+
+        // Sunday (1) through Saturday (7)
+        for ($d = 1; $d <= 7; $d++) {
+            $data['days'][] = $startOfWeek->copy()->addDays($d - 1)->format('l');
+            $data['total'][] = $totalRequests[$d] ?? 0;
+            $data['completed'][] = $completedRequests[$d] ?? 0;
+        }
+
         return $data;
     }
 }
