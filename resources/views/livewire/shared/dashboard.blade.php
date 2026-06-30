@@ -83,7 +83,7 @@
                         <span class="text-muted fw-bold fs-7">Requests vs. Completed for {{ now()->year }}</span>
                     </h3>
                 </div>
-                <div class="card-body">
+                <div class="card-body" wire:ignore>
                     <div id="kt_charts_widget_requests" style="height: 350px"></div>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body" wire:ignore>
                     <div id="kt_charts_widget_weekly_requests" style="height: 350px"></div>
                 </div>
             </div>
