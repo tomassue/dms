@@ -298,6 +298,8 @@ class Requests extends Component
 
         try {
             DB::transaction(function () use ($padded_category_no) {
+                $isNewRequest = empty($this->incomingRequestId);
+
                 $incomingRequest = IncomingRequest::updateOrCreate(
                     ['id' => $this->incomingRequestId ?? null],
                     [
@@ -323,6 +325,11 @@ class Requests extends Component
                 // save files
                 $this->saveFiles($incomingRequest);
 
+                // Auto-forward newly created requests to the creator's own division.
+                if ($isNewRequest) {
+                    $this->autoAssignToCreatorDivision($incomingRequest);
+                }
+
                 $this->clear();
                 $this->dispatch('hide-incoming-request-modal');
                 $this->dispatch('success', message: 'Incoming Request successfully saved.');
@@ -331,6 +338,40 @@ class Requests extends Component
             // throw $th;
             $this->dispatch('error', message: 'Something went wrong.');
         }
+    }
+
+    /**
+     * autoAssignToCreatorDivision
+     * * When a division-assigned user creates a new incoming request, automatically
+     * forward it to their own division so it immediately shows up under their division's
+     * view (IsForwardedFilterScope only shows requests forwarded to the user's division).
+     * * Office admins have no ref_division_id, so this is skipped for them - they forward
+     * requests manually to the appropriate division(s).
+     */
+    protected function autoAssignToCreatorDivision(IncomingRequest $incomingRequest)
+    {
+        $divisionId = auth()->user()->user_metadata->ref_division_id ?? null;
+
+        if (!$divisionId) {
+            return;
+        }
+
+        $incomingRequest->forwards()->create([
+            'ref_division_id' => $divisionId,
+        ]);
+
+        $incomingRequest->update([
+            'ref_status_id' => RefStatus::where('name', 'forwarded')->first()->id,
+        ]);
+
+        $divisionName = RefDivision::find($divisionId)?->name ?? 'their division';
+
+        activity()
+            ->causedBy(auth()->user())
+            ->performedOn($incomingRequest)
+            ->useLog('forwarded')
+            ->event('updated')
+            ->log(auth()->user()->name . ' automatically assigned this request to ' . $divisionName . ' upon creation.');
     }
 
     protected function saveFiles($model)

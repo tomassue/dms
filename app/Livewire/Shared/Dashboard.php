@@ -15,6 +15,8 @@ class Dashboard extends Component
 {
     use WithPagination;
 
+    public $weekOffset = 0; // 0 = current week, -1 = previous week, etc. Cannot go beyond 0 (the future).
+
     public function render()
     {
         return view(
@@ -107,8 +109,8 @@ class Dashboard extends Component
 
     public function getWeeklyStats()
     {
-        $startOfWeek = Carbon::now()->startOfWeek(Carbon::SUNDAY);
-        $endOfWeek = Carbon::now()->endOfWeek(Carbon::SATURDAY);
+        $startOfWeek = Carbon::now()->addWeeks($this->weekOffset)->startOfWeek(Carbon::SUNDAY);
+        $endOfWeek = Carbon::now()->addWeeks($this->weekOffset)->endOfWeek(Carbon::SATURDAY);
 
         // DAYOFWEEK() returns 1 (Sunday) through 7 (Saturday) in MySQL
         $totalRequests = IncomingRequest::withoutGlobalScopes()
@@ -130,15 +132,44 @@ class Dashboard extends Component
             'days' => [],
             'total' => [],
             'completed' => [],
+            'range_label' => $startOfWeek->format('M j') . ' - ' . $endOfWeek->format('M j, Y'),
         ];
 
-        // Sunday (1) through Saturday (7)
+        // Sunday (1) through Saturday (7) - label includes the date so each week is distinguishable
         for ($d = 1; $d <= 7; $d++) {
-            $data['days'][] = $startOfWeek->copy()->addDays($d - 1)->format('l');
+            $data['days'][] = $startOfWeek->copy()->addDays($d - 1)->format('D, M j');
             $data['total'][] = $totalRequests[$d] ?? 0;
             $data['completed'][] = $completedRequests[$d] ?? 0;
         }
 
         return $data;
+    }
+
+    public function previousWeek()
+    {
+        $this->weekOffset--;
+        $this->dispatchWeeklyStats();
+    }
+
+    public function nextWeek()
+    {
+        if ($this->weekOffset < 0) {
+            $this->weekOffset++;
+        }
+        $this->dispatchWeeklyStats();
+    }
+
+    protected function dispatchWeeklyStats()
+    {
+        $stats = $this->getWeeklyStats();
+
+        $this->dispatch(
+            'weekly-stats-updated',
+            days: $stats['days'],
+            total: $stats['total'],
+            completed: $stats['completed'],
+            rangeLabel: $stats['range_label'],
+            canGoNext: $this->weekOffset < 0,
+        );
     }
 }

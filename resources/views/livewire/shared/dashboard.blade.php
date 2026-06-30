@@ -93,11 +93,35 @@
     <div class="row g-5 g-xl-8 mt-5">
         <div class="col-xl-12">
             <div class="card card-xl-stretch mb-xl-8">
-                <div class="card-header border-0 pt-5">
-                    <h3 class="card-title align-items-start flex-column">
+                <div class="card-header border-0 pt-5 d-flex align-items-center justify-content-between flex-wrap gap-3">
+                    <h3 class="card-title align-items-start flex-column mb-0">
                         <span class="card-label fw-bolder fs-3 mb-1">Weekly Request Performance</span>
-                        <span class="text-muted fw-bold fs-7">Requests vs. Completed, Sunday to Saturday</span>
+                        <span class="text-muted fw-bold fs-7" id="kt_weekly_range_label">{{ $weekly_stats['range_label'] }}</span>
                     </h3>
+                    <div class="d-flex align-items-center gap-2">
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-icon btn-light"
+                            wire:click="previousWeek"
+                            wire:loading.attr="disabled"
+                            wire:target="previousWeek,nextWeek"
+                            title="Previous week"
+                        >
+                            <i class="bi bi-chevron-left"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="btn btn-sm btn-icon btn-light"
+                            wire:click="nextWeek"
+                            wire:loading.attr="disabled"
+                            wire:target="previousWeek,nextWeek"
+                            id="kt_weekly_next_btn"
+                            {{ $weekOffset >= 0 ? 'disabled' : '' }}
+                            title="Next week"
+                        >
+                            <i class="bi bi-chevron-right"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="card-body">
                     <div id="kt_charts_widget_weekly_requests" style="height: 350px"></div>
@@ -107,8 +131,9 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    @script
     <script>
-        document.addEventListener('livewire:navigated', () => {
+        (() => {
             var element = document.getElementById('kt_charts_widget_requests');
 
             if (!element) return;
@@ -242,6 +267,25 @@
 
             var weeklyChart = new ApexCharts(weeklyElement, weeklyOptions);
             weeklyChart.render();
-        });
+
+            // Re-render the weekly chart in place when Previous/Next is clicked,
+            // instead of reloading the whole page (canGoNext disables Next at the current week).
+            $wire.on('weekly-stats-updated', (event) => {
+                weeklyChart.updateOptions({
+                    xaxis: { categories: event.days }
+                });
+                weeklyChart.updateSeries([
+                    { name: 'Total Requests', data: event.total },
+                    { name: 'Completed', data: event.completed }
+                ]);
+
+                var rangeLabelEl = document.getElementById('kt_weekly_range_label');
+                if (rangeLabelEl) rangeLabelEl.textContent = event.rangeLabel;
+
+                var nextBtn = document.getElementById('kt_weekly_next_btn');
+                if (nextBtn) nextBtn.disabled = !event.canGoNext;
+            });
+        })();
     </script>
+    @endscript
 </div>
