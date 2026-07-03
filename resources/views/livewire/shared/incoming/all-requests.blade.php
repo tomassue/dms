@@ -112,6 +112,13 @@
                                                             @endforeach
                                                         </div>
                                                     @endif
+                                                    @if($item->files->isNotEmpty())
+                                                        <div class="mt-1">
+                                                            <span title="{{ $item->files->count() }} attachment(s)" class="text-muted fs-8">
+                                                                <i class="bi bi-paperclip"></i> {{ $item->files->count() }}
+                                                            </span>
+                                                        </div>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     <span class="badge text-uppercase {{ ($item->username->name ?? 'None') === 'None' ? 'badge-light-danger' : 'badge-info' }}">

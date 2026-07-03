@@ -184,7 +184,7 @@ class AllRequests extends Component
         return IncomingRequest::query()
             // Added eager loading for forwards and divisions to support your Blade column update
             ->withoutGlobalScopes()
-            ->with(['status', 'category', 'username', 'forwards.division']) 
+            ->with(['status', 'category', 'username', 'forwards.division', 'files'])
             ->when($this->search, function ($query) {
                 $query->where(function ($q){
                 $q->where('no', 'like', '%' . $this->search . '%')
