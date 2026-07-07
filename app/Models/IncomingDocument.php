@@ -92,6 +92,7 @@ class IncomingDocument extends Model
     {
         return $query->where(function ($query) use ($search) {
             $query->where('document_info', 'like', '%' . $search . '%')
+                ->orWhere('no', 'like', '%' . $search . '%')
                 ->orWhereHas('apoDocument', function ($q) use ($search) {
                     $q->where('source', 'like', '%' . $search . '%');
                 })
