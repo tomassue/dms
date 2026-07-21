@@ -295,6 +295,12 @@
                                     </div>
                                     <div class="row py-2 ms-8">
                                         <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="incoming.requests.pdf" id="incomingRequestsPDF" wire:model="permissions" />
+                                            <label class="form-check-label" for="incomingRequestsRead"> PDF </label>
+                                        </div>
+                                    </div>
+                                    <div class="row py-2 ms-8">
+                                        <div class="form-check form-check-custom form-check-solid">
                                             <input class="form-check-input" type="checkbox" value="incoming.requests.forward" id="incomingRequestsForward" wire:model="permissions" />
                                             <label class="form-check-label" for="incomingRequestsForward"> Forward </label>
                                         </div>

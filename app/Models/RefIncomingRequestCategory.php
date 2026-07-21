@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Models\Scopes\OfficeScope;
-use App\Models\Scopes\RoleBasedFilterScope;
 use Illuminate\Database\Eloquent\Attributes\ScopedBy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -23,6 +22,8 @@ class RefIncomingRequestCategory extends Model
     protected $fillable = [
         'incoming_request_category_name',
         'office_id',
+        'pdf_template',
+        'pdf_header_image',
     ];
 
     //* Activity log
@@ -49,5 +50,11 @@ class RefIncomingRequestCategory extends Model
     public function office()
     {
         return $this->belongsTo(Role::class, 'office_id', 'id');
+    }
+
+    public function signatories()
+    {
+        return $this->hasMany(RefIncomingRequestCategorySignatory::class, 'ref_incoming_request_category_id')
+                    ->orderBy('sort_order');
     }
 }

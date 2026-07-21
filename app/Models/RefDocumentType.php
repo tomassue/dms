@@ -19,6 +19,9 @@ class RefDocumentType extends Model
     protected $fillable = [
         'document_name',
         'office_id',
+        'pdf_template',
+        'pdf_header_image',
+        'signatory_font_size',
     ];
 
     //* Activity log
@@ -45,5 +48,11 @@ class RefDocumentType extends Model
     public function office()
     {
         return $this->belongsTo(Role::class, 'office_id', 'id');
+    }
+
+    public function signatories()
+    {
+        return $this->hasMany(RefDocumentTypeSignatory::class, 'ref_document_type_id')
+                    ->orderBy('sort_order');
     }
 }

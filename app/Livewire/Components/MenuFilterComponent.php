@@ -22,7 +22,7 @@ class MenuFilterComponent extends Component
         $outgoing_category,
         $doctype;
 
-    public function mount($page, $context)
+    public function mount($page, $context = null)
     {
         $this->page = $page;
         $this->context = $context;

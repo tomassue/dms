@@ -113,11 +113,9 @@
                                                         </div>
                                                     @endif
                                                     @if($item->files->isNotEmpty())
-                                                        <div class="mt-1">
-                                                            <span title="{{ $item->files->count() }} attachment(s)" class="text-muted fs-8">
-                                                                <i class="bi bi-paperclip"></i> {{ $item->files->count() }}
-                                                            </span>
-                                                        </div>
+                                                        <span class="badge badge-dark mt-1" title="{{ $item->files->count() }} attachment(s)">
+                                                            <i class="bi bi-paperclip me-1"></i>{{ $item->files->count() }}
+                                                        </span>
                                                     @endif
                                                 </td>
                                                 <td>
@@ -142,9 +140,12 @@
                                                     @endif
                                                 </td>
                                                 <td class="text-center" wire:loading.class="pe-none">
+                                                    @php $isDone = $item->IsCompleted() || $item->IsCancelled(); @endphp
                                                     <div class="btn-group" role="group" aria-label="Actions">
                                                         @can('incoming.requests.update')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingRequest({{ $item->id }})" @click.stop {{ ($is_office_admin == '1') ? '' : (($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '') }}>
+                                                        <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit"
+                                                                wire:click="editIncomingRequest({{ $item->id }})" @click.stop
+                                                                {{ ($is_office_admin == '1') ? '' : ($isDone ? 'disabled' : '') }}>
                                                             <div wire:loading.remove wire:target="editIncomingRequest({{ $item->id }})">
                                                                 <i class="bi bi-pencil"></i>
                                                             </div>
@@ -155,13 +156,32 @@
                                                             </div>
                                                         </button>
                                                         @endcan
+                                                        @can('incoming.requests.pdf')
+                                                        <button type="button" class="btn btn-icon btn-sm {{ $isDone ? 'btn-secondary' : '' }}" title="Edit PDF"
+                                                                style="{{ $isDone ? '' : 'background-color:#c01f1f;border-color:#fd7e14;color:#fff;' }}"
+                                                                wire:click="openRequestPdfEditor({{ $item->id }})" @click.stop
+                                                                {{ $isDone ? 'disabled' : '' }}>
+                                                            <div wire:loading.remove wire:target="openRequestPdfEditor({{ $item->id }})">
+                                                                <i class="bi bi-file-earmark-pdf"></i>
+                                                            </div>
+                                                            <div wire:loading wire:target="openRequestPdfEditor({{ $item->id }})">
+                                                                <div class="spinner-border spinner-border-sm" role="status">
+                                                                    <span class="visually-hidden">Loading...</span>
+                                                                </div>
+                                                            </div>
+                                                        </button>
+                                                        @endcan
                                                         @can('incoming.requests.forward')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" @click.stop {{ ($item->IsCancelled() || $item->IsCompleted()) ? 'disabled' : '' }}>
+                                                        <button type="button" class="btn btn-icon btn-sm {{ $isDone ? 'btn-secondary' : 'btn-warning' }}" title="Forward"
+                                                                wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" @click.stop
+                                                                {{ $isDone ? 'disabled' : '' }}>
                                                             <i class="bi bi-arrow-up-square"></i>
                                                         </button>
                                                         @endcan
                                                         @can('incoming.requests.assign')
-                                                        <button type="button" class="btn btn-icon btn-sm btn-primary" title="Assign" wire:click="showAssignRequest({{ $item->id }})" @click.stop {{ ($item->IsCompleted() || $item->IsCancelled()) ? 'disabled' : '' }}>
+                                                        <button type="button" class="btn btn-icon btn-sm {{ $isDone ? 'btn-secondary' : 'btn-primary' }}" title="Assign"
+                                                                wire:click="showAssignRequest({{ $item->id }})" @click.stop
+                                                                {{ $isDone ? 'disabled' : '' }}>
                                                             <div wire:loading.remove wire:target="showAssignRequest({{ $item->id }})">
                                                                 <i class="bi bi-person-check"></i>
                                                             </div>
@@ -172,7 +192,8 @@
                                                             </div>
                                                         </button>
                                                         @endcan
-                                                        <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
+                                                        <button type="button" class="btn btn-icon btn-sm btn-info" title="Log"
+                                                                wire:click="activityLog({{ $item->id }})" @click.stop>
                                                             <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
                                                                 <i class="bi bi-clock-history"></i>
                                                             </div>
@@ -773,6 +794,130 @@
             </div>
         </div>
     </div>
+
+    <!--begin::Modal - Request PDF WYSIWYG Editor-->
+    <div class="modal fade" tabindex="-1" id="arRequestPdfEditorModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content" style="background:#f0f0f0;">
+
+                {{-- Header --}}
+                <div class="modal-header py-2 bg-white border-bottom">
+                    <h5 class="modal-title d-flex align-items-center gap-2 fs-6">
+                        <i class="bi bi-file-earmark-richtext fs-4" style="color:#fd7e14;"></i>
+                        <span id="arReqPdfEditorLabel" class="fw-bold">{{ $pdfDocTypeName }}</span>
+                        <span class="badge badge-light-warning fs-9 fw-normal ms-1">WYSIWYG</span>
+                    </h5>
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clearRequestPdfEditor">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                </div>
+
+                {{-- Formatting Toolbar --}}
+                <div id="arReqWysiwygToolbar" class="px-3 py-2 bg-white border-bottom d-flex align-items-center gap-1 flex-wrap" style="position:sticky;top:0;z-index:10;">
+                    {{-- Text style --}}
+                    <div class="btn-group btn-group-sm me-1">
+                        <button type="button" class="btn btn-light" onclick="arReqExec('bold')" title="Bold"><b>B</b></button>
+                        <button type="button" class="btn btn-light" onclick="arReqExec('italic')" title="Italic"><i>I</i></button>
+                        <button type="button" class="btn btn-light" onclick="arReqExec('underline')" title="Underline"><u>U</u></button>
+                        <button type="button" class="btn btn-light" onclick="arReqExec('strikeThrough')" title="Strikethrough"><s>S</s></button>
+                    </div>
+
+                    <div class="vr mx-1"></div>
+
+                    {{-- Headings --}}
+                    <select class="form-select form-select-sm" style="width:110px;" onchange="arReqExec('formatBlock', this.value); this.value=''">
+                        <option value="">Paragraph</option>
+                        <option value="H1">Heading 1</option>
+                        <option value="H2">Heading 2</option>
+                        <option value="H3">Heading 3</option>
+                        <option value="P">Normal</option>
+                    </select>
+
+                    {{-- Font size --}}
+                    <select class="form-select form-select-sm ms-1" style="width:80px;" onchange="arReqExecFontSize(this.value); this.value=''">
+                        <option value="">Size</option>
+                        @foreach([8,9,10,11,12,13,14,16,18,20,24,28,32,36] as $sz)
+                        <option value="{{ $sz }}">{{ $sz }}px</option>
+                        @endforeach
+                    </select>
+
+                    <div class="vr mx-1"></div>
+
+                    {{-- Alignment --}}
+                    <div class="btn-group btn-group-sm me-1">
+                        <button type="button" class="btn btn-light" onclick="arReqExec('justifyLeft')" title="Align Left"><i class="bi bi-text-left"></i></button>
+                        <button type="button" class="btn btn-light" onclick="arReqExec('justifyCenter')" title="Center"><i class="bi bi-text-center"></i></button>
+                        <button type="button" class="btn btn-light" onclick="arReqExec('justifyRight')" title="Align Right"><i class="bi bi-text-right"></i></button>
+                    </div>
+
+                    <div class="vr mx-1"></div>
+
+                    {{-- Color --}}
+                    <div class="d-flex align-items-center gap-1">
+                        <label class="fs-8 text-muted mb-0">Color</label>
+                        <input type="color" class="form-control form-control-color p-0 border-0" style="width:28px;height:28px;cursor:pointer;" value="#000000"
+                               oninput="arReqExec('foreColor', this.value)" title="Text Color">
+                        <label class="fs-8 text-muted mb-0 ms-1">Bg</label>
+                        <input type="color" class="form-control form-control-color p-0 border-0" style="width:28px;height:28px;cursor:pointer;" value="#ffffff"
+                               oninput="arReqExec('hiliteColor', this.value)" title="Background Color">
+                    </div>
+
+                    <div class="vr mx-1"></div>
+
+                    {{-- Undo / Redo --}}
+                    <div class="btn-group btn-group-sm me-1">
+                        <button type="button" class="btn btn-light" onclick="arReqExec('undo')" title="Undo"><i class="bi bi-arrow-counterclockwise"></i></button>
+                        <button type="button" class="btn btn-light" onclick="arReqExec('redo')" title="Redo"><i class="bi bi-arrow-clockwise"></i></button>
+                    </div>
+
+                    <div class="vr mx-1"></div>
+
+                    {{-- Load Template from server --}}
+                    <button type="button" class="btn btn-sm btn-light-info" id="arReqLoadTemplateBtn"
+                            wire:click="reloadRequestPdfTemplate" title="Discard edits and reload the document type template with real data">
+                        <span wire:loading.remove wire:target="reloadRequestPdfTemplate">
+                            <i class="bi bi-file-earmark-arrow-down me-1"></i> Load Template
+                        </span>
+                        <span wire:loading wire:target="reloadRequestPdfTemplate">
+                            <span class="spinner-border spinner-border-sm me-1"></span> Loading…
+                        </span>
+                    </button>
+
+                    <div class="vr mx-1"></div>
+
+                    {{-- Reset to template --}}
+                    <button type="button" class="btn btn-sm btn-light-secondary" id="arReqResetToTemplateBtn" title="Reset to last loaded state">
+                        <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                    </button>
+
+                    {{-- Spacer --}}
+                    <div class="flex-grow-1"></div>
+
+                    {{-- Print --}}
+                    <button type="button" class="btn btn-sm btn-light-success" id="arReqPdfPrintPreviewBtn">
+                        <i class="bi bi-printer me-1"></i> Print Preview
+                    </button>
+                </div>
+
+                {{-- WYSIWYG canvas --}}
+                <div class="flex-grow-1 d-flex" style="overflow:auto;background:#808080;padding:24px 0;">
+                    <iframe id="arReqWysiwygFrame"
+                            style="display:block;margin:0 auto;width:210mm;min-height:297mm;border:none;background:#fff;box-shadow:0 4px 32px rgba(0,0,0,.45);"
+                    ></iframe>
+                </div>
+
+                {{-- Footer --}}
+                <div class="modal-footer py-2 bg-white border-top">
+                    <span class="text-muted fs-8 me-auto"><i class="bi bi-info-circle me-1"></i>Click anywhere in the document to start editing.</span>
+                    <button type="button" class="btn btn-light btn-sm" data-bs-dismiss="modal" wire:click="clearRequestPdfEditor">Close</button>
+                    <button type="button" class="btn btn-primary btn-sm" id="arReqSavePdfContentBtn">
+                        <i class="bi bi-floppy me-1"></i> Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--end::Modal - Request PDF WYSIWYG Editor-->
 </div>
 
 @script
@@ -836,6 +981,121 @@
     // Listen for event
     $wire.on('open-file', (url) => {
         window.open(event.detail.url, '_blank'); // Open the signed URL in a new tab
+    });
+
+    /* ── Request PDF WYSIWYG Editor ─────────────────────────────────────── */
+
+    let _arReqOriginalHtml = '';
+
+    function _arReqFrame() { return document.getElementById('arReqWysiwygFrame'); }
+    function _arReqDoc()   { const f = _arReqFrame(); return f ? f.contentDocument || f.contentWindow.document : null; }
+
+    function arReqExec(cmd, val = null) {
+        const doc = _arReqDoc();
+        if (!doc) return;
+        doc.execCommand('styleWithCSS', false, true);
+        doc.execCommand(cmd, false, val);
+        _arReqFrame().contentWindow.focus();
+    }
+
+    function arReqExecFontSize(px) {
+        if (!px) return;
+        const doc = _arReqDoc();
+        if (!doc) return;
+        const sel = doc.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+        const range = sel.getRangeAt(0);
+        if (range.collapsed) return;
+        const span = doc.createElement('span');
+        span.style.fontSize = px + 'px';
+        try { range.surroundContents(span); } catch(e) { doc.execCommand('fontSize', false, '3'); }
+        _arReqFrame().contentWindow.focus();
+    }
+
+    function _arReqLoadHtml(html) {
+        const frame = _arReqFrame();
+        if (!frame) return;
+        const doc = frame.contentDocument || frame.contentWindow.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+        doc.designMode = 'on';
+        doc.execCommand('styleWithCSS', false, true);
+    }
+
+    function _arReqGetCurrentHtml() {
+        const doc = _arReqDoc();
+        return doc ? doc.documentElement.outerHTML : '';
+    }
+
+    $wire.on('show-request-pdf-editor-modal', () => {
+        const label = document.getElementById('arReqPdfEditorLabel');
+        if (label) label.textContent = $wire.pdfDocTypeName || '';
+        $('#arRequestPdfEditorModal').modal('show');
+
+        setTimeout(() => {
+            const html = $wire.pdfEditorHtml || '';
+            _arReqOriginalHtml = html;
+            if (html) {
+                _arReqLoadHtml(html);
+            } else {
+                _arReqFrame().srcdoc = '<body style="font-family:sans-serif;padding:20px;color:#888;"><p>No PDF template configured for this document type.</p><p>Go to <strong>Settings → Document Type → Edit PDF</strong> to create one.</p></body>';
+            }
+        }, 200);
+    });
+
+    $wire.on('hide-request-pdf-editor-modal', () => {
+        $('#arRequestPdfEditorModal').modal('hide');
+    });
+
+    $wire.on('reload-request-pdf-template', () => {
+        const html = $wire.pdfEditorHtml || '';
+        _arReqOriginalHtml = html;
+        if (html) _arReqLoadHtml(html);
+    });
+
+    // Reset to the original loaded HTML
+    document.getElementById('arReqResetToTemplateBtn')?.addEventListener('click', function () {
+        if (_arReqOriginalHtml) _arReqLoadHtml(_arReqOriginalHtml);
+    });
+
+    // Save — grabs current HTML from the iframe and sends to Livewire
+    document.getElementById('arReqSavePdfContentBtn')?.addEventListener('click', function () {
+        const btn = this;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Saving…';
+        const html = _arReqGetCurrentHtml();
+        $wire.saveRequestPdfContent(html).then(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-floppy me-1"></i> Save';
+        });
+    });
+
+    // Print Preview — gets current iframe HTML, injects print toolbar, opens popup
+    document.getElementById('arReqPdfPrintPreviewBtn')?.addEventListener('click', function () {
+        let html = _arReqGetCurrentHtml();
+        if (!html || !html.trim()) { alert('Nothing to print.'); return; }
+
+        const printBarCss = `<style>
+            @media print { #__printBar{display:none!important;} body{padding-top:0!important;} }
+            #__printBar{position:fixed;top:0;left:0;right:0;z-index:9999;background:#fff;border-bottom:2px solid #dee2e6;padding:8px 16px;display:flex;align-items:center;gap:8px;font-family:system-ui,sans-serif;font-size:13px;}
+            #__printBar button{border:none;padding:6px 14px;border-radius:4px;cursor:pointer;font-size:13px;}
+            #__printBar .__btn-print{background:#198754;color:#fff;}
+            #__printBar .__btn-close{background:#6c757d;color:#fff;}
+            body{padding-top:52px!important;}
+        </style>`;
+        const printBar = `<div id="__printBar">
+            <button class="__btn-print" onclick="window.print()">&#128438; Print</button>
+            <button class="__btn-close" onclick="window.close()">&#10005; Close</button>
+            <span style="color:#888;margin-left:8px;font-size:12px;">${$wire.pdfDocTypeName}</span>
+        </div>`;
+
+        html = html.includes('</head>') ? html.replace('</head>', printBarCss + '</head>') : printBarCss + html;
+        html = /<body[\s>]/.test(html) ? html.replace(/<body([^>]*)>/, '<body$1>' + printBar) : printBar + html;
+
+        const win = window.open('', '_blank', 'width=900,height=700,scrollbars=yes');
+        win.document.write(html);
+        win.document.close();
     });
 </script>
 @endscript

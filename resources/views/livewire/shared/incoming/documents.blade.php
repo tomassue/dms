@@ -205,7 +205,7 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Document Category</label>
-                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_document_category_id" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <select class="form-select" aria-label="Select document category" wire:model="ref_incoming_document_category_id" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                     <option>-Select-</option>
                                     @foreach ($incoming_documents_categories as $item)
                                     <option value="{{ $item->id }}">{{ $item->incoming_document_category_name }}</option>
@@ -217,21 +217,21 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">No.</label>
-                                <input type="text" class="form-control" wire:model="category_no" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <input type="text" class="form-control" wire:model="category_no" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('category_no')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Document Info</label>
-                                <textarea class="form-control" wire:model="document_info" {{ $is_office_admin ? '' : 'disabled' }}></textarea>
+                                <textarea class="form-control" wire:model="document_info" {{ $is_office_admin ? '' : 'xdisabled' }}></textarea>
                                 @error('document_info')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Date</label>
-                                <input type="date" class="form-control" wire:model="date" {{ $is_office_admin ? '' : 'disabled' }}>
+                                <input type="date" class="form-control" wire:model="date" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('date')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror

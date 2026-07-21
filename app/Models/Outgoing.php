@@ -86,9 +86,9 @@ class Outgoing extends Model
         return $query->whereBetween('date', [$start_date, $end_date]);
     }
 
-    public function scopeCompleted()
+    public function isCompleted(): bool
     {
-        return $this->status()->where('name', 'completed')->exists();
+        return ($this->status?->name ?? '') === 'completed';
     }
 
     // Accessors

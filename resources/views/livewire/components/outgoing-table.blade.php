@@ -120,7 +120,7 @@
                             @can('outgoing.update')
                             <td class="text-center" wire:loading.class="pe-none">
                                 <div class="btn-group" role="group" aria-label="Actions">
-                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})" {{ $item->completed() ? 'disabled' : '' }}>
+                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})" {{ ($item->status->name ?? '') === 'completed' ? 'disabled' : '' }}>
                                         <div wire:loading.remove wire:target="editOutgoing({{ $item->id }})">
                                             <i class="bi bi-pencil"></i>
                                         </div>
@@ -186,7 +186,7 @@
                 </div>
 
                 <div class="modal-body">
-                    <form wire:submit="saveOutgoing">
+                    <form id="outgoingForm" wire:submit="saveOutgoing">
                         <div class="p-2">
                             <div class="mb-10">
                                 <label class="form-label {{ $editMode ? '' : 'required' }}">Type</label>
@@ -358,13 +358,13 @@
                                 <!-- end:: Files -->
                             </div>
                         </div>
+                    </form>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-light" data-bs-dismiss="modal" wire:click="clear">Close</button>
                     <div wire:loading.remove>
-                        <button type="submit" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
+                        <button type="submit" form="outgoingForm" class="btn btn-primary">{{ $editMode ? 'Update' : 'Create' }}</button>
                     </div>
-                    </form>
                     <div wire:loading wire:target="saveOutgoing">
                         <button class="btn btn-primary" type="button" disabled>
                             <span class="spinner-border spinner-border-sm" aria-hidden="true"></span>
@@ -423,8 +423,8 @@
         /* -------------------------------------------------------------------------- */
 
         // Listen for event
-        $wire.on('open-file', (url) => {
-            window.open(event.detail.url, '_blank'); // Open the signed URL in a new tab
+        $wire.on('open-file', (data) => {
+            window.open(data.url, '_blank'); // Open the signed URL in a new tab
         });
     </script>
     @endscript

@@ -40,7 +40,8 @@ class IncomingRequest extends Model
         'memo_no',
         'user_id',
         'ref_document_type_id',
-        'comment'
+        'comment',
+        'pdf_content',
     ];
 
     // Accessors

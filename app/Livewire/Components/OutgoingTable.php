@@ -301,9 +301,10 @@ class OutgoingTable extends Component
     }
 
 
-    public function editOutgoing(Outgoing $outgoing)
+    public function editOutgoing(int $id)
     {
         try {
+            $outgoing = Outgoing::withoutGlobalScopes()->findOrFail($id);
             $this->outgoingId = $outgoing->id;
             $this->editMode = true;
 

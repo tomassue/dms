@@ -10,6 +10,7 @@ use App\Models\RefDivision;
 use App\Models\RefIncomingRequestCategory;
 use App\Models\RefStatus;
 use App\Models\SmsSender;
+use App\Models\User;
 use App\Models\UserMetadata;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -78,9 +79,14 @@ class Requests extends Component
         public $is_custom,
             $assignThis,
             $tempID;
-            
+
         public $sortField = 'date_requested'; // Default sort field
         public $sortDirection = 'desc';
+
+    // PDF editor state (per request)
+    public $pdfRequestId;
+    public $pdfDocTypeName;
+    public $pdfEditorHtml = '';
 
     public function rules()
     {
@@ -183,7 +189,7 @@ class Requests extends Component
 {   
     return IncomingRequest::query()
         // Added eager loading for forwards and divisions to support your Blade column update
-        ->with(['status', 'category', 'username', 'forwards.division']) 
+        ->with(['status', 'category', 'username', 'forwards.division', 'files'])
         ->when($this->search, function ($query) {
             $query->where(function ($q){
             $q->where('no', 'like', '%' . $this->search . '%')
@@ -580,6 +586,9 @@ class Requests extends Component
                                     'office_barangay_organization' => 'Office/Brgy/Org',
                                     'ref_division_id' => 'Division',
                                     'is_opened' => 'Opened',
+                                    'user_id' => 'Assigned To',
+                                    'ref_document_type_id' => 'Document Type',
+                                    'pdf_content' => 'PDF Content',
                                     default => ucfirst(str_replace('_', ' ', $key))
                                 };
 
@@ -606,6 +615,21 @@ class Requests extends Component
                                 if ($key === "ref_division_id") {
                                     $oldValue = $oldValue !== 'N/A' ? RefDivision::find($oldValue)?->name : 'N/A';
                                     $newValue = $newValue !== 'N/A' ? RefDivision::find($newValue)?->name : 'N/A';
+                                }
+
+                                if ($key === 'user_id') {
+                                    $oldValue = $oldValue !== 'N/A' ? (User::find($oldValue)?->name ?? 'N/A') : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? (User::find($newValue)?->name ?? 'N/A') : 'N/A';
+                                }
+
+                                if ($key === 'ref_document_type_id') {
+                                    $oldValue = $oldValue !== 'N/A' ? (RefDocumentType::find($oldValue)?->document_name ?? 'N/A') : 'N/A';
+                                    $newValue = $newValue !== 'N/A' ? (RefDocumentType::find($newValue)?->document_name ?? 'N/A') : 'N/A';
+                                }
+
+                                if ($key === 'pdf_content') {
+                                    $oldValue = '-';
+                                    $newValue = 'Updated';
                                 }
 
                                 if ($key === "is_opened") {
@@ -959,6 +983,139 @@ class Requests extends Component
             FacadesLog::error("Error removing uploaded file ID $fileId: " . $e->getMessage());
             $this->dispatch('error', message: 'Failed to remove file. Please check logs.');
         }
+    }
+
+    public function openRequestPdfEditor(IncomingRequest $incomingRequest)
+    {
+        if (!$incomingRequest->ref_document_type_id) {
+            $this->dispatch('error', message: 'No document type assigned to this request. Edit the request and assign a document type first.');
+            return;
+        }
+
+        $docType = RefDocumentType::with('signatories')->find($incomingRequest->ref_document_type_id);
+
+        if (!$docType) {
+            $this->dispatch('error', message: 'The assigned document type could not be found.');
+            return;
+        }
+
+        $this->pdfRequestId  = $incomingRequest->id;
+        $this->pdfDocTypeName = $docType->document_name;
+
+        // If saved WYSIWYG content exists, use it directly; otherwise build from template + real data
+        $this->pdfEditorHtml = $incomingRequest->pdf_content
+            ?? $this->buildRequestPdfHtml($incomingRequest, $docType);
+
+        $this->dispatch('show-request-pdf-editor-modal');
+    }
+
+    public function reloadRequestPdfTemplate()
+    {
+        if (!$this->pdfRequestId) return;
+
+        $request = IncomingRequest::find($this->pdfRequestId);
+        if (!$request || !$request->ref_document_type_id) return;
+
+        $docType = RefDocumentType::with('signatories')->find($request->ref_document_type_id);
+        if (!$docType) return;
+
+        $this->pdfEditorHtml = $this->buildRequestPdfHtml($request, $docType);
+
+        $this->dispatch('reload-request-pdf-template');
+    }
+
+    protected function buildRequestPdfHtml(IncomingRequest $request, RefDocumentType $docType): string
+    {
+        $template = $docType->pdf_template ?? '';
+        if (!$template) return '';
+
+        $headerUrl = $docType->pdf_header_image
+            ? Storage::disk('public')->url($docType->pdf_header_image)
+            : null;
+
+        $headerHtml = $headerUrl
+            ? '<div style="text-align:center;margin-top:-40px;"><img src="' . $headerUrl . '" style="margin-left:-60px;max-height:180px;object-fit:contain;"></div>'
+            : '';
+
+        $fontSize = $docType->signatory_font_size ?? 12;
+        $sigs     = $docType->signatories;
+        $signatoriesHtml = '';
+        if ($sigs->isNotEmpty()) {
+            $cellW = floor(100 / $sigs->count()) . '%';
+            $cells = $sigs->map(fn ($s) =>
+                '<div style="display:table-cell;width:' . $cellW . ';text-align:center;padding:0 20px;vertical-align:top;">' .
+                '<div style="margin-top:50px;border-top:1px solid #333;padding-top:8px;">' .
+                '<strong style="font-size:' . $fontSize . 'px;display:block;">' . e($s->name) . '</strong>' .
+                '<span style="font-size:' . ($fontSize - 1) . 'px;color:#555;">' . e($s->title) . '</span>' .
+                '</div></div>'
+            )->join('');
+            $signatoriesHtml = '<div style="display:table;width:100%;margin-top:40px;">' . $cells . '</div>';
+        }
+
+        $vars = [
+            'header_image'                 => $headerHtml,
+            'signatories'                  => $signatoriesHtml,
+            'document_no'                  => $request->no ?? '',
+            'category_no'                  => ($request->category->incoming_request_category_name ?? '') . '-' . ($request->category_no ?? ''),
+            'date_requested'               => $request->formatted_date_requested ?? '',
+            'description'                  => $request->description ?? '',
+            'office_barangay_organization' => $request->office_barangay_organization ?? '',
+            'location'                     => $request->location ?? '',
+            'contact_person_name'          => $request->contact_person_name ?? '',
+            'contact_person_number'        => $request->contact_person_number ?? '',
+            'contact_person_email'         => $request->contact_person_email ?? '',
+            'memo_no'                      => $request->memo_no ?? '',
+            'document_type_name'           => $docType->document_name,
+            'generated_at'                 => now()->format('M d, Y h:i A'),
+        ];
+
+        $html = $template;
+        foreach ($vars as $key => $value) {
+            $html = str_replace('{{' . $key . '}}', $value, $html);
+        }
+
+        // Header image fallback: if template has no {{header_image}} var but there IS a header, prepend it
+        if ($headerHtml && !str_contains($docType->pdf_template ?? '', '{{header_image}}')) {
+            if (preg_match('/<body[^>]*>/i', $html)) {
+                $html = preg_replace('/(<body[^>]*>)/i', '$1' . $headerHtml, $html, 1);
+            } else {
+                $html = $headerHtml . $html;
+            }
+        }
+
+        // Inject A4 framing CSS — same as the document type editor preview
+        $a4Css = '<style>'
+            . '@media screen{'
+            . 'html{background:#808080;margin:0;padding:24px 0;}'
+            . 'body{width:210mm!important;min-height:297mm!important;margin:0 auto!important;background:#fff!important;box-shadow:0 4px 24px rgba(0,0,0,.4)!important;box-sizing:border-box!important;}'
+            . '}'
+            . '@media print{'
+            . '@page{size:A4 portrait;margin:0;}'
+            . 'html{background:white!important;padding:0!important;}'
+            . 'body{width:auto!important;min-height:auto!important;margin:0!important;box-shadow:none!important;}'
+            . '}'
+            . '</style>';
+
+        if (str_contains($html, '</head>')) {
+            $html = str_replace('</head>', $a4Css . '</head>', $html);
+        } else {
+            $html = $a4Css . $html;
+        }
+
+        return $html;
+    }
+
+    public function saveRequestPdfContent(string $html)
+    {
+        IncomingRequest::findOrFail($this->pdfRequestId)->update([
+            'pdf_content' => $html,
+        ]);
+        $this->dispatch('success', message: 'PDF content saved.');
+    }
+
+    public function clearRequestPdfEditor()
+    {
+        $this->reset(['pdfRequestId', 'pdfDocTypeName', 'pdfEditorHtml']);
     }
 
     public function downloadMergedAttachments()
