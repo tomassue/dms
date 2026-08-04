@@ -50,6 +50,7 @@
                                                 <th>Date Requested</th>
                                                 <th>Office/Brgy/Org</th>
                                                 <th>Category</th>
+                                                <th>Description</th>
                                                 <th>Status</th>
                                                 @can('incoming.requests.update')
                                                 <th class="text-center">Actions</th>
@@ -70,6 +71,9 @@
                                                 </td>
                                                 <td>
                                                     {{ $item->category->incoming_request_category_name }}
+                                                </td>
+                                                <td>
+                                                    <span class="text-muted" title="{{ $item->description }}">{{ Str::limit($item->description, 50) }}</span>
                                                 </td>
                                                 <td>
                                                     <span class="badge

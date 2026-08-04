@@ -130,6 +130,7 @@ class Requests extends Component
             ->when($this->search, function ($query) {
                 $query->where('no', 'like', '%' . $this->search . '%')
                     ->orWhere('office_barangay_organization', 'like', '%' . $this->search . '%')
+                    ->orWhere('description', 'like', '%' . $this->search . '%')
                     ->orWhereHas('category', function ($q) {
                         $q->where('incoming_request_category_name', 'like', '%' . $this->search . '%');
                     });
