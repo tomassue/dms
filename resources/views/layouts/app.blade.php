@@ -95,6 +95,20 @@
 </body>
 
 <script>
+    // Safety net: clear any orphaned Bootstrap modal backdrop left over from
+    // a previous page state, so the page is never stuck unclickable.
+    (function () {
+        var hasOpenModal = document.querySelector('.modal.show');
+        var backdrops = document.querySelectorAll('.modal-backdrop');
+
+        if (!hasOpenModal && backdrops.length) {
+            backdrops.forEach(function (el) { el.remove(); });
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }
+    })();
+
     document.addEventListener('livewire:init', () => {
         Livewire.on('success', (message) => {
             const Toast = Swal.mixin({

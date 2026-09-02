@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\FileHandler;
 use App\Livewire\Apo\Meetings;
+use App\Livewire\Chat\ChatComponent;
 use App\Livewire\Shared\Accomplishments;
 use App\Livewire\Shared\AccountSettings;
 use App\Livewire\Shared\Calendar;
@@ -19,6 +20,7 @@ use App\Livewire\Shared\Settings\MeetingsCategory;
 use App\Livewire\Shared\Settings\Positions;
 use App\Livewire\Shared\Settings\Signatories;
 use App\Livewire\Shared\Settings\UserManagement;
+use App\Livewire\SuperAdmin\Backup;
 use App\Livewire\SuperAdmin\RolesAndPermissions;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
@@ -51,8 +53,8 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMI
         # Incoming.Requests
         Route::get('/incoming/requests', Requests::class)->name('incoming-requests')->middleware('permission:incoming.requests.read');
 
-        # Incoming.Documents
-        Route::get('/incoming/documents', Documents::class)->name('incoming-documents')->middleware('permission:incoming.documents.read');
+        # Incoming.Documents (Issuances) - accessible to all authenticated users
+        Route::get('/incoming/documents', Documents::class)->name('incoming-documents');
 
         # Outgoing
         Route::get('/outgoing', Outgoing::class)->name('outgoing')->middleware('permission:outgoing.read');
@@ -83,6 +85,9 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMI
         # File Handler
         Route::get('/file/view/{id}', [FileHandler::class, 'viewFile'])->name('file.view')->middleware('signed');
 
+        # Chat
+        Route::get('/chat/{conversation?}', ChatComponent::class)->name('chat');
+
         /* ------------------------------- APO ROUTES ------------------------------- */
         Route::get('/meetings', Meetings::class)->name('meetings')->middleware('permission:meeting.read');
         # Settings.Meetings Category
@@ -91,6 +96,7 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMI
         /* --------------------------- SUPER ADMIN ROUTES --------------------------- */
         Route::group(['middleware' => ['role:Super Admin']], function () {
             Route::get('/roles-and-permissions', RolesAndPermissions::class)->name('roles-and-permissions');
+            Route::get('/backup', Backup::class)->name('backup');
         });
     });
 });

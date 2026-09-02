@@ -25,7 +25,6 @@
                 </div>
                 @endcan
 
-                @canany(['incoming.requests.read', 'incoming.documents.read'])
                 <div data-kt-menu-trigger="click" data-kt-menu-placement="right-start" class="menu-item py-3">
                     <span class="menu-link menu-center" title="Incoming" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-dismiss="click" data-bs-placement="right">
                         <span class="menu-icon me-0">
@@ -67,19 +66,16 @@
                         </div>
                         @endcan
 
-                        @can('incoming.documents.read')
                         <div class="menu-item">
                             <a class="menu-link {{ Route::currentRouteName() == 'incoming-documents' ? 'active' : '' }}" href="{{ route('incoming-documents') }}">
                                 <span class="menu-bullet">
                                     <span class="bullet bullet-dot"></span>
                                 </span>
-                                <span class="menu-title">Documents</span>
+                                <span class="menu-title">Issuances</span>
                             </a>
                         </div>
-                        @endcan
                     </div>
                 </div>
-                @endcanany
 
                 @can('outgoing.read')
                 <div class="menu-item py-3">
@@ -218,6 +214,7 @@
                                 <span class="menu-title">Roles and Permissions</span>
                             </a>
                         </div>
+
                         @endrole
 
                         @can('reference.userManagement.read')

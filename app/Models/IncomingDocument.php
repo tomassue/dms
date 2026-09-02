@@ -25,6 +25,7 @@ class IncomingDocument extends Model
     protected $fillable = [
         'no',
         'ref_incoming_document_category_id',
+        'subject',
         'document_info',
         'date',
         'ref_status_id',

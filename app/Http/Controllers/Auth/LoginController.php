@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\Request;
 
 class LoginController extends Controller
 {
@@ -41,5 +42,14 @@ class LoginController extends Controller
     public function username()
     {
         return 'username';
+    }
+
+    /**
+     * Flag this session as freshly logged-in so the unread chat/notification
+     * modal shows once on the next page load, then never again this session.
+     */
+    protected function authenticated(Request $request, $user)
+    {
+        $request->session()->put('just_logged_in', true);
     }
 }

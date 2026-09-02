@@ -11,8 +11,8 @@
                         <!--begin::Header-->
                         <div class="card-header border-0 py-5">
                             <h3 class="card-title align-items-start flex-column">
-                                <span class="card-label fw-bolder fs-3 mb-1">Incoming Documents</span>
-                                <span class="text-muted fw-bold fs-7">Over {{ $incoming_documents->count() }} incoming documents</span>
+                                <span class="card-label fw-bolder fs-3 mb-1">Issuances</span>
+                                <span class="text-muted fw-bold fs-7">Over {{ $incoming_documents->count() }} issuances</span>
                             </h3>
                             <div class="card-toolbar">
                                 <div class="d-flex align-items-center gap-2">
@@ -48,6 +48,7 @@
                                             <th>Status</th>
                                             <th>Category</th>
                                             <th>No.</th>
+                                            <th>Subject</th>
                                             <th>Information</th>
                                             <th>Date</th>
                                             @can('incoming.documents.update')
@@ -83,12 +84,20 @@
                                             ">
                                                     {{ $item->status->name }}
                                                 </span>
+                                                @if($item->files->isNotEmpty())
+                                                    <span class="badge badge-dark mt-1" title="{{ $item->files->count() }} attachment(s)">
+                                                        <i class="bi bi-paperclip me-1"></i>{{ $item->files->count() }}
+                                                    </span>
+                                                @endif
                                             </td>
                                             <td>
-                                                {{ $item->category->incoming_document_category_name }}
+                                                {{ $item->category?->incoming_document_category_name ?? 'N/A' }}
                                             </td>
                                             <td>
                                                 {{ $item->category_no ?? '-' }}
+                                            </td>
+                                            <td>
+                                                {{ $item->subject ?? '-' }}
                                             </td>
                                             <td>
                                                 {{ $item->document_info }}
@@ -99,7 +108,7 @@
                                             <td class="text-center" wire:loading.class="pe-none">
                                                 <div class="btn-group" role="group" aria-label="Actions">
                                                     @can('incoming.documents.update')
-                                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})" @click.stop {{ ($item->isCompleted() || $item->isCancelled()) ? 'disabled' : '' }}>
+                                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})" @click.stop {{ ($item->isCompleted() || $item->isCancelled()) ? 'xdisabled' : '' }}>
                                                         <div wire:loading.remove wire:target="editIncomingDocument({{ $item->id }})">
                                                             <i class="bi bi-pencil"></i>
                                                         </div>
@@ -111,9 +120,11 @@
                                                     </button>
                                                     @endcan
                                                     @can('incoming.documents.forward')
-                                                    <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" @click.stop {{ $item->isCancelled() || $item->isCompleted() ? 'disabled' : '' }}>
+                                                    @if(!$item->isCancelled() && !$item->isCompleted())
+                                                    <button type="button" class="btn btn-icon btn-sm btn-warning" title="Forward" wire:click="$dispatch('show-forward-modal', { id: {{ $item->id }} })" @click.stop>
                                                         <i class="bi bi-arrow-up-square"></i>
                                                     </button>
+                                                    @endif
                                                     @endcan
                                                     <button type="button" class="btn btn-icon btn-sm btn-info" title="Log" wire:click="activityLog({{ $item->id }})" @click.stop>
                                                         <div wire:loading.remove wire:target="activityLog({{ $item->id }})">
@@ -130,7 +141,7 @@
                                         </tr>
                                         @empty
                                         <tr>
-                                            <td colspan="6" class="text-center">No records found.</td>
+                                            <td colspan="7" class="text-center">No records found.</td>
                                         </tr>
                                         @endforelse
                                     </tbody>
@@ -171,7 +182,7 @@
         <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Incoming Document</h5>
+                    <h5 class="modal-title">{{ $editMode ? 'Edit' : 'Add' }} Issuance</h5>
                     <!--begin::Close-->
                     <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close" wire:click="clear">
                         <i class="bi bi-x-circle"></i>
@@ -219,6 +230,13 @@
                                 <label class="form-label required">No.</label>
                                 <input type="text" class="form-control" wire:model="category_no" {{ $is_office_admin ? '' : 'xdisabled' }}>
                                 @error('category_no')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            <div class="mb-10">
+                                <label class="form-label required">Subject</label>
+                                <input type="text" class="form-control" wire:model="subject" {{ $is_office_admin ? '' : 'xdisabled' }}>
+                                @error('subject')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -372,6 +390,10 @@
                         <div class="row">
                             <div class="col-5 fw-bold">Document Category:</div>
                             <div class="col-7">{{ $ref_incoming_document_category_id ?? '-' }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-5 fw-bold">Subject:</div>
+                            <div class="col-7">{{ $subject ?? '-' }}</div>
                         </div>
                         <div class="row">
                             <div class="col-5 fw-bold">Category No:</div>

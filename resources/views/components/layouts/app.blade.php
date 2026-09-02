@@ -99,6 +99,20 @@
 </body>
 
 <script>
+    // Safety net: clear any orphaned Bootstrap modal backdrop left over from
+    // a previous page state, so the page is never stuck unclickable.
+    (function () {
+        var hasOpenModal = document.querySelector('.modal.show');
+        var backdrops = document.querySelectorAll('.modal-backdrop');
+
+        if (!hasOpenModal && backdrops.length) {
+            backdrops.forEach(function (el) { el.remove(); });
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }
+    })();
+
     document.addEventListener('livewire:init', () => {
         Livewire.on('success', (message) => {
             toastr.options = {
@@ -142,6 +156,28 @@
             };
 
             toastr.error(message.message);
+        });
+
+        Livewire.on('warning', (message) => {
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": true,
+                "progressBar": true,
+                "positionClass": "toast-top-center",
+                "preventDuplicates": true,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut"
+            };
+
+            toastr.warning(message.message);
         });
     });
 </script>

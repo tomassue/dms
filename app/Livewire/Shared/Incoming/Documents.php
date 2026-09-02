@@ -33,7 +33,7 @@ use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\File as FileFacade;
 use setasign\Fpdi\PdfParser\PdfParserException; // Added for specific error handling
 
-#[Title('Incoming Documents')]
+#[Title('Issuances')]
 class Documents extends Component
 {
     use WithPagination, WithFileUploads;
@@ -54,6 +54,7 @@ class Documents extends Component
     /* ---------------------------- begin::Properties --------------------------- */
     public $no,
         $ref_incoming_document_category_id,
+        $subject,
         $document_info,
         $date,
         $ref_status_id,
@@ -69,6 +70,7 @@ class Documents extends Component
         $rules = [
             'no' => 'required|unique:incoming_documents,no,' . $this->incomingDocumentId,
             'ref_incoming_document_category_id' => 'required|exists:ref_incoming_documents_categories,id',
+            'subject' => 'required|string|max:255',
             'document_info' => 'required',
             'category_no' => 'string|nullable',
             'date' => 'required|date'
@@ -87,6 +89,7 @@ class Documents extends Component
     {
         return [
             'ref_incoming_document_category_id' => 'document category',
+            'subject' => 'subject',
             'file_id' => 'file',
         ];
     }
@@ -118,12 +121,18 @@ class Documents extends Component
     public function generateReferenceNo()
     {
         $this->no = IncomingDocument::generateUniqueReference('INCD-', 8); // Pre-generate reference number to show in the input field (disabled).
+        $this->date = now()->format('Y-m-d'); // Default the date to today when opening the Add modal.
     }
 
     public function loadIncomingDocuments()
     {
         return IncomingDocument::query()
-            ->with('apoDocument')
+            ->withoutGlobalScopes()
+            ->with([
+                'apoDocument',
+                'files',
+                'category' => fn ($query) => $query->withoutGlobalScopes(),
+            ])
             ->when($this->search, function ($query) {
                 $query->where(function ($q){
                 $q->where('category_no', 'like', '%' . $this->search . '%')
@@ -196,12 +205,16 @@ class Documents extends Component
         );
     }
 
-    public function editIncomingDocument(IncomingDocument $incomingDocument)
+    public function editIncomingDocument($id)
     {
+        // Fetch the model manually while bypassing the Office/Forwarded scopes, since all users can view/edit issuances now.
+        $incomingDocument = IncomingDocument::withoutGlobalScopes()->findOrFail($id);
+
         try {
             if (!Auth::user()->hasRole('Super Admin')) {
                 // Mark all forwarded documents to this division (division level) as opened
                 $incomingDocument->forwards()
+                    ->withoutGlobalScopes()
                     ->where('ref_division_id', auth()->user()->user_metadata->ref_division_id)
                     ->update([
                         'is_opened' => true
@@ -222,6 +235,7 @@ class Documents extends Component
 
             $this->no = $incomingDocument->no;
             $this->ref_incoming_document_category_id = $incomingDocument->ref_incoming_document_category_id;
+            $this->subject = $incomingDocument->subject;
             $this->document_info = $incomingDocument->document_info;
             $this->date = $incomingDocument->date;
             $this->ref_status_id = $incomingDocument->ref_status_id;
@@ -316,15 +330,16 @@ class Documents extends Component
         $data = [
             'no' => $this->no,
             'ref_incoming_document_category_id' => $this->ref_incoming_document_category_id,
+            'subject' => $this->subject,
             'document_info' => $this->document_info,
             'date' => $this->date,
-            'ref_status_id' => $this->ref_status_id ?? '1', //! Default value set in the database is not working. - Set to pending.
+            'ref_status_id' => $this->ref_status_id ?? RefStatus::where('name', 'completed')->first()->id, // Newly added issuances are auto-completed.
             'remarks' => $this->remarks,
             'category_no' => $this->category_no,
             'office_id' => auth()->user()->roles()->first()->id
         ];
 
-        return IncomingDocument::updateOrCreate(
+        return IncomingDocument::withoutGlobalScopes()->updateOrCreate(
             ['id' => $this->incomingDocumentId ?? null],
             $data
         );
@@ -450,6 +465,7 @@ class Documents extends Component
                                     'file_id' => 'Files',
                                     'ref_status_id' => 'Status',
                                     'ref_incoming_document_category_id' => 'Category',
+                                    'subject' => 'Subject',
                                     'document_info' => 'Info',
                                     'ref_division_id' => 'Division',
                                     'is_opened' => 'Opened',
@@ -531,8 +547,11 @@ class Documents extends Component
      * * This function is used to get the forwarded divisions of the incoming document.
      * * It will return the forwarded divisions of the incoming document.
      */
-    public function getForwardedDivisions(IncomingDocument $incomingDocument)
+    public function getForwardedDivisions($id)
     {
+        // Fetch the model manually while bypassing the Office/Forwarded scopes
+        $incomingDocument = IncomingDocument::withoutGlobalScopes()->findOrFail($id);
+
         try {
             $forwarded_divisions = $incomingDocument->forwards()
                 ->with(['division'])
@@ -565,7 +584,7 @@ class Documents extends Component
         ]);
 
         try {
-            $incomingDocument = IncomingDocument::find($this->incomingDocumentId);
+            $incomingDocument = IncomingDocument::withoutGlobalScopes()->find($this->incomingDocumentId);
 
             /* ------------------------- CITY VETERINARY OFFICE ------------------------- */
             if (Auth::user()->hasRole('CITY VETERINARY OFFICE')) {
@@ -703,12 +722,15 @@ class Documents extends Component
         }
     }
 
-    public function viewIncomingDocument(IncomingDocument $incomingDocument)
+    public function viewIncomingDocument($id)
     {
+        // Fetch the model manually while bypassing the Office/Forwarded scopes, since all users can view issuances now.
+        $incomingDocument = IncomingDocument::withoutGlobalScopes()->findOrFail($id);
+
         try {
             $this->forwarded_divisions = Forwarded::where('forwardable_type', IncomingDocument::class)
                 ->where('forwardable_id', $incomingDocument->id)
-                ->with(['division']) // Assuming 'division' is a relationship
+                ->with(['division' => fn ($query) => $query->withoutGlobalScopes()])
                 ->latest()
                 ->get()
                 ->map(function ($forward) {
@@ -717,7 +739,8 @@ class Documents extends Component
                     ];
                 });
 
-            $this->ref_incoming_document_category_id = $incomingDocument->category->incoming_document_category_name;
+            $this->ref_incoming_document_category_id = RefIncomingDocumentCategory::withoutGlobalScopes()->find($incomingDocument->ref_incoming_document_category_id)?->incoming_document_category_name ?? 'N/A';
+            $this->subject = $incomingDocument->subject;
             $this->document_info = $incomingDocument->document_info;
             $this->date = Carbon::parse($incomingDocument->date)->format('M d, Y');
             $this->ref_status_id = $incomingDocument->status->name;

@@ -44,7 +44,11 @@
                     <!--begin::Toolbar wrapper-->
                     <div class="d-flex align-items-stretch flex-shrink-0">
 
+                        <livewire:components.chat-notification-component />
+
                         <livewire:components.notification-component />
+
+                        <livewire:components.login-unread-alert />
 
                         <!--begin::User-->
                         <div class="d-flex align-items-center ms-1 ms-lg-3" id="kt_header_user_menu_toggle">
@@ -93,6 +97,13 @@
                                     <a href="{{ route('account-settings') }}" class="menu-link px-5">Account Settings</a>
                                 </div>
                                 <!--end::Menu item-->
+                                @role('Super Admin')
+                                <!--begin::Menu item-->
+                                <div class="menu-item px-5">
+                                    <a href="{{ route('backup') }}" class="menu-link px-5">Backup</a>
+                                </div>
+                                <!--end::Menu item-->
+                                @endrole
                                 <!--begin::Menu item-->
                                 <div class="menu-item px-5 my-1">
                                     <a href="{{ route('logout') }}"
