@@ -42,6 +42,15 @@
     <link rel="stylesheet" href="{{ asset('plugins/virtual-select/tooltip.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('plugins/daterangepicker-master/daterangepicker.css') }}" />
     <!-- end::Plugins -->
+
+    <style>
+        .chat-message-alert-swal,
+        .chat-message-alert-swal .swal2-title,
+        .chat-message-alert-swal .swal2-html-container {
+            background-color: #fff !important;
+            color: #000 !important;
+        }
+    </style>
 </head>
 
 <body id="kt_body" class="header-fixed header-tablet-and-mobile-fixed aside-fixed aside-secondary-disabled">
@@ -151,6 +160,29 @@
             Toast.fire({
                 icon: "warning",
                 title: data.message ?? "Warning"
+            });
+        });
+
+        Livewire.on('chat-message-alert', (data) => {
+            const Toast = Swal.mixin({
+                toast: true,
+                position: "top-end",
+                showConfirmButton: false,
+                timer: 4000,
+                timerProgressBar: true,
+                background: "#fff",
+                color: "#000",
+                customClass: {
+                    popup: "chat-message-alert-swal"
+                },
+                didOpen: (toast) => {
+                    toast.onmouseenter = Swal.stopTimer;
+                    toast.onmouseleave = Swal.resumeTimer;
+                }
+            });
+            Toast.fire({
+                icon: "info",
+                title: data.message
             });
         });
     });

@@ -42,6 +42,17 @@
     <link rel="stylesheet" href="{{ asset('plugins/summernote/summernote-lite.css') }}" />
     <link rel="stylesheet" href="{{ asset('plugins/lightbox2/lightbox.min.css') }}">
     <!-- end::Plugins -->
+
+    <style>
+        .chat-message-alert-toast {
+            background-color: #fff !important;
+            color: #000 !important;
+        }
+        .chat-message-alert-toast .toast-title,
+        .chat-message-alert-toast .toast-message {
+            color: #000 !important;
+        }
+    </style>
 </head>
 
 <body id="kt_body" class="header-fixed header-tablet-and-mobile-fixed aside-fixed aside-secondary-disabled">
@@ -178,6 +189,29 @@
             };
 
             toastr.warning(message.message);
+        });
+
+        Livewire.on('chat-message-alert', (message) => {
+            toastr.options = {
+                "closeButton": true,
+                "debug": false,
+                "newestOnTop": true,
+                "progressBar": true,
+                "positionClass": "toast-top-center",
+                "preventDuplicates": true,
+                "onclick": null,
+                "showDuration": "300",
+                "hideDuration": "1000",
+                "timeOut": "5000",
+                "extendedTimeOut": "1000",
+                "showEasing": "swing",
+                "hideEasing": "linear",
+                "showMethod": "fadeIn",
+                "hideMethod": "fadeOut",
+                "toastClass": "toast chat-message-alert-toast"
+            };
+
+            toastr.info(message.message);
         });
     });
 </script>

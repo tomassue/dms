@@ -29,7 +29,7 @@ class ChatNotificationComponent extends Component
             $latestMessage = $this->getLatestUnreadMessage();
 
             if ($latestMessage && $latestMessage->id !== $this->lastAlertedMessageId) {
-                $this->dispatch('warning', message: 'New message from '.($latestMessage->sender->name ?? 'Someone').': '.Str::limit($latestMessage->body, 80));
+                $this->dispatch('chat-message-alert', message: 'New message from '.($latestMessage->sender->name ?? 'Someone').': '.Str::limit($latestMessage->body, 80));
                 $this->lastAlertedMessageId = $latestMessage->id;
             }
         }

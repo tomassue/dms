@@ -56,7 +56,7 @@
                             @forelse($messages as $message)
                             <div class="d-flex mb-3 {{ $message->sender_id === auth()->id() ? 'justify-content-end' : 'justify-content-start' }}">
                                 <div class="p-3 rounded {{ $message->sender_id === auth()->id() ? 'bg-primary text-white' : 'bg-light' }}" style="max-width: 60%;">
-                                    <div>{{ $message->body }}</div>
+                                    <div style="font-size: 16px;">{{ $message->body }}</div>
                                     <div class="fs-9 mt-1 opacity-75">{{ $message->created_at->format('M d, h:i A') }}</div>
                                 </div>
                             </div>
