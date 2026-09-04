@@ -20,6 +20,18 @@
                                     <livewire:components.menu-filter-component page="incoming" context="documents" />
                                     <!--end::Menu Filter-->
 
+                                    <!--begin::Export-->
+                                    <div class="vr"></div> <!-- Vertical Divider -->
+                                    <button type="button" class="btn btn-icon btn-secondary" title="Export to Excel" wire:click="exportExcel" wire:target="exportExcel">
+                                        <span wire:loading.remove wire:target="exportExcel">
+                                            <i class="bi bi-file-earmark-excel"></i>
+                                        </span>
+                                        <span wire:loading wire:target="exportExcel">
+                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                        </span>
+                                    </button>
+                                    <!--end::Export-->
+
                                     <!--begin::Menu 2-->
                                     @can('incoming.documents.create')
                                     <div class="vr"></div> <!-- Vertical Divider -->

@@ -32,6 +32,8 @@ use Fpdi\PdfParser\StreamReader;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Facades\File as FileFacade;
 use setasign\Fpdi\PdfParser\PdfParserException; // Added for specific error handling
+use PhpOffice\PhpSpreadsheet\Spreadsheet;
+use PhpOffice\PhpSpreadsheet\Writer\Xlsx;
 
 #[Title('Issuances')]
 class Documents extends Component
@@ -126,6 +128,11 @@ class Documents extends Component
 
     public function loadIncomingDocuments()
     {
+        return $this->buildIncomingDocumentsQuery()->paginate(10);
+    }
+
+    protected function buildIncomingDocumentsQuery()
+    {
         return IncomingDocument::query()
             ->withoutGlobalScopes()
             ->with([
@@ -148,8 +155,50 @@ class Documents extends Component
             ->when($this->filter_status, function ($query) {
                 $query->where('ref_status_id', $this->filter_status);
             })
-            ->latest()
-            ->paginate(10);
+            ->latest();
+    }
+
+    public function exportExcel()
+    {
+        $issuances = $this->buildIncomingDocumentsQuery()->get();
+
+        $spreadsheet = new Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+        $sheet->setTitle('Issuances');
+
+        $headers = ['Status', 'Category', 'No.', 'Subject', 'Information', 'Date'];
+        $sheet->fromArray($headers, null, 'A1');
+        $sheet->getStyle('A1:F1')->getFont()->setBold(true);
+
+        $row = 2;
+        foreach ($issuances as $item) {
+            $sheet->fromArray([
+                ucfirst($item->status->name ?? '-'),
+                $item->category?->incoming_document_category_name ?? 'N/A',
+                $item->category_no ?? '-',
+                $item->subject ?? '-',
+                $item->document_info,
+                $item->formatted_date,
+            ], null, 'A'.$row);
+            $row++;
+        }
+
+        foreach (range('A', 'F') as $column) {
+            $sheet->getColumnDimension($column)->setAutoSize(true);
+        }
+
+        $tempDir = storage_path('app/temp/exports');
+        if (! FileFacade::isDirectory($tempDir)) {
+            FileFacade::makeDirectory($tempDir, 0755, true);
+        }
+
+        $filename = 'issuances_'.now()->format('Y_m_d_His').'.xlsx';
+        $filePath = $tempDir.DIRECTORY_SEPARATOR.$filename;
+
+        $writer = new Xlsx($spreadsheet);
+        $writer->save($filePath);
+
+        return response()->download($filePath, $filename)->deleteFileAfterSend(true);
     }
 
     public function loadRefIncomingDocumentCategory()
