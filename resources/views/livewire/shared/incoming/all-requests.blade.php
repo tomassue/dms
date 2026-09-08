@@ -145,7 +145,7 @@
                                                         @can('incoming.requests.update')
                                                         <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit"
                                                                 wire:click="editIncomingRequest({{ $item->id }})" @click.stop
-                                                                {{ ($is_office_admin == '1') ? '' : ($isDone ? 'disabled' : '') }}>
+                                                                {{ ($is_office_admin == '1' || auth()->user()->hasRole('Super Admin')) ? '' : ($isDone ? 'disabled' : '') }}>
                                                             <div wire:loading.remove wire:target="editIncomingRequest({{ $item->id }})">
                                                                 <i class="bi bi-pencil"></i>
                                                             </div>

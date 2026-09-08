@@ -120,7 +120,7 @@
                             @can('outgoing.update')
                             <td class="text-center" wire:loading.class="pe-none">
                                 <div class="btn-group" role="group" aria-label="Actions">
-                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})" {{ ($item->status->name ?? '') === 'completed' ? 'disabled' : '' }}>
+                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editOutgoing({{ $item->id }})" {{ (auth()->user()->hasRole('Super Admin') || ($item->status->name ?? '') !== 'completed') ? '' : 'disabled' }}>
                                         <div wire:loading.remove wire:target="editOutgoing({{ $item->id }})">
                                             <i class="bi bi-pencil"></i>
                                         </div>

@@ -120,7 +120,7 @@
                                             <td class="text-center" wire:loading.class="pe-none">
                                                 <div class="btn-group" role="group" aria-label="Actions">
                                                     @can('incoming.documents.update')
-                                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})" @click.stop {{ ($item->isCompleted() || $item->isCancelled()) ? 'xdisabled' : '' }}>
+                                                    <button type="button" class="btn btn-icon btn-sm btn-secondary" title="Edit" wire:click="editIncomingDocument({{ $item->id }})" @click.stop {{ (auth()->user()->hasRole('Super Admin') || !($item->isCompleted() || $item->isCancelled())) ? '' : 'disabled' }}>
                                                         <div wire:loading.remove wire:target="editIncomingDocument({{ $item->id }})">
                                                             <i class="bi bi-pencil"></i>
                                                         </div>

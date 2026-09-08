@@ -4,6 +4,8 @@ namespace App\Livewire\Shared;
 
 use App\Models\IncomingDocument;
 use App\Models\IncomingRequest;
+use App\Models\RefIncomingDocumentCategory;
+use App\Models\RefIncomingRequestCategory;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 use Livewire\WithPagination;
@@ -16,6 +18,14 @@ class Dashboard extends Component
     use WithPagination;
 
     public $weekOffset = 0; // 0 = current week, -1 = previous week, etc. Cannot go beyond 0 (the future).
+
+    public ?string $yearSummaryType = null; // 'requests' | 'documents'
+
+    public $yearSummaryStartDate;
+
+    public $yearSummaryEndDate;
+
+    public $yearSummaryCategoryFilter;
 
     public function render()
     {
@@ -30,8 +40,80 @@ class Dashboard extends Component
                 'incoming_documents' => $this->loadIncomingDocuments(),
                 'monthly_stats' => $this->getMonthlyStats(),
                 'weekly_stats' => $this->getWeeklyStats(),
+                'total_incoming_requests_this_year' => $this->loadTotalIncomingRequestsThisYear(),
+                'total_incoming_documents_this_year' => $this->loadTotalIncomingDocumentsThisYear(),
+                'year_summary_items' => $this->loadYearSummaryItems(),
+                'year_summary_request_categories' => RefIncomingRequestCategory::withoutGlobalScopes()->get(),
+                'year_summary_document_categories' => RefIncomingDocumentCategory::withoutGlobalScopes()->get(),
             ]
         );
+    }
+
+    public function loadTotalIncomingRequestsThisYear()
+    {
+        return IncomingRequest::withoutGlobalScopes()->whereYear('date_requested', now()->year)->count();
+    }
+
+    public function loadTotalIncomingDocumentsThisYear()
+    {
+        return IncomingDocument::withoutGlobalScopes()->whereYear('date', now()->year)->count();
+    }
+
+    public function openRequestsYearSummary(): void
+    {
+        $this->yearSummaryType = 'requests';
+        $this->yearSummaryStartDate = now()->startOfYear()->format('Y-m-d');
+        $this->yearSummaryEndDate = now()->endOfYear()->format('Y-m-d');
+        $this->yearSummaryCategoryFilter = null;
+        $this->dispatch('show-year-summary-modal');
+    }
+
+    public function openDocumentsYearSummary(): void
+    {
+        $this->yearSummaryType = 'documents';
+        $this->yearSummaryStartDate = now()->startOfYear()->format('Y-m-d');
+        $this->yearSummaryEndDate = now()->endOfYear()->format('Y-m-d');
+        $this->yearSummaryCategoryFilter = null;
+        $this->dispatch('show-year-summary-modal');
+    }
+
+    protected function loadYearSummaryItems()
+    {
+        if (! $this->yearSummaryType) {
+            return collect();
+        }
+
+        if ($this->yearSummaryType === 'requests') {
+            return IncomingRequest::query()
+                ->withoutGlobalScopes()
+                ->with(['category' => fn ($query) => $query->withoutGlobalScopes()])
+                ->when($this->yearSummaryStartDate && $this->yearSummaryEndDate, function ($query) {
+                    $query->whereBetween('date_requested', [
+                        Carbon::parse($this->yearSummaryStartDate)->startOfDay(),
+                        Carbon::parse($this->yearSummaryEndDate)->endOfDay(),
+                    ]);
+                })
+                ->when($this->yearSummaryCategoryFilter, function ($query) {
+                    $query->where('ref_incoming_request_category_id', $this->yearSummaryCategoryFilter);
+                })
+                ->orderBy('category_no')
+                ->get(['id', 'ref_incoming_request_category_id', 'category_no', 'memo_no']);
+        }
+
+        return IncomingDocument::query()
+            ->withoutGlobalScopes()
+            ->with(['category' => fn ($query) => $query->withoutGlobalScopes()])
+            ->when($this->yearSummaryStartDate && $this->yearSummaryEndDate, function ($query) {
+                $query->whereBetween('date', [
+                    Carbon::parse($this->yearSummaryStartDate)->startOfDay(),
+                    Carbon::parse($this->yearSummaryEndDate)->endOfDay(),
+                ]);
+            })
+            ->when($this->yearSummaryCategoryFilter, function ($query) {
+                $query->where('ref_incoming_document_category_id', $this->yearSummaryCategoryFilter);
+            })
+            ->orderBy('category_no')
+            ->get(['id', 'ref_incoming_document_category_id', 'category_no']);
     }
 
     public function loadPendingIncomingRequests()
