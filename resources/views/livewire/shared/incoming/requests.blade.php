@@ -313,21 +313,28 @@
                                             <th>Action</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                   <tbody>
                                         @forelse($preview_file as $item)
-                                        <tr>
-                                            <td>
-                                                {{ $item->name }}
-                                            </td>
-                                            <td>
-                                                <a href="#" class="btn btn-sm btn-info" wire:click="viewFile({{ $item->id }})">View</a>
-                                            </td>
-                                        </tr>
+                                            <tr wire:key="uploaded-file-{{ $item->id }}">
+                                                <td>
+                                                    {{ $item->name }}
+                                                </td>
+                                                <td>
+                                                    <a href="#" class="btn btn-sm btn-info me-1" wire:click.prevent="viewFile({{ $item->id }})">
+                                                        View
+                                                    </a>
+                                                    <button type="button" 
+                                                            class="btn btn-sm btn-danger" 
+                                                            wire:click="deleteFile({{ $item->id }})"
+                                                            wire:confirm="Are you sure you want to delete {{ $item->name }}?">
+                                                        Delete
+                                                    </button>
+                                                </td>
+                                            </tr>
                                         @empty
-                                        <tr>
-                                            <td colspan="2" class="text-center">No files uploaded.</td>
-                                            <td class="text-center"></td>
-                                        </tr>
+                                            <tr>
+                                                <td colspan="2" class="text-center">No files uploaded.</td>
+                                            </tr>
                                         @endforelse
                                     </tbody>
                                 </table>

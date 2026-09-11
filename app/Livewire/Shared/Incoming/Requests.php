@@ -664,4 +664,25 @@ class Requests extends Component
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
+
+    public function deleteFile($id)
+    {
+        try {
+            $file = File::findOrFail($id);
+
+            $fileName = $file->name;
+
+            $file->delete();
+
+            // Refresh the preview list so the blade updates reactively
+            if ($this->incomingRequestId) {
+                $this->preview_file = \App\Models\IncomingRequest::find($this->incomingRequestId)?->files ?? collect();
+            }
+
+            $this->dispatch('success', message: "'{$fileName}' deleted successfully.");
+        } catch (\Throwable $th) {
+            FacadesLog::error('Delete File Error: ' . $th->getMessage());
+            $this->dispatch('error', message: 'Failed to delete file.');
+        }
+    }
 }

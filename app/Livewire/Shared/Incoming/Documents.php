@@ -691,4 +691,25 @@ class Documents extends Component
             $this->dispatch('error', message: 'Something went wrong.');
         }
     }
+
+    public function deleteFile($id)
+    {
+        try {
+            $file = File::findOrFail($id);
+
+            $fileName = $file->name;
+
+            $file->delete();
+
+            // Refresh the preview list so the blade updates reactively
+            if ($this->incomingDocumentId) {
+                $this->preview_file = IncomingDocument::find($this->incomingDocumentId)?->files ?? collect();
+            }
+
+            $this->dispatch('success', message: "'{$fileName}' deleted successfully.");
+        } catch (\Throwable $th) {
+            Log::error('Delete File Error: ' . $th->getMessage());
+            $this->dispatch('error', message: 'Failed to delete file.');
+        }
+    }
 }
