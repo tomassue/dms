@@ -247,7 +247,7 @@
                             </div>
                             <div class="mb-10">
                                 <label class="form-label required">Subject</label>
-                                <input type="text" class="form-control" wire:model="subject" {{ $is_office_admin ? '' : 'xdisabled' }}>
+                                <textarea class="form-control" wire:model="subject" {{ $is_office_admin ? '' : 'xdisabled' }}></textarea>
                                 @error('subject')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror

@@ -368,7 +368,7 @@
                                 @forelse($year_summary_items as $item)
                                 <tr>
                                     @if($yearSummaryType === 'requests')
-                                    <td>{{ $item->category?->incoming_request_category_name ?? 'N/A' }}-{{ $item->category_no ?? '-' }}</td>
+                                    <td>{{ $item->category?->incoming_request_category_name ?? 'N/A' }} - {{ $item->category_no ?? '-' }}</td>
                                     <td>{{ $item->memo_no ?? '-' }}</td>
                                     @else
                                     <td>{{ $item->category?->incoming_document_category_name ?? 'N/A' }}: {{ $item->category_no ?? '-' }}</td>

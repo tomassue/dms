@@ -72,7 +72,7 @@ class Documents extends Component
         $rules = [
             'no' => 'required|unique:incoming_documents,no,' . $this->incomingDocumentId,
             'ref_incoming_document_category_id' => 'required|exists:ref_incoming_documents_categories,id',
-            'subject' => 'required|string|max:255',
+            'subject' => 'required|string|max:500',
             'document_info' => 'required',
             'category_no' => 'string|nullable',
             'date' => 'required|date'
@@ -795,6 +795,7 @@ class Documents extends Component
             $this->ref_status_id = $incomingDocument->status->name;
             $this->remarks = $incomingDocument->remarks;
             $this->category_no = $incomingDocument->category_no;
+            $this->preview_file = $incomingDocument->files;
 
             /* ----------------------------------- APO ---------------------------------- */
             if (Auth::user()->hasRole('APOO')) {
