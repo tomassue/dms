@@ -96,8 +96,10 @@ Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|CMI
         /* --------------------------- SUPER ADMIN ROUTES --------------------------- */
         Route::group(['middleware' => ['role:Super Admin']], function () {
             Route::get('/roles-and-permissions', RolesAndPermissions::class)->name('roles-and-permissions');
-            Route::get('/backup', Backup::class)->name('backup');
         });
+
+        # Backup (Super Admin, plus any user explicitly granted access by Super Admin)
+        Route::get('/backup', Backup::class)->name('backup')->middleware('permission:backup.read');
     });
 });
 

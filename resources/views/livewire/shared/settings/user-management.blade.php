@@ -399,6 +399,19 @@
                                         </div>
                                     </div>
 
+                                    <!-- Backup (Super Admin only can grant this access) -->
+                                    @role('Super Admin')
+                                    <li class="d-flex align-items-center py-2">
+                                        <span class="bullet me-5"></span> Backup
+                                    </li>
+                                    <div class="row py-2 ms-4">
+                                        <div class="form-check form-check-custom form-check-solid">
+                                            <input class="form-check-input" type="checkbox" value="backup.read" id="backupRead" wire:model="permissions" />
+                                            <label class="form-check-label" for="backupRead"> Access Backup Page </label>
+                                        </div>
+                                    </div>
+                                    @endrole
+
                                     <!-- References -->
                                     <li class="d-flex align-items-center py-2">
                                         <span class="bullet me-5"></span> References

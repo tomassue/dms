@@ -97,13 +97,13 @@
                                     <a href="{{ route('account-settings') }}" class="menu-link px-5">Account Settings</a>
                                 </div>
                                 <!--end::Menu item-->
-                                @role('Super Admin')
+                                @can('backup.read')
                                 <!--begin::Menu item-->
                                 <div class="menu-item px-5">
                                     <a href="{{ route('backup') }}" class="menu-link px-5">Backup</a>
                                 </div>
                                 <!--end::Menu item-->
-                                @endrole
+                                @endcan
                                 <!--begin::Menu item-->
                                 <div class="menu-item px-5 my-1">
                                     <a href="{{ route('logout') }}"

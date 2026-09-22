@@ -77,6 +77,34 @@ class UserManagement extends Component
         $this->resetValidation();
     }
 
+    /**
+     * Strip permissions that only a Super Admin is allowed to grant/revoke
+     * (e.g. Backup page access) when the acting user is not a Super Admin.
+     * This guards the server side against tampered Livewire payloads, not
+     * just hiding the checkbox in the modal. For an existing user, whatever
+     * they already had for those permissions is left untouched rather than
+     * silently revoked.
+     */
+    protected function sanitizePermissions(array $permissions, ?int $targetUserId = null): array
+    {
+        $superAdminOnlyPermissions = ['backup.read'];
+
+        if (! Auth::user()->hasRole('Super Admin')) {
+            $permissions = array_diff($permissions, $superAdminOnlyPermissions);
+
+            if ($targetUserId) {
+                $existing = User::find($targetUserId)
+                    ?->getPermissionNames()
+                    ->intersect($superAdminOnlyPermissions)
+                    ->all() ?? [];
+
+                $permissions = array_merge($permissions, $existing);
+            }
+        }
+
+        return array_values(array_unique($permissions));
+    }
+
     public function loadUsers()
     {
         $user = User::query()
@@ -191,7 +219,7 @@ class UserManagement extends Component
                 }
 
                 $user->syncRoles($role);
-                $user->syncPermissions($this->permissions);
+                $user->syncPermissions($this->sanitizePermissions($this->permissions));
 
                 $this->clear();
                 $this->dispatch('hide-users-modal');
@@ -259,7 +287,7 @@ class UserManagement extends Component
                 // Sync roles and permissions
                 $role = Role::findOrFail($this->role_id);
                 $user->syncRoles($role);
-                $user->syncPermissions($this->permissions);
+                $user->syncPermissions($this->sanitizePermissions($this->permissions, $this->userId));
 
                 $this->clear();
                 $this->dispatch('hide-users-modal');

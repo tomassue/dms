@@ -21,7 +21,7 @@ class Backup extends Component
 
     public function download()
     {
-        abort_unless(Auth::user()->hasRole('Super Admin'), 403);
+        abort_unless(Auth::user()->can('backup.read'), 403);
 
         set_time_limit(0);
 
