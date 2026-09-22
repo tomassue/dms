@@ -2,6 +2,7 @@
 
 namespace App\Livewire\SuperAdmin;
 
+use App\Models\BackupSetting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
@@ -14,15 +15,87 @@ use ZipArchive;
 #[Title('Backup')]
 class Backup extends Component
 {
+    public $downloadPath;
+
+    public function mount(): void
+    {
+        $this->downloadPath = BackupSetting::first()?->download_path;
+    }
+
     public function render()
     {
         return view('livewire.super-admin.backup');
+    }
+
+    public function openDownloadPathSettings(): void
+    {
+        $this->dispatch('show-backup-settings-modal');
+    }
+
+    public function saveDownloadPath(): void
+    {
+        abort_unless(Auth::user()->can('backup.read'), 403);
+
+        $this->validate([
+            'downloadPath' => 'required|string',
+        ], [], ['downloadPath' => 'download location']);
+
+        $path = rtrim(trim($this->downloadPath), '/\\');
+
+        if (! File::isDirectory($path)) {
+            try {
+                File::makeDirectory($path, 0755, true);
+            } catch (\Throwable $e) {
+                $this->addError('downloadPath', 'Unable to create or access this folder. Please check the path.');
+
+                return;
+            }
+        }
+
+        if (! is_writable($path)) {
+            $this->addError('downloadPath', 'This folder is not writable. Please choose another location.');
+
+            return;
+        }
+
+        $setting = BackupSetting::first() ?? new BackupSetting();
+        $setting->download_path = $path;
+        $setting->updated_by = Auth::id();
+        $setting->save();
+
+        $this->downloadPath = $path;
+
+        $this->dispatch('hide-backup-settings-modal');
+        $this->dispatch('success', message: 'Backup save location updated.');
     }
 
     public function download()
     {
         abort_unless(Auth::user()->can('backup.read'), 403);
 
+        if (! $this->downloadPath) {
+            $this->dispatch('show-backup-settings-modal');
+            $this->dispatch('error', message: 'Please set a backup save location first.');
+
+            return;
+        }
+
+        try {
+            [$zipPath, $zipFilename] = $this->generateBackupArchive();
+
+            $destination = $this->downloadPath.DIRECTORY_SEPARATOR.$zipFilename;
+
+            File::copy($zipPath, $destination);
+            File::delete($zipPath);
+
+            $this->dispatch('success', message: "Backup saved to {$destination}");
+        } catch (\Throwable $e) {
+            $this->dispatch('error', message: 'Backup failed: '.$e->getMessage());
+        }
+    }
+
+    protected function generateBackupArchive(): array
+    {
         set_time_limit(0);
 
         $timestamp = now()->format('Y_m_d_His');
@@ -57,13 +130,13 @@ class Backup extends Component
                 ->causedBy(Auth::user())
                 ->log('Generated a system backup (database + files)');
 
-            return response()->download($zipPath, $zipFilename)->deleteFileAfterSend(true);
+            return [$zipPath, $zipFilename];
         } catch (\Throwable $e) {
-            $this->dispatch('error', message: 'Backup failed: '.$e->getMessage());
-
             if (File::exists($zipPath)) {
                 File::delete($zipPath);
             }
+
+            throw $e;
         } finally {
             if (File::exists($sqlPath)) {
                 File::delete($sqlPath);

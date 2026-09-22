@@ -13,6 +13,11 @@
                                 <span class="card-label fw-bolder fs-3 mb-1">System Backup</span>
                                 <span class="text-muted fw-bold fs-7">Export the database and uploaded files</span>
                             </h3>
+                            <div class="card-toolbar">
+                                <button type="button" class="btn btn-icon btn-secondary" wire:click="openDownloadPathSettings" title="Backup save location">
+                                    <i class="bi bi-gear"></i>
+                                </button>
+                            </div>
                         </div>
                         <!--end::Header-->
                         <!--begin::Body-->
@@ -37,6 +42,16 @@
                             </div>
                             <!--end::Alert-->
 
+                            <div class="mb-5">
+                                <span class="text-muted fw-bold fs-7">Save location:</span>
+                                @if($downloadPath)
+                                <span class="fw-bold">{{ $downloadPath }}</span>
+                                @else
+                                <span class="fst-italic text-muted">Not set yet</span>
+                                @endif
+                                <a href="#" class="ms-2" wire:click.prevent="openDownloadPathSettings">Change</a>
+                            </div>
+
                             <div>
                                 <button type="button" class="btn btn-primary" wire:click="download" wire:target="download" wire:loading.attr="disabled">
                                     <span wire:loading.remove wire:target="download">
@@ -57,4 +72,63 @@
         <!--end::Container-->
     </div>
     <!--end::Content-->
+
+    <!--begin::Modal - Backup Settings-->
+    <div class="modal fade" tabindex="-1" id="backupSettingsModal" data-bs-backdrop="static" data-bs-keyboard="false" wire:ignore.self>
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Backup Save Location</h5>
+                    <!--begin::Close-->
+                    <div class="btn btn-icon btn-sm btn-active-light-primary ms-2" data-bs-dismiss="modal" aria-label="Close">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                    <!--end::Close-->
+                </div>
+                <div class="modal-body">
+                    <form wire:submit="saveDownloadPath">
+                        <div class="p-2">
+                            <div class="mb-10">
+                                <label class="form-label required">Folder path on the server</label>
+                                <input type="text" class="form-control" wire:model="downloadPath" placeholder="e.g. D:\Backups\DMS">
+                                <div class="form-text">Every backup will be saved to this folder. If it doesn't exist yet, it will be created.</div>
+                                @error('downloadPath')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+                        </div>
+
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+                                Close
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <div wire:loading.remove wire:target="saveDownloadPath">
+                                    Save
+                                </div>
+                                <div wire:loading wire:target="saveDownloadPath">
+                                    <div class="spinner-border spinner-border-sm" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--end::Modal - Backup Settings-->
+
+    @script
+    <script>
+        $wire.on('show-backup-settings-modal', () => {
+            $('#backupSettingsModal').modal('show');
+        });
+
+        $wire.on('hide-backup-settings-modal', () => {
+            $('#backupSettingsModal').modal('hide');
+        });
+    </script>
+    @endscript
 </div>
