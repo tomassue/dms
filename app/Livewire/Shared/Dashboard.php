@@ -27,6 +27,10 @@ class Dashboard extends Component
 
     public $yearSummaryCategoryFilter;
 
+    public $yearSummarySortField = 'date'; // date | category | memo_no
+
+    public $yearSummarySortDirection = 'desc'; // asc | desc
+
     public function render()
     {
         return view(
@@ -65,6 +69,8 @@ class Dashboard extends Component
         $this->yearSummaryStartDate = now()->startOfYear()->format('Y-m-d');
         $this->yearSummaryEndDate = now()->endOfYear()->format('Y-m-d');
         $this->yearSummaryCategoryFilter = null;
+        $this->yearSummarySortField = 'date';
+        $this->yearSummarySortDirection = 'desc';
         $this->dispatch('show-year-summary-modal');
     }
 
@@ -74,7 +80,19 @@ class Dashboard extends Component
         $this->yearSummaryStartDate = now()->startOfYear()->format('Y-m-d');
         $this->yearSummaryEndDate = now()->endOfYear()->format('Y-m-d');
         $this->yearSummaryCategoryFilter = null;
+        $this->yearSummarySortField = 'date';
+        $this->yearSummarySortDirection = 'desc';
         $this->dispatch('show-year-summary-modal');
+    }
+
+    public function sortYearSummaryBy(string $field): void
+    {
+        if ($this->yearSummarySortField === $field) {
+            $this->yearSummarySortDirection = $this->yearSummarySortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->yearSummarySortField = $field;
+            $this->yearSummarySortDirection = 'desc';
+        }
     }
 
     protected function loadYearSummaryItems()
@@ -83,8 +101,10 @@ class Dashboard extends Component
             return collect();
         }
 
+        $direction = $this->yearSummarySortDirection === 'asc' ? 'asc' : 'desc';
+
         if ($this->yearSummaryType === 'requests') {
-            return IncomingRequest::query()
+            $query = IncomingRequest::query()
                 ->withoutGlobalScopes()
                 ->with(['category' => fn ($query) => $query->withoutGlobalScopes()])
                 ->when($this->yearSummaryStartDate && $this->yearSummaryEndDate, function ($query) {
@@ -95,12 +115,22 @@ class Dashboard extends Component
                 })
                 ->when($this->yearSummaryCategoryFilter, function ($query) {
                     $query->where('ref_incoming_request_category_id', $this->yearSummaryCategoryFilter);
-                })
-                ->orderBy('category_no')
-                ->get(['id', 'ref_incoming_request_category_id', 'category_no', 'memo_no']);
+                });
+
+            match ($this->yearSummarySortField) {
+                'category' => $query->orderBy(
+                    RefIncomingRequestCategory::select('incoming_request_category_name')
+                        ->whereColumn('id', 'incoming_requests.ref_incoming_request_category_id'),
+                    $direction
+                ),
+                'memo_no' => $query->orderBy('memo_no', $direction),
+                default => $query->orderBy('date_requested', $direction),
+            };
+
+            return $query->get(['id', 'ref_incoming_request_category_id', 'category_no', 'memo_no', 'date_requested']);
         }
 
-        return IncomingDocument::query()
+        $query = IncomingDocument::query()
             ->withoutGlobalScopes()
             ->with(['category' => fn ($query) => $query->withoutGlobalScopes()])
             ->when($this->yearSummaryStartDate && $this->yearSummaryEndDate, function ($query) {
@@ -111,9 +141,18 @@ class Dashboard extends Component
             })
             ->when($this->yearSummaryCategoryFilter, function ($query) {
                 $query->where('ref_incoming_document_category_id', $this->yearSummaryCategoryFilter);
-            })
-            ->orderBy('category_no')
-            ->get(['id', 'ref_incoming_document_category_id', 'category_no']);
+            });
+
+        match ($this->yearSummarySortField) {
+            'category' => $query->orderBy(
+                RefIncomingDocumentCategory::select('incoming_document_category_name')
+                    ->whereColumn('id', 'incoming_documents.ref_incoming_document_category_id'),
+                $direction
+            ),
+            default => $query->orderBy('date', $direction),
+        };
+
+        return $query->get(['id', 'ref_incoming_document_category_id', 'category_no', 'date']);
     }
 
     public function loadPendingIncomingRequests()

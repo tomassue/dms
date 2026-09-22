@@ -358,9 +358,25 @@
                         <table class="table table-row-bordered table-hover">
                             <thead>
                                 <tr class="fw-bold fs-6 text-gray-800">
-                                    <th>Category</th>
+                                    <th style="cursor: pointer; user-select: none;" wire:click="sortYearSummaryBy('date')">
+                                        Date
+                                        @if($yearSummarySortField === 'date')
+                                        <i class="bi bi-arrow-{{ $yearSummarySortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                        @endif
+                                    </th>
+                                    <th style="cursor: pointer; user-select: none;" wire:click="sortYearSummaryBy('category')">
+                                        Category
+                                        @if($yearSummarySortField === 'category')
+                                        <i class="bi bi-arrow-{{ $yearSummarySortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                        @endif
+                                    </th>
                                     @if($yearSummaryType === 'requests')
-                                    <th>Memo Number</th>
+                                    <th style="cursor: pointer; user-select: none;" wire:click="sortYearSummaryBy('memo_no')">
+                                        Memo Number
+                                        @if($yearSummarySortField === 'memo_no')
+                                        <i class="bi bi-arrow-{{ $yearSummarySortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                        @endif
+                                    </th>
                                     @endif
                                 </tr>
                             </thead>
@@ -368,15 +384,17 @@
                                 @forelse($year_summary_items as $item)
                                 <tr>
                                     @if($yearSummaryType === 'requests')
+                                    <td>{{ $item->date_requested ? \Carbon\Carbon::parse($item->date_requested)->format('M d, Y') : '-' }}</td>
                                     <td>{{ $item->category?->incoming_request_category_name ?? 'N/A' }} - {{ $item->category_no ?? '-' }}</td>
                                     <td>{{ $item->memo_no ?? '-' }}</td>
                                     @else
+                                    <td>{{ $item->date ? \Carbon\Carbon::parse($item->date)->format('M d, Y') : '-' }}</td>
                                     <td>{{ $item->category?->incoming_document_category_name ?? 'N/A' }}: {{ $item->category_no ?? '-' }}</td>
                                     @endif
                                 </tr>
                                 @empty
                                 <tr>
-                                    <td colspan="{{ $yearSummaryType === 'requests' ? 2 : 1 }}" class="text-center">No records found.</td>
+                                    <td colspan="{{ $yearSummaryType === 'requests' ? 3 : 2 }}" class="text-center">No records found.</td>
                                 </tr>
                                 @endforelse
                             </tbody>
