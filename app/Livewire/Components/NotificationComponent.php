@@ -19,8 +19,22 @@ class NotificationComponent extends Component
         ]);
     }
 
+    /**
+     * Discards everything up to now so the next poll only has to fetch
+     * notifications created/updated after this point, instead of the
+     * ever-growing full list (the actual cause of the polling lag).
+     */
+    public function clearNotifications()
+    {
+        auth()->user()->update(['notifications_cleared_at' => now()]);
+
+        $this->prepareNotifications();
+    }
+
     protected function prepareNotifications()
     {
+        $clearedAt = auth()->user()->notifications_cleared_at;
+
         // Load data
         $requests = IncomingRequest::when(auth()->user()->hasRole('Super Admin'), function ($query) {
             // Super Admin sees all
@@ -31,6 +45,9 @@ class NotificationComponent extends Component
                 return $query->forwarded();
             });
         })
+            ->when($clearedAt, function ($query) use ($clearedAt) {
+                $query->where('updated_at', '>', $clearedAt);
+            })
             ->get();
 
         $documents = IncomingDocument::when(auth()->user()->hasRole('Super Admin'), function ($query) {
@@ -42,6 +59,9 @@ class NotificationComponent extends Component
                 return $query->forwarded();
             });
         })
+            ->when($clearedAt, function ($query) use ($clearedAt) {
+                $query->where('updated_at', '>', $clearedAt);
+            })
             ->get();
 
         // Format notifications with human-readable time

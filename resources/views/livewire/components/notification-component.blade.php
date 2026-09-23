@@ -15,8 +15,16 @@
         <!--begin::Heading-->
         <div class="d-flex flex-column bgi-no-repeat rounded-top" style="background-color: #0E4A84;">
             <!--begin::Title-->
-            <h3 class="text-white fw-bold px-9 mt-10 mb-6">Notifications
-                <span class="fs-8 opacity-75 ps-3">{{ $notifications->count() }} reports</span>
+            <h3 class="text-white fw-bold px-9 mt-10 mb-6 d-flex align-items-center justify-content-between">
+                <span>
+                    Notifications
+                    <span class="fs-8 opacity-75 ps-3">{{ $notifications->count() }} reports</span>
+                </span>
+                @if($notifications->isNotEmpty())
+                <a href="#" class="fs-8 text-white opacity-75 text-hover-primary" wire:click.prevent="clearNotifications" title="Clear all notifications">
+                    Clear all
+                </a>
+                @endif
             </h3>
             <!--end::Title-->
             <!--begin::Tabs-->
