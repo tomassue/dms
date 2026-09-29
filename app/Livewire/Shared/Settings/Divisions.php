@@ -20,7 +20,8 @@ class Divisions extends Component
     public $editMode;
     public $divisionId;
     public $name,
-        $office_id;
+        $office_id,
+        $order;
 
     public function rules()
     {
@@ -33,6 +34,7 @@ class Divisions extends Component
                     return $query->where('office_id', $this->office_id);
                 })->ignore($this->divisionId),
             ],
+            'order' => 'nullable|integer|min:0',
         ];
 
         if (auth()->user()->hasRole('Super Admin')) {
@@ -67,6 +69,8 @@ class Divisions extends Component
             ->when($this->search, function ($query) {
                 return $query->where('name', 'LIKE', '%' . $this->search . '%');
             })
+            ->orderByRaw('`order` IS NULL, `order` ASC')
+            ->orderBy('name')
             ->paginate(10);
     }
 
@@ -90,6 +94,7 @@ class Divisions extends Component
                     $division->office_id = auth()->user()->roles()->first()->id;
                 }
                 $division->name = $this->name;
+                $division->order = $this->order;
                 $division->save();
 
                 $this->clear();
@@ -111,6 +116,7 @@ class Divisions extends Component
             $division = RefDivision::find($divisionId);
             $this->name = $division->name;
             $this->office_id = $division->office_id;
+            $this->order = $division->order;
 
             $this->dispatch('show-division-modal');
         } catch (\Throwable $th) {
@@ -132,6 +138,7 @@ class Divisions extends Component
                     $division->office_id = auth()->user()->roles()->first()->id;
                 }
                 $division->name = $this->name;
+                $division->order = $this->order;
                 $division->save();
 
                 $this->clear();

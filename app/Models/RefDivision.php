@@ -21,7 +21,8 @@ class RefDivision extends Model
 
     protected $fillable = [
         'office_id',
-        'name'
+        'name',
+        'order',
     ];
 
     # Relationship

@@ -626,7 +626,7 @@ class Documents extends Component
     public function forward()
     {
         $this->validate([
-            'selected_divisions' => 'required|min:1',
+            'selected_divisions' => 'required|array|min:1|max:1',
             'selected_divisions.*' => 'exists:ref_divisions,id',
         ], [], [
             'selected_divisions' => 'division'

@@ -70,16 +70,18 @@
     VirtualSelect.init({
         ele: '#division-select',
         options: @json($divisions),
-        multiple: true,
         maxWidth: '100%',
         dropboxWrapper: 'body', // Append to body instead of parent
         zIndex: 1060, // Higher than modal's z-index
     });
 
+    // Single-select (radio-style) - a request/document can only be forwarded
+    // to one division at a time, so we keep selected_divisions as a
+    // one-item array to stay compatible with the existing forward() logic.
     let selected_divisions = document.querySelector('#division-select');
     selected_divisions.addEventListener('change', () => {
         let data = selected_divisions.value;
-        @this.set('selected_divisions', data);
+        @this.set('selected_divisions', data ? [data] : []);
     });
 
     $wire.on('reset-division-select', () => {
@@ -87,7 +89,7 @@
     });
 
     $wire.on('set-division-select', (data) => {
-        document.querySelector('#division-select').setValue(data[0]);
+        document.querySelector('#division-select').setValue(data[0][0]);
     });
 </script>
 @endscript

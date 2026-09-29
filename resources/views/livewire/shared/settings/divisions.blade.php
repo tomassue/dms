@@ -37,6 +37,7 @@
                             <table class="table align-middle table-hover table-rounded table-striped border gy-7 gs-7">
                                 <thead>
                                     <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200">
+                                        <th>Order</th>
                                         <th>Role (Office)</th>
                                         <th>Name</th>
                                         <th>Status</th>
@@ -48,6 +49,7 @@
                                 <tbody>
                                     @forelse($divisions as $item)
                                     <tr>
+                                        <td>{{ $item->order ?? '-' }}</td>
                                         <td>{{ $item->roles->name ?? '' }}</td>
                                         <td>{{ $item->name }}</td>
                                         <td><span class="badge {{ $item->deleted_at ? 'badge-light-danger' : 'badge-light-success' }}">{{ $item->deleted_at ? 'Inactive' : 'Active' }}</span></td>
@@ -70,7 +72,7 @@
                                     </tr>
                                     @empty
                                     <tr>
-                                        <td colspan="5" class="text-center">No records found.</td>
+                                        <td colspan="6" class="text-center">No records found.</td>
                                     </tr>
                                     @endforelse
                                 </tbody>
@@ -134,6 +136,17 @@
                                 <label class="form-label required">Name</label>
                                 <input type="text" class="form-control" wire:model="name">
                                 @error('name')
+                                <span class="text-danger">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="mb-10">
+                                <label class="form-label">Order</label>
+                                <input type="text" inputmode="numeric" class="form-control"
+                                    oninput="this.value = this.value.replace(/\D/g, '');"
+                                    placeholder="e.g. 1"
+                                    wire:model="order">
+                                @error('order')
                                 <span class="text-danger">{{ $message }}</span>
                                 @enderror
                             </div>
