@@ -54,6 +54,15 @@
                                 </a>
                             </li>
                             <!--end::Nav item-->
+                            @role('Super Admin')
+                            <!--begin::Nav item-->
+                            <li class="nav-item">
+                                <a class="nav-link text-active-primary me-6 {{ $page == 3 ? 'active' : '' }}" href="#" wire:click="$set('page', 3)">
+                                    System
+                                </a>
+                            </li>
+                            <!--end::Nav item-->
+                            @endrole
                         </ul>
                     </div>
                     <!--begin::Navs-->
@@ -389,6 +398,69 @@
                 </form>
             </div>
             <!--end::change password View-->
+
+            @role('Super Admin')
+            <!--begin::System View-->
+            <div class="card mt-5 mb-5 mb-xl-10" style="display: {{ $page == 3 ? '' : 'none' }};">
+                <!--begin::Card header-->
+                <div class="card-header cursor-pointer">
+                    <!--begin::Card title-->
+                    <div class="card-title m-0">
+                        <h3 class="fw-bolder m-0">System</h3>
+                    </div>
+                    <!--end::Card title-->
+                </div>
+                <!--begin::Card header-->
+                <!--begin::Card body-->
+                <div class="card-body p-9">
+                    <!--begin::Row-->
+                    <div class="row mb-7">
+                        <!--begin::Label-->
+                        <label class="col-lg-4 fw-bold text-muted">Message alerts</label>
+                        <!--end::Label-->
+                        <!--begin::Col-->
+                        <div class="col-lg-8 d-flex align-items-center">
+                            <div class="form-check form-check-solid form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    wire:click="toggleMessagesEnabled"
+                                    wire:loading.attr="disabled" wire:target="toggleMessagesEnabled"
+                                    {{ $messagesEnabled ? 'checked' : '' }}>
+                            </div>
+                            <span class="ms-3 text-muted fs-7">
+                                {{ $messagesEnabled ? 'On - chat message sound/alerts are active.' : 'Off - chat message sound/alerts are suppressed.' }}
+                            </span>
+                        </div>
+                        <!--end::Col-->
+                    </div>
+                    <!--end::Row-->
+                    <!--begin::Row-->
+                    <div class="row mb-7">
+                        <!--begin::Label-->
+                        <label class="col-lg-4 fw-bold text-muted">Notification alerts</label>
+                        <!--end::Label-->
+                        <!--begin::Col-->
+                        <div class="col-lg-8 d-flex align-items-center">
+                            <div class="form-check form-check-solid form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch"
+                                    wire:click="toggleNotificationsEnabled"
+                                    wire:loading.attr="disabled" wire:target="toggleNotificationsEnabled"
+                                    {{ $notificationsEnabled ? 'checked' : '' }}>
+                            </div>
+                            <span class="ms-3 text-muted fs-7">
+                                {{ $notificationsEnabled ? 'On - the notification bell is active for everyone.' : 'Off - the notification bell is hidden for everyone.' }}
+                            </span>
+                        </div>
+                        <!--end::Col-->
+                    </div>
+                    <!--end::Row-->
+                    <div class="text-muted fs-7">
+                        These switches apply system-wide, for every user, not just your own account.
+                    </div>
+                </div>
+                <!--end::Card body-->
+            </div>
+            <!--end::System View-->
+            @endrole
         </div>
         <!--end::Container-->
     </div>

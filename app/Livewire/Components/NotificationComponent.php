@@ -4,6 +4,7 @@ namespace App\Livewire\Components;
 
 use App\Models\IncomingDocument;
 use App\Models\IncomingRequest;
+use App\Models\SystemSetting;
 use Livewire\Component;
 
 class NotificationComponent extends Component
@@ -12,10 +13,17 @@ class NotificationComponent extends Component
 
     public function render()
     {
-        $this->prepareNotifications();
+        $alertsEnabled = SystemSetting::current()->notifications_enabled;
+
+        if ($alertsEnabled) {
+            $this->prepareNotifications();
+        } else {
+            $this->notifications = collect();
+        }
 
         return view('livewire.components.notification-component', [
-            'notifications' => $this->notifications
+            'notifications' => $this->notifications,
+            'alertsEnabled' => $alertsEnabled,
         ]);
     }
 

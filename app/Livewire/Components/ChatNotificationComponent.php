@@ -3,6 +3,7 @@
 namespace App\Livewire\Components;
 
 use App\Models\ChatMessage;
+use App\Models\SystemSetting;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -23,7 +24,9 @@ class ChatNotificationComponent extends Component
     {
         $unreadCount = $this->getUnreadCount();
 
-        if ($this->previousUnreadCount !== null && $unreadCount > $this->previousUnreadCount) {
+        $alertsEnabled = SystemSetting::current()->messages_enabled;
+
+        if ($alertsEnabled && $this->previousUnreadCount !== null && $unreadCount > $this->previousUnreadCount) {
             $this->dispatch('play-chat-notification-sound');
 
             $latestMessage = $this->getLatestUnreadMessage();

@@ -2,6 +2,7 @@
 
 namespace App\Livewire\Shared;
 
+use App\Models\SystemSetting;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -29,10 +30,18 @@ class AccountSettings extends Component
         $new_password,
         $confirm_password;
 
+    public $messagesEnabled = true;
+
+    public $notificationsEnabled = true;
+
     public function mount()
     {
         $this->user = auth()->user();
         $this->loadPersonalDetails();
+
+        if ($this->user->hasRole('Super Admin')) {
+            $this->loadSystemSettings();
+        }
     }
 
     public function refresh()
@@ -44,9 +53,47 @@ class AccountSettings extends Component
 
     public function clear()
     {
-        $this->resetExcept('user', 'page');
+        $this->resetExcept('user', 'page', 'messagesEnabled', 'notificationsEnabled');
         $this->resetValidation();
         $this->loadPersonalDetails();
+    }
+
+    public function loadSystemSettings()
+    {
+        $settings = SystemSetting::current();
+
+        $this->messagesEnabled = $settings->messages_enabled;
+        $this->notificationsEnabled = $settings->notifications_enabled;
+    }
+
+    public function toggleMessagesEnabled()
+    {
+        abort_unless($this->user->hasRole('Super Admin'), 403);
+
+        $settings = SystemSetting::current();
+        $settings->update([
+            'messages_enabled' => ! $settings->messages_enabled,
+            'updated_by' => $this->user->id,
+        ]);
+        SystemSetting::forgetCache();
+
+        $this->loadSystemSettings();
+        $this->dispatch('success', message: 'Message alerts turned '.($this->messagesEnabled ? 'on' : 'off').'.');
+    }
+
+    public function toggleNotificationsEnabled()
+    {
+        abort_unless($this->user->hasRole('Super Admin'), 403);
+
+        $settings = SystemSetting::current();
+        $settings->update([
+            'notifications_enabled' => ! $settings->notifications_enabled,
+            'updated_by' => $this->user->id,
+        ]);
+        SystemSetting::forgetCache();
+
+        $this->loadSystemSettings();
+        $this->dispatch('success', message: 'Notification alerts turned '.($this->notificationsEnabled ? 'on' : 'off').'.');
     }
 
     public function render()

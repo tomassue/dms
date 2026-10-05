@@ -1,5 +1,6 @@
 <!-- begin::Notifications -->
-<div class="d-flex align-items-center ms-1 ms-lg-3" wire:poll>
+<div class="d-flex align-items-center ms-1 ms-lg-3" @if($alertsEnabled) wire:poll @endif>
+    @if($alertsEnabled)
     <!--begin::Menu wrapper-->
     <div class="btn btn-icon btn-active-light-info position-relative w-30px h-30px w-md-40px h-md-40px" data-kt-menu-trigger="click" data-kt-menu-attach="parent" data-kt-menu-placement="bottom-end" wire:ignore.self>
         <!--begin::Svg Icon | path: icons/duotune/general/gen022.svg-->
@@ -107,5 +108,6 @@
     </div>
     <!--end::Menu-->
     <!--end::Menu wrapper-->
+    @endif
 </div>
 <!--end::Notifications-->
