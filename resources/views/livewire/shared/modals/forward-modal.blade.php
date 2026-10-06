@@ -15,9 +15,20 @@
                 <form wire:submit="forward">
                     <div class="p-2">
                         <div class="mb-10">
-                            <label class="form-label required">Division</label>
+                            <div class="d-flex align-items-center justify-content-between">
+                                <label class="form-label required mb-0">Division</label>
+                                <div class="form-check form-check-solid form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" id="manualForwardSwitch"
+                                        wire:click="toggleManualForward"
+                                        {{ $manualForward ? 'checked' : '' }}>
+                                    <label class="form-check-label fs-7 text-muted" for="manualForwardSwitch">Select manually</label>
+                                </div>
+                            </div>
                             <div wire:ignore>
                                 <div id="division-select"></div>
+                            </div>
+                            <div class="form-text">
+                                {{ $manualForward ? 'Pick the division to forward this to.' : 'Automatically forwarding to the next division in order. Turn on "Select manually" to pick a different one.' }}
                             </div>
                             @error('selected_divisions')
                             <span class="text-danger">{{ $message }}</span>
@@ -46,14 +57,18 @@
 @script
 <script>
     $wire.on('show-forward-modal', (id) => {
+        // Lock the dropdown by default - prepareForwardDivision below will
+        // enable it again only if it couldn't auto-pick a next division.
+        document.querySelector('#division-select').disable();
+
         if ($wire.page == 'incoming documents') {
-            $wire.getForwardedDivisions(id.id); // Check for already forwarded divisions. If any, they will be selected in the dropdown.
+            $wire.prepareForwardDivision(id.id); // Auto-pick the next division in order; falls back to manual if it can't.
 
             @this.set('incomingDocumentId', id.id);
         }
 
         if ($wire.page == 'incoming requests') {
-            $wire.getForwardedDivisions(id.id); // Check for already forwarded divisions. If any, they will be selected in the dropdown.
+            $wire.prepareForwardDivision(id.id); // Auto-pick the next division in order; falls back to manual if it can't.
 
             @this.set('incomingRequestId', id.id);
         }
@@ -85,11 +100,23 @@
     });
 
     $wire.on('reset-division-select', () => {
+        // Dispatched when no next division could be auto-determined -
+        // fall back to letting the user pick manually.
         document.querySelector('#division-select').reset();
+        document.querySelector('#division-select').enable();
     });
 
     $wire.on('set-division-select', (data) => {
+        // Dispatched with the auto-picked next division - keep the
+        // dropdown locked unless the user turns on manual selection.
         document.querySelector('#division-select').setValue(data[0][0]);
+        if (! $wire.manualForward) {
+            document.querySelector('#division-select').disable();
+        }
+    });
+
+    $wire.on('enable-division-select', () => {
+        document.querySelector('#division-select').enable();
     });
 </script>
 @endscript

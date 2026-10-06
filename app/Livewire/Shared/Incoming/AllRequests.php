@@ -50,6 +50,7 @@ class AllRequests extends Component
     public $incomingRequestId;
     public $selected_divisions = [], // for forwarded
         $forwarded_divisions = [];
+    public $manualForward = false; // when false, the division dropdown is locked to the auto-computed next division
     public $preview_file = [];
     public $activity_log = [];
 
@@ -685,30 +686,78 @@ class AllRequests extends Component
     }
 
     /**
-     * getForwardedDivisions
-     * * This function is used to get the forwarded divisions of the incoming document.
-     * * It will return the forwarded divisions of the incoming document.
+     * prepareForwardDivision
+     * * Called when the Forward modal opens. Figures out the division that
+     * * currently holds the request (its latest active forward, or the
+     * * acting user's own division if it hasn't been forwarded yet) and
+     * * auto-selects the next division in that office's order sequence.
+     * * The dropdown stays locked to this auto pick unless the user flips
+     * * the manual switch (toggleManualForward).
      */
-    public function getForwardedDivisions($id)
+    public function prepareForwardDivision($id)
     {
-        // Fetch the model manually while bypassing the Office/Forwarded scopes
-        $incomingRequest = IncomingRequest::withoutGlobalScopes()->findOrFail($id);
+        $this->manualForward = false;
 
         try {
-            $forwarded_divisions = $incomingRequest->forwards()
-                ->with(['division'])
-                ->get()
-                ->map(function ($forward) {
-                    return $forward->ref_division_id;
-                })
-                ->toArray();
+            // Fetch the model manually while bypassing the Office/Forwarded scopes
+            $incomingRequest = IncomingRequest::withoutGlobalScopes()->findOrFail($id);
 
-            if ($forwarded_divisions) {
-                $this->dispatch('set-division-select', $forwarded_divisions);
+            $nextDivision = $this->findNextDivision($incomingRequest);
+
+            if ($nextDivision) {
+                $this->selected_divisions = [$nextDivision->id];
+                $this->dispatch('set-division-select', [$nextDivision->id]);
+            } else {
+                $this->selected_divisions = [];
+                $this->manualForward = true;
+                $this->dispatch('reset-division-select');
+                $this->dispatch('warning', message: 'Could not determine the next division automatically. Please select one manually.');
             }
         } catch (\Throwable $th) {
             $this->dispatch('error', message: 'Something went wrong.');
         }
+    }
+
+    public function toggleManualForward()
+    {
+        $this->manualForward = ! $this->manualForward;
+
+        if ($this->manualForward) {
+            $this->dispatch('enable-division-select');
+        } else {
+            $this->prepareForwardDivision($this->incomingRequestId);
+        }
+    }
+
+    /**
+     * findNextDivision
+     * * The current division is the request's latest active forward, or the
+     * * acting user's own division when it hasn't been forwarded yet.
+     * * The next division is the one with the smallest `order` greater than
+     * * the current division's order, within the same office.
+     */
+    protected function findNextDivision(IncomingRequest $incomingRequest): ?RefDivision
+    {
+        $currentDivisionId = $incomingRequest->forwards()->latest()->first()?->ref_division_id
+            ?? Auth::user()->user_metadata?->ref_division_id;
+
+        if (! $currentDivisionId) {
+            return null;
+        }
+
+        $currentDivision = RefDivision::withoutGlobalScopes()->find($currentDivisionId);
+
+        if (! $currentDivision || $currentDivision->order === null) {
+            return null;
+        }
+
+        return RefDivision::withoutGlobalScopes()
+            ->where('office_id', $currentDivision->office_id)
+            ->where('id', '!=', $currentDivision->id)
+            ->whereNotNull('order')
+            ->where('order', '>', $currentDivision->order)
+            ->orderBy('order')
+            ->first();
     }
 
     public function forward()
