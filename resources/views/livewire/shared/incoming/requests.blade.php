@@ -48,9 +48,9 @@
                                             <tr class="fw-bold fs-6 text-gray-800 border-bottom-2 border-gray-200 bg-light">
                                                 <th>Status</th>
                                                 <th>Assign By</th>
-                                                <th class="min-w-100px cursor-pointer" wire:click="sortBy('no')">
+                                                <th class="min-w-100px cursor-pointer" wire:click="sortBy('category_no')">
                                                     Category No.
-                                                    @if($sortField === 'no')
+                                                    @if($sortField === 'category_no')
                                                         <i style="color:rgb(255, 0, 0)" class="bi {{ $sortDirection === 'asc' ? 'bi-arrow-up' : 'bi-arrow-down' }}"></i>
                                                     @endif
                                                 </th>

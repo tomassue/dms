@@ -212,7 +212,15 @@ class AllRequests extends Component
             ->when($this->filter_status, function ($query) {
                 $query->where('ref_status_id', $this->filter_status);
             })
-            ->orderBy($this->sortField, $this->sortDirection)
+            ->when($this->sortField === 'category_no', function ($query) {
+                // category_no is stored as varchar, so a plain orderBy sorts it
+                // lexicographically (e.g. "10" before "2"). Cast it numerically
+                // so asc/desc actually follow the number series.
+                $direction = $this->sortDirection === 'asc' ? 'asc' : 'desc';
+                $query->orderByRaw("CAST(category_no AS UNSIGNED) {$direction}");
+            }, function ($query) {
+                $query->orderBy($this->sortField, $this->sortDirection);
+            })
             ->orderBy('id', 'desc')
             // ->latest()
             ->paginate(20);
