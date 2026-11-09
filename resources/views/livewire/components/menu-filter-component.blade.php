@@ -61,6 +61,18 @@
                     </select>
                     <!--end::Input-->
                 </div>
+
+                <div class="mb-10">
+                    <!--begin::Label-->
+                    <label class="form-label fw-bold">Attachment:</label>
+                    <!--end::Label-->
+                    <!--begin::Input-->
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="filter_no_attachment" wire:model="no_attachment">
+                        <label class="form-check-label" for="filter_no_attachment">No attachment only</label>
+                    </div>
+                    <!--end::Input-->
+                </div>
                 @endif
 
                 @if (in_array($context, ['documents']))

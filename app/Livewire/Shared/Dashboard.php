@@ -118,11 +118,13 @@ class Dashboard extends Component
                 });
 
             match ($this->yearSummarySortField) {
+                // category_no is varchar and may have a suffix (e.g. "006a"), so sort
+                // by its number first, then the raw value to order the suffixes.
                 'category' => $query->orderBy(
                     RefIncomingRequestCategory::select('incoming_request_category_name')
                         ->whereColumn('id', 'incoming_requests.ref_incoming_request_category_id'),
                     $direction
-                ),
+                )->orderByRaw("CAST(category_no AS UNSIGNED) {$direction}")->orderBy('category_no', $direction),
                 'memo_no' => $query->orderBy('memo_no', $direction),
                 default => $query->orderBy('date_requested', $direction),
             };
@@ -148,7 +150,7 @@ class Dashboard extends Component
                 RefIncomingDocumentCategory::select('incoming_document_category_name')
                     ->whereColumn('id', 'incoming_documents.ref_incoming_document_category_id'),
                 $direction
-            ),
+            )->orderByRaw("CAST(category_no AS UNSIGNED) {$direction}")->orderBy('category_no', $direction),
             default => $query->orderBy('date', $direction),
         };
 

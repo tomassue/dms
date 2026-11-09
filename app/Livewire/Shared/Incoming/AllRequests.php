@@ -46,7 +46,8 @@ class AllRequests extends Component
         $filter_end_date,
         $filter_category,
         $filter_document_type,
-        $filter_status;
+        $filter_status,
+        $filter_no_attachment;
     public $incomingRequestId;
     public $selected_divisions = [], // for forwarded
         $forwarded_divisions = [];
@@ -126,13 +127,15 @@ class AllRequests extends Component
     }
 
     #[On('filter')]
-    public function filter($start_date, $end_date, $request_category, $doctype, $status)
+    public function filter($start_date, $end_date, $request_category, $doctype, $status, $no_attachment = false)
     {
         $this->filter_start_date = $start_date;
         $this->filter_end_date = $end_date;
         $this->filter_category = $request_category;
         $this->filter_document_type = $doctype;
         $this->filter_status = $status;
+        $this->filter_no_attachment = $no_attachment;
+        $this->resetPage();
     }
 
     #[On('clear-filter-data')]
@@ -211,6 +214,9 @@ class AllRequests extends Component
             })
             ->when($this->filter_status, function ($query) {
                 $query->where('ref_status_id', $this->filter_status);
+            })
+            ->when($this->filter_no_attachment, function ($query) {
+                $query->doesntHave('files');
             })
             ->when($this->sortField === 'category_no', function ($query) {
                 // category_no is stored as varchar, so a plain orderBy sorts it

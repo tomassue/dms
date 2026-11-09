@@ -20,7 +20,8 @@ class MenuFilterComponent extends Component
         $document_category,
         $status,
         $outgoing_category,
-        $doctype;
+        $doctype,
+        $no_attachment;
 
     public function mount($page, $context = null)
     {
@@ -38,13 +39,14 @@ class MenuFilterComponent extends Component
             document_category: $this->document_category,
             doctype: $this->doctype,
             status: $this->status,
-            outgoing_category: $this->outgoing_category
+            outgoing_category: $this->outgoing_category,
+            no_attachment: $this->no_attachment
         );
     }
 
     public function clear()
     {
-        $this->resetExcept('page');
+        $this->resetExcept('page', 'context');
 
         $this->dispatch('clear-filter-date'); // date range picker
 
