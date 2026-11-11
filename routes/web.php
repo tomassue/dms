@@ -29,7 +29,8 @@ Route::get('/', function () {
 
 Auth::routes();
 
-Route::group(['middleware' => ['role:Super Admin|APOO|CITY VETERINARY OFFICE|OBO|CITY ADMIN|CMISID|LSB|City Hospital - Lumbia|CCAD']], function () {
+// Accessible by any user assigned to an office (role). New offices are picked up automatically.
+Route::group(['middleware' => ['has_office']], function () {
     // Routes accessible only by admin of team 1
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
 
