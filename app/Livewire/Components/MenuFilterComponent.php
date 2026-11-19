@@ -23,6 +23,8 @@ class MenuFilterComponent extends Component
         $doctype,
         $no_attachment;
 
+    public $active_count = 0; // number of applied filters, shown as a badge on the filter button
+
     public function mount($page, $context = null)
     {
         $this->page = $page;
@@ -31,6 +33,16 @@ class MenuFilterComponent extends Component
 
     public function filter()
     {
+        $this->active_count = collect([
+            $this->start_date && $this->end_date,
+            $this->request_category,
+            $this->document_category,
+            $this->doctype,
+            $this->status,
+            $this->outgoing_category,
+            $this->no_attachment,
+        ])->filter()->count();
+
         $this->dispatch(
             'filter',
             start_date: $this->start_date,
