@@ -131,6 +131,12 @@
         </div>
         <!--end::Actions-->
     </div>
+
+    <style>
+        /* Quick-range list of the filter's date picker (rendered outside the menu, at body level) */
+        .filter-daterangepicker .ranges li { color: #000; }
+        .filter-daterangepicker .ranges li.active { color: #fff; }
+    </style>
 </div>
 
 @script
@@ -150,6 +156,7 @@
             'This Year': [moment().startOf('year'), moment().endOf('year')]
         }
     });
+    $('#filter_date').data('daterangepicker').container.addClass('filter-daterangepicker');
 
     // When dates are selected
     $('#filter_date').on('apply.daterangepicker', function(ev, picker) {
